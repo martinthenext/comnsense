@@ -164,6 +164,13 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="Action.cs" />
+    <Compile Include="ActionDeserializer.cs" />
+    <Compile Include="Event.cs" />
+    <Compile Include="EventPublisher.cs" />
+    <Compile Include="EventSerializer.cs" />
+    <Compile Include="CustomProperty.cs" />
+    <Compile Include="Ident.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -189,6 +196,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Router.cs" />
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
     </Compile>
