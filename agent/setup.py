@@ -6,6 +6,8 @@ requirements = ['pyzmq', 'tornado', 'msgpack-python']
 if platform.system.lower() == "windows":
     requirements.append('pywin32')
 
+test_requirements = ['pytest', 'pytest-allure-adaptor']
+
 setup(name='comnsense-agent',
       version='0.0.1',
       description="Comnsense Agent",
@@ -15,6 +17,7 @@ setup(name='comnsense-agent',
       package_dir={'comnsense_agent': 'comnsense_agent'},
       install_requires=['pyzmq'],
       test_suite='tests',
+      test_require=test_requirements,
       scripts=['bin/comnsense-agent'],
       license='COMERCIAL',
       url='http://comnsense.io',

@@ -11,7 +11,7 @@ from zmq.eventloop import ioloop, zmqstream
 import comnsense_agent.message as M
 import comnsense_agent.utils.log as L
 from comnsense_agent.data import Signal, SIGNAL_STOP
-from comnsense_agent.algorithm import Algorithm
+from comnsense_agent.runtime import Runtime
 
 
 class WorkerProcess:
@@ -48,7 +48,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
 
     socket_stream = setup_socket()
     logger = setup_logger(socket_stream)
-    algorithm = Algorithm()
+    runtime = Runtime()
 
     def on_signal_recv(msg):
         signal = Signal.deserialize(msg.payload)

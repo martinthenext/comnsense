@@ -1,20 +1,22 @@
 import logging
+import copy
 
 logger = logging.getLogger(__name__)
 
 
-class Model:
+class Model(object):
     def __init__(self):
+        self._copy = None
         self._workbook = None
+        self._ready = False
 
-    def _get_workbook_id(self):
+    @property
+    def workbook(self):
         return self._workbook
 
-    def _set_workbook_id(self, workbook):
+    @workbook.setter
+    def workbook(self, workbook):
         self._workbook = workbook
-
-    # model may be too complex, so lets define getter and setter
-    workbook = property(_get_workbook_id, _set_workbook_id)
 
     def dumps(self):
         """
@@ -30,6 +32,16 @@ class Model:
         Constructs `Model` object from byte string
         :returns: `Model`
         """
+        if self._workbook:
+            self._ready = True
+
+    def is_ready(self):
+        """
+        True if model is ready to working with runtime,
+        e.g.: when it was retrieved from server
+        """
+        # TODO write here something sensible
+        return self._ready
 
     def __eq__(self, model):
         # TODO write here something sensible
@@ -38,3 +50,13 @@ class Model:
 
     def __ne__(self, model):
         return not self.__eq__(model)
+
+    def __enter__(self):
+        # TODO backup model
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            # TODO rollback model to previous state in case of exception
+            pass
+        return exc_type is None

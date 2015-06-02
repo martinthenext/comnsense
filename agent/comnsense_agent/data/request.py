@@ -1,14 +1,13 @@
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
 
 REQUEST_AUTH = 0
-REQUEST_GETID = 1
-REQUEST_GETMODEL = 2
+REQUEST_GETMODEL = 1
 
 REQUESTS = [
-    REQUEST_GETID,
     REQUEST_GETMODEL,
 ]
 
@@ -22,13 +21,11 @@ class Request:
 
     URLS = {
         REQUEST_AUTH: "agent/auth",
-        REQUEST_GETID: "agent/register",
         REQUEST_GETMODEL: "agent/model",
     }
 
     METHODS = {
         REQUEST_AUTH: "POST",
-        REQUEST_GETID: "PUT",
         REQUEST_GETMODEL: "GET"
     }
 
@@ -50,7 +47,7 @@ class Request:
             data = json.loads(data)
         except ValueError, e:
             raise RequestError(e)
-        return RequestError(data.get("type"), data.get("data"))
+        return Request(data.get("type"), data.get("data"))
 
     def get_url(self):
         Request.URLS[self.type]
@@ -60,10 +57,6 @@ class Request:
 
     def get_body(self):
         return json.dumps(self.data)
-
-    @staticmethod
-    def getid(data):
-        return Request(REQUEST_GETID, data)
 
     @staticmethod
     def getmodel(workbook):
