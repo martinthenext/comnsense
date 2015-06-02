@@ -1,5 +1,5 @@
 import logging
-import pickle
+import msgpack
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +27,10 @@ class Signal:
 
     @staticmethod
     def deserialize(data):
-        return Signal(*pickle.loads(data))
+        return Signal(*msgpack.unpackb(data, encoding='utf-8'))
 
     def serialize(self):
-        return pickle.dumps([self.code, self.data])
+        return msgpack.packb([self.code, self.data], use_bin_type=True)
 
     def __str__(self):
         if self.data is None:
@@ -38,9 +38,17 @@ class Signal:
         return "Signal {code:%d, data:%s}" % (self.code, self.data)
 
     @staticmethod
-    def ready():
-        return Signal(SIGNAL_READY)
+    def ready(identity=None):
+        return Signal(SIGNAL_READY, identity)
 
     @staticmethod
     def stop():
         return Signal(SIGNAL_STOP)
+
+    def __eq__(self, sig):
+        return isinstance(sig, Signal) and \
+                self.code == sig.code and \
+                self.data == sig.data
+
+    def __ne__(self, sig):
+        return not self.__eq__(sig)

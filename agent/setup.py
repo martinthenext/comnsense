@@ -2,7 +2,7 @@
 from setuptools import setup
 import platform
 
-requirements = ['pyzmq', 'tornado']
+requirements = ['pyzmq', 'tornado', 'msgpack-python']
 if platform.system.lower() == "windows":
     requirements.append('pywin32')
 
