@@ -52,9 +52,11 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+agent/docs/build/
 
 # PyBuilder
 target/
 
-agent/allure
-agent/allure-report
+agent/allure/
+agent/allure-report/
+
