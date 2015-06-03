@@ -6,6 +6,7 @@ import string
 
 
 from comnsense_agent.data import Signal, SignalError, SIGNALS
+from comnsense_agent.data import SIGNALS, SIGNAL_STOP, SIGNAL_READY
 
 
 class TestSignal(unittest.TestCase):

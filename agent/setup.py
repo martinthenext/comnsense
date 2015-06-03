@@ -3,7 +3,7 @@ from setuptools import setup
 import platform
 
 requirements = ['pyzmq', 'tornado', 'msgpack-python']
-if platform.system.lower() == "windows":
+if platform.system().lower() == "windows":
     requirements.append('pywin32')
 
 test_requirements = ['pytest', 'pytest-allure-adaptor', 'mock']
@@ -15,7 +15,7 @@ setup(name='comnsense-agent',
       author_email='team@comnsense.io',
       packages=["comnsense_agent"],
       package_dir={'comnsense_agent': 'comnsense_agent'},
-      install_requires=['pyzmq'],
+      install_requires=requirements,
       test_suite='tests',
       test_require=test_requirements,
       scripts=['bin/comnsense-agent'],

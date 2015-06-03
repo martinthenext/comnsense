@@ -6,9 +6,12 @@ logger = logging.getLogger(__name__)
 
 REQUEST_AUTH = 0
 REQUEST_GETMODEL = 1
+REQUEST_SAVEMODEL = 2
 
 REQUESTS = [
+    REQUEST_AUTH,
     REQUEST_GETMODEL,
+    REQUEST_SAVEMODEL,
 ]
 
 
@@ -21,12 +24,14 @@ class Request:
 
     URLS = {
         REQUEST_AUTH: "agent/auth",
-        REQUEST_GETMODEL: "agent/model",
+        REQUEST_GETMODEL: "agent/model/%(workbook)s",
+        REQUEST_SAVEMODEL: "agent/model/%(workbook)s",
     }
 
     METHODS = {
         REQUEST_AUTH: "POST",
-        REQUEST_GETMODEL: "GET"
+        REQUEST_GETMODEL: "GET",
+        REQUEST_SAVEMODEL: "POST",
     }
 
     def __init__(self, type, data):
@@ -50,14 +55,20 @@ class Request:
         return Request(data.get("type"), data.get("data"))
 
     def get_url(self):
-        Request.URLS[self.type]
+        return Request.URLS[self.type] % self.data
 
     def get_method(self):
-        Request.METHODS[self.type]
+        return Request.METHODS[self.type]
 
     def get_body(self):
         return json.dumps(self.data)
 
     @staticmethod
     def getmodel(workbook):
-        return Request(REQUEST_GETMODEL, {"workbook": workbook})
+        return Request(
+            REQUEST_GETMODEL, {"workbook": workbook})
+
+    @staticmethod
+    def savemodel(workbook, model):
+        return Request(
+            REQUEST_GETMODEL, {"workbook": workbook, "model": model})
