@@ -6,9 +6,7 @@ import string
 
 
 from comnsense_agent.runtime import Runtime
-from comnsense_agent.message import KIND_EVENT, KIND_REQUEST, KIND_RESPONSE
-from comnsense_agent.message import KIND_SIGNAL, KINDS
-from comnsense_agent.message import Message
+from comnsense_agent.message import Message, MESSAGE_RESPONSE
 from comnsense_agent.data import Event, EVENT_WORKBOOK_OPEN
 from comnsense_agent.data import Request, REQUEST_GETMODEL
 from comnsense_agent.data import Response
@@ -24,18 +22,17 @@ class TestRuntimeInitialization(unittest.TestCase):
 
     @pytest.allure.step("creating valid event message")
     def get_valid_event_message(self, workbook):
-        msg = Message(
-            KIND_EVENT, Event(EVENT_WORKBOOK_OPEN, workbook, None, None))
+        msg = Message.event(Event(EVENT_WORKBOOK_OPEN, workbook, None, None))
         return msg
 
     @pytest.allure.step("creating valid response message")
     def get_valid_response_message(self, workbook):
         # TODO make sensible response
-        return Message(KIND_RESPONSE, Response(200, {"key": "value"}))
+        return Message.response(Response(200, {"key": "value"}))
 
     @pytest.allure.step("creating valid signal message")
     def get_valid_signal_message(self, workbook):
-        return Message(KIND_SIGNAL, Signal.ready(workbook))
+        return Message.signal(Signal.ready(workbook))
 
     @pytest.allure.step("creating invalid message with kind: {1}")
     def get_invalid_message(self, kind):
@@ -54,7 +51,7 @@ class TestRuntimeInitialization(unittest.TestCase):
     def check_state_waiting_model(self, runtime, msg, workbook):
         self.assertFalse(msg is None)
         self.assertFalse(isinstance(msg, tuple))
-        self.assertEquals(msg.kind, KIND_REQUEST)
+        self.assertTrue(msg.is_request())
         request = Request.deserialize(msg.payload)
         self.assertEquals(request.type, REQUEST_GETMODEL)
         self.assertEquals(request.data, {"workbook": workbook})
@@ -91,6 +88,6 @@ class TestRuntimeInitialization(unittest.TestCase):
     def test_wrong_first_message(self):
         runtime = self.get_new_runtime()
         self.check_state_initial(runtime)
-        msg = self.get_invalid_message(KIND_RESPONSE)
+        msg = self.get_invalid_message(MESSAGE_RESPONSE)
         answer = self.execute_runtime(runtime, msg)
         self.check_state_initial(runtime)

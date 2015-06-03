@@ -8,7 +8,7 @@ import os
 import zmq
 from zmq.eventloop import ioloop, zmqstream
 
-import comnsense_agent.message as M
+from comnsense_agent.message import Message
 import comnsense_agent.utils.log as L
 from comnsense_agent.data import Signal, SIGNAL_STOP
 from comnsense_agent.runtime import Runtime
@@ -73,10 +73,10 @@ def worker_main(ident, connection, loop=None, ctx=None):
         else:
             logger.warn("unexpected message kind: %s", msg.kind)
 
-    socket_stream.on_recv(M.Message.call(on_recv))
+    socket_stream.on_recv(Message.call(on_recv))
 
     socket_stream.send_multipart(
-        M.Message(M.KIND_SIGNAL, Signal.ready()))
+        Message.signal(Signal.ready()))
 
     loop.start()
 

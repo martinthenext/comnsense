@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-import comnsense_agent.message as M
+from comnsense_agent.message import Message
 from comnsense_agent.data import Event, Action, Request, Signal, Response
 from comnsense_agent.model import Model
 
@@ -26,8 +26,7 @@ class WaitingWorkbookID:
         if model.workbook:
             if not model.is_ready():
                 # get model from server
-                request = M.Message(
-                    M.KIND_REQUEST, Request.getmodel(model.workbook))
+                request = Message.request(Request.getmodel(model.workbook))
                 return request, State.WaitingModel
             else:
                 return None, State.WaitingEvent

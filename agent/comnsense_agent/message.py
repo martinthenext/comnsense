@@ -2,20 +2,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-KIND_EVENT = "event"
-KIND_ACTION = "action"
-KIND_REQUEST = "request"
-KIND_RESPONSE = "response"
-KIND_LOG = "log"
-KIND_SIGNAL = "signal"
+MESSAGE_EVENT = 0
+MESSAGE_ACTION = 1
+MESSAGE_REQUEST = 2
+MESSAGE_RESPONSE = 3
+MESSAGE_LOG = 4
+MESSAGE_SIGNAL = 5
 
-KINDS = [
-    KIND_EVENT,
-    KIND_ACTION,
-    KIND_REQUEST,
-    KIND_RESPONSE,
-    KIND_LOG,
-    KIND_SIGNAL
+MESSAGES = [
+    MESSAGE_EVENT,
+    MESSAGE_ACTION,
+    MESSAGE_REQUEST,
+    MESSAGE_RESPONSE,
+    MESSAGE_LOG,
+    MESSAGE_SIGNAL
 ]
 
 
@@ -24,7 +24,7 @@ class InvalidMessageError(RuntimeError):
 
 
 class Message:
-    NO_IDENT = "NO_IDENT"
+    NO_IDENT = 0
     __slots__ = ("ident", "kind", "payload")
 
     def __init__(self, *message):
@@ -34,13 +34,10 @@ class Message:
             message = (message[0], message[1], message[2].serialize())
         for name, value in zip(self.__slots__, message):
             setattr(self, name, value)
-
         self.validate()
-        logger.debug("done")
 
     def validate(self):
-        logger.debug("validating message")
-        if self.kind not in KINDS:
+        if self.kind not in MESSAGES:
             raise InvalidMessageError(
                 "unknown message kind: %s" % self.kind)
         # TODO validate ident here
@@ -51,14 +48,14 @@ class Message:
         return len(self.__slots__)
 
     def __getitem__(self, key):
+        shift = 0
+        if self.ident == Message.NO_IDENT:
+            shift = 1
         if isinstance(key, slice):
-            shift = 0
-            if self.ident == Message.NO_IDENT:
-                shift = 1
             return [getattr(self, x) for x in
                     self.__slots__[key.start + shift: key.stop + shift]]
         if isinstance(key, int):
-            key = self.__slots__[key]
+            key = self.__slots__[key + shift]
         if key not in self.__slots__:
             raise KeyError("unknown part: %s" % key)
         return getattr(self, key)
@@ -72,7 +69,7 @@ class Message:
         self.validate()
 
     def __delitem__(self, key):
-        raise KeyError("could not delete key: %s", key)
+        raise NotImplementedError("could not delete key: %s", key)
 
     def __iter__(self):
         shift = 0
@@ -93,28 +90,54 @@ class Message:
         raise NotImplementedError("could not append to message")
 
     def head(self):
+        if self.ident == Message.NO_IDENT:
+            return self.kind
         return self.ident
 
     def last(self):
         return self.payload
 
     def is_action(self):
-        return self.kind == KIND_ACTION
+        return self.kind == MESSAGE_ACTION
+
+    @staticmethod
+    def action(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_ACTION, payload)
 
     def is_event(self):
-        return self.kind == KIND_EVENT
+        return self.kind == MESSAGE_EVENT
+
+    @staticmethod
+    def event(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_EVENT, payload)
 
     def is_request(self):
-        return self.kind == KIND_REQUEST
+        return self.kind == MESSAGE_REQUEST
+
+    @staticmethod
+    def request(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_REQUEST, payload)
 
     def is_response(self):
-        return self.kind == KIND_RESPONSE
+        return self.kind == MESSAGE_RESPONSE
+
+    @staticmethod
+    def response(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_RESPONSE, payload)
 
     def is_log(self):
-        return self.kind == KIND_LOG
+        return self.kind == MESSAGE_LOG
+
+    @staticmethod
+    def log(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_LOG, payload)
 
     def is_signal(self):
-        return self.kind == KIND_SIGNAL
+        return self.kind == MESSAGE_SIGNAL
+
+    @staticmethod
+    def signal(payload, ident=None):
+        return Message(ident or Message.NO_IDENT, MESSAGE_SIGNAL, payload)
 
     @staticmethod
     def call(callback, log=None):

@@ -4,7 +4,7 @@ import os
 import platform
 import pickle
 
-import comnsense_agent.message as M
+from comnsense_agent.message import Message
 
 
 class IdentFilter(logging.Filter):
@@ -120,6 +120,6 @@ class ZLogHandler(logging.Handler):
                 dummy = self.format(record)
                 record.exc_info = None
             data = pickle.dumps(record)
-            self.socket.send_multipart([M.KIND_LOG, data])
+            self.socket.send_multipart(M.message(data))
         except:
             self.handleError(record)
