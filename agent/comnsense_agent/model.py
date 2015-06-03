@@ -20,17 +20,18 @@ class Model(object):
 
     def dumps(self):
         """
-        Creates byte string representation of `Model`.
+        Creates byte string representation of :py:class:`Model`.
         Algorithm should not serialize workbook_id,
         it can be used as key for serialization/deserialization
-        :returns: byte string
+
+        :return: byte string
         """
         return b""
 
     def loads(self, data):
         """
-        Constructs `Model` object from byte string
-        :returns: `Model`
+        Constructs :py:class:`Model` object from byte string
+        :return: :py:class:`Model`
         """
         if self._workbook:
             self._ready = True

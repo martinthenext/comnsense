@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from setuptools import setup
 import platform
+import sys
 
 requirements = ['pyzmq', 'tornado', 'msgpack-python']
 if platform.system().lower() == "windows":
     requirements.append('pywin32')
+
+if sys.version_info[0] < 3 or sys.version_info[1] < 4:
+    requirements.append('enum34')
 
 test_requirements = ['pytest', 'pytest-allure-adaptor', 'mock']
 

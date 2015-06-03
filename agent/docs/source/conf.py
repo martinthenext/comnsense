@@ -4,7 +4,6 @@ import os
 import shlex
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-print sys.path
 
 import comnsense_agent
 

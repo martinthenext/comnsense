@@ -81,7 +81,9 @@ def setup(level, filename=None):
     logging.config.dictConfig(config)
 
 
-def worker_setup(socket, ident):
+def worker_setup(socket, ident, level=None):
+    if level is None:
+        level = "DEBUG"
     config = {
         "version": 1,
         "handlers": {
@@ -99,7 +101,7 @@ def worker_setup(socket, ident):
         },
         "root": {
             "handlers": ["zmq"],
-            "level": "DEBUG",
+            "level": level,
         },
         "loggers": {
             "comnsense_agent": {},
@@ -120,6 +122,6 @@ class ZLogHandler(logging.Handler):
                 dummy = self.format(record)
                 record.exc_info = None
             data = pickle.dumps(record)
-            self.socket.send_multipart(M.message(data))
+            self.socket.send_multipart(Message.log(data))
         except:
             self.handleError(record)

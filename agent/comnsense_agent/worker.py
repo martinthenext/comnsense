@@ -52,7 +52,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
 
     def on_signal_recv(msg):
         signal = Signal.deserialize(msg.payload)
-        if signal.code == SIGNAL_STOP:
+        if signal.code == Signal.Code.Stop.value:
             loop.stop()
         else:
             logger.warn("unexpected signal: %s", signal)
