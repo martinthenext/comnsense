@@ -6,7 +6,7 @@ requirements = ['pyzmq', 'tornado', 'msgpack-python']
 if platform.system.lower() == "windows":
     requirements.append('pywin32')
 
-test_requirements = ['pytest', 'pytest-allure-adaptor']
+test_requirements = ['pytest', 'pytest-allure-adaptor', 'mock']
 
 setup(name='comnsense-agent',
       version='0.0.1',
