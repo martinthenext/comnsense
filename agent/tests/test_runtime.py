@@ -7,7 +7,7 @@ import string
 
 from comnsense_agent.runtime import Runtime
 from comnsense_agent.message import Message, MESSAGE_RESPONSE
-from comnsense_agent.data import Event, EVENT_WORKBOOK_OPEN
+from comnsense_agent.data import Event
 from comnsense_agent.data import Request
 from comnsense_agent.data import Response
 from comnsense_agent.data import Signal
@@ -22,7 +22,8 @@ class TestRuntimeInitialization(unittest.TestCase):
 
     @pytest.allure.step("creating valid event message")
     def get_valid_event_message(self, workbook):
-        msg = Message.event(Event(EVENT_WORKBOOK_OPEN, workbook, None, None))
+        msg = Message.event(Event(Event.Type.WorkbookOpen,
+                                  workbook, None, None))
         return msg
 
     @pytest.allure.step("creating valid response message")
