@@ -4,30 +4,26 @@ import json
 logger = logging.getLogger()
 
 
-ACTION_SETID = 0
-ACTION_CHANGE_CELL = 1
-
-ACTIONS = [
-    ACTION_SETID,
-    ACTION_CHANGE_CELL,
-]
-
-
 class ActionError(RuntimeError):
     pass
 
 
 class Action:
+
+    @enum.unique
+    class Type(enum.IntEnum):
+        ChangeCell = 0
+
     __slots__ = ("type", "data")
 
     def __init__(self, type, data):
         self.type = type
         self.data = data
-        if self.type not in ACTIONS:
-            raise ActionError("unknown action type: %s", self.type)
+        if not isinstance(self.type, Action.Type):
+            raise ActionError("type should be member of Action.Type")
 
     def serialize(self):
-        data = {"type": self.type, "data": self.data}
+        data = {"type": self.type.value, "data": self.data}
         return json.dumps(data)
 
     @staticmethod
@@ -36,8 +32,8 @@ class Action:
             data = json.loads(data)
         except ValueError, e:
             raise ActionError(e)
-        return Action(data.get("type"), data.get("data"))
+        return Action(Action.Type(data.get("type")), data.get("data"))
 
     @staticmethod
-    def setid(workbook):
-        return Action(ACTION_SETID, workbook)
+    def changecell(values):
+        return Action(Action.Type, values)
