@@ -1,5 +1,6 @@
 import logging
 import json
+import msgpack
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +17,26 @@ class Response:
         self.data = data
         if code < 100 or code > 599:
             raise ResponseError("unknown response http code: %s", self.code)
-        if not self.data:
-            raise ResponseError("request data is empty")
 
     def serialize(self):
-        data = {"code": self.code, "data": self.data}
-        return json.dumps(data)
+        return msgpack.packb([self.code, self.data], use_bin_type=True)
 
     @staticmethod
     def deserialize(data):
-        try:
-            data = json.loads(data)
-        except ValueError, e:
-            raise ResponseError(e)
-        return Response(data.get("code"), data.get("data"))
+        return Response(*msgpack.unpackb(data, encoding='utf-8'))
+
+    @staticmethod
+    def accepted():
+        return Response(202)
+
+    @staticmethod
+    def created():
+        return Response(201)
+
+    @staticmethod
+    def nocontent():
+        return Response(204)
+
+    @staticmethod
+    def ok(data):
+        return Response(200, data)
