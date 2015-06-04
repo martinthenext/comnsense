@@ -44,24 +44,24 @@ class TestRuntimeInitialization(unittest.TestCase):
 
     @pytest.allure.step("check state - initial")
     def check_state_initial(self, runtime):
-        self.assertFalse(runtime.model.is_ready())
-        self.assertTrue(runtime.model.workbook is None)
+        self.assertFalse(runtime.context.is_ready())
+        self.assertTrue(runtime.context.workbook is None)
 
-    @pytest.allure.step("check state - waiting model")
-    def check_state_waiting_model(self, runtime, msg, workbook):
+    @pytest.allure.step("check state - waiting context")
+    def check_state_waiting_context(self, runtime, msg, workbook):
         self.assertFalse(msg is None)
         self.assertFalse(isinstance(msg, tuple))
         self.assertTrue(msg.is_request())
         request = Request.deserialize(msg.payload)
         self.assertEquals(request.type, REQUEST_GETMODEL)
         self.assertEquals(request.data, {"workbook": workbook})
-        self.assertFalse(runtime.model.is_ready())
-        self.assertEquals(runtime.model.workbook, workbook)
+        self.assertFalse(runtime.context.is_ready())
+        self.assertEquals(runtime.context.workbook, workbook)
 
     @pytest.allure.step("check state - ready")
     def check_state_ready(self, runtime, msg):
         self.assertTrue(msg is None)
-        self.assertTrue(runtime.model.is_ready())
+        self.assertTrue(runtime.context.is_ready())
 
     def test_event(self):
         workbook = "".join(random.sample(string.ascii_letters, 10))
@@ -69,7 +69,7 @@ class TestRuntimeInitialization(unittest.TestCase):
         self.check_state_initial(runtime)
         event_msg = self.get_valid_event_message(workbook)
         request_msg = self.execute_runtime(runtime, event_msg)
-        self.check_state_waiting_model(runtime, request_msg, workbook)
+        self.check_state_waiting_context(runtime, request_msg, workbook)
         response_msg = self.get_valid_response_message(workbook)
         answer = self.execute_runtime(runtime, response_msg)
         self.check_state_ready(runtime, answer)
@@ -80,7 +80,7 @@ class TestRuntimeInitialization(unittest.TestCase):
         self.check_state_initial(runtime)
         signal_msg = self.get_valid_signal_message(workbook)
         request_msg = self.execute_runtime(runtime, signal_msg)
-        self.check_state_waiting_model(runtime, request_msg, workbook)
+        self.check_state_waiting_context(runtime, request_msg, workbook)
         response_msg = self.get_valid_response_message(workbook)
         answer = self.execute_runtime(runtime, response_msg)
         self.check_state_ready(runtime, answer)

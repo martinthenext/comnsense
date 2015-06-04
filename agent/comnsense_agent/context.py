@@ -4,7 +4,7 @@ import copy
 logger = logging.getLogger(__name__)
 
 
-class Model(object):
+class Context(object):
     def __init__(self):
         self._copy = None
         self._workbook = None
@@ -20,7 +20,7 @@ class Model(object):
 
     def dumps(self):
         """
-        Creates byte string representation of :py:class:`Model`.
+        Creates byte string representation of :py:class:`Context`.
         Algorithm should not serialize workbook_id,
         it can be used as key for serialization/deserialization
 
@@ -30,8 +30,8 @@ class Model(object):
 
     def loads(self, data):
         """
-        Constructs :py:class:`Model` object from byte string
-        :return: :py:class:`Model`
+        Constructs :py:class:`Context` object from byte string
+        :return: :py:class:`Context`
         """
         if self._workbook:
             self._ready = True
@@ -47,7 +47,7 @@ class Model(object):
     def __eq__(self, model):
         # TODO write here something sensible
         # It is needed for tests
-        return isinstance(model, Model)
+        return isinstance(model, Context)
 
     def __ne__(self, model):
         return not self.__eq__(model)

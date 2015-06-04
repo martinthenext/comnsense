@@ -24,8 +24,8 @@ class Request:
 
     URLS = {
         REQUEST_AUTH: "agent/auth",
-        REQUEST_GETMODEL: "agent/model/%(workbook)s",
-        REQUEST_SAVEMODEL: "agent/model/%(workbook)s",
+        REQUEST_GETMODEL: "agent/context/%(workbook)s",
+        REQUEST_SAVEMODEL: "agent/context/%(workbook)s",
     }
 
     METHODS = {
@@ -64,11 +64,11 @@ class Request:
         return json.dumps(self.data)
 
     @staticmethod
-    def getmodel(workbook):
+    def getcontext(workbook):
         return Request(
             REQUEST_GETMODEL, {"workbook": workbook})
 
     @staticmethod
-    def savemodel(workbook, model):
+    def savecontext(workbook, context):
         return Request(
-            REQUEST_GETMODEL, {"workbook": workbook, "model": model})
+            REQUEST_GETMODEL, {"workbook": workbook, "context": context})

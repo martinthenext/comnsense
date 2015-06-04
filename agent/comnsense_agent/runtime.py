@@ -3,7 +3,7 @@ import uuid
 
 from comnsense_agent.message import Message
 from comnsense_agent.data import Event, Action, Request, Signal, Response
-from comnsense_agent.model import Model
+from comnsense_agent.context import Context
 
 logger = logging.getLogger(__name__)
 
@@ -16,41 +16,41 @@ class WaitingWorkbookID:
     """
     Waiting for workbook id from excel
     """
-    def next(self, model, msg):
+    def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
-            model.workbook = event.workbook
+            context.workbook = event.workbook
         elif msg.is_signal():
             signal = Signal.deserialize(msg.payload)
-            model.workbook = signal.data
-        if model.workbook:
-            if not model.is_ready():
-                # get model from server
-                request = Message.request(Request.getmodel(model.workbook))
-                return request, State.WaitingModel
+            context.workbook = signal.data
+        if context.workbook:
+            if not context.is_ready():
+                # get context from server
+                request = Message.request(Request.getcontext(context.workbook))
+                return request, State.WaitingContext
             else:
                 return None, State.WaitingEvent
         return None, self
 
 
-class WaitingModel:
+class WaitingContext:
     """
-    Waiting model from server
+    Waiting context from server
     """
-    def next(self, model, msg):
+    def next(self, context, msg):
         if msg.is_response():
             response = Response.deserialize(msg.payload)
-            model.loads(response.data)
-        if model.is_ready():
+            context.loads(response.data)
+        if context.is_ready():
             return None, State.Ready
         return None, self
 
 
 class Ready:
     """
-    Model is ready
+    Context is ready
     """
-    def next(self, model, msg):
+    def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
             # proceed event
@@ -59,16 +59,17 @@ class Ready:
 
 
 State.WaitingWorkbookID = WaitingWorkbookID()
-State.WaitingModel = WaitingModel()
+State.WaitingContext = WaitingContext()
 State.Ready = Ready()
 
 
 class Runtime:
     def __init__(self):
         self.currentState = State.WaitingWorkbookID
-        self.model = Model()
+        self.context = Context()
 
     def run(self, message):
-        with self.model as model:
-            answer, self.currentState = self.currentState.next(model, message)
+        with self.context as context:
+            answer, self.currentState = \
+                self.currentState.next(context, message)
             return answer
