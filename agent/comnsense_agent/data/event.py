@@ -11,8 +11,8 @@ class EventError(RuntimeError):
 
 class Event:
     """
-    Events should be ussed for transferring data between the Excel
-    and the `Agent`
+    Events should be used for transferring data between from the Excel
+    to the `Agent`
     """
 
     @enum.unique

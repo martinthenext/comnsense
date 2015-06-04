@@ -1,5 +1,5 @@
 import logging
-import json
+import msgpack
 import enum
 
 logger = logging.getLogger(__name__)
@@ -10,21 +10,22 @@ class RequestError(RuntimeError):
 
 
 class Request:
+    """
+    Events should be used for transferring data between from the `Agent`
+    to the Server
+    """
 
     @enum.unique
     class Type(enum.IntEnum):
-        Auth = 0
-        GetContext = 1
-        SaveContext = 2
+        GetContext = 0
+        SaveContext = 1
 
     Url = {
-        Type.Auth: "agent/auth",
         Type.GetContext: "agent/context/%(workbook)s",
         Type.SaveContext: "agent/context/%(workbook)s",
     }
 
     Method = {
-        Type.Auth: "POST",
         Type.GetContext: "GET",
         Type.SaveContext: "POST",
     }
@@ -40,16 +41,12 @@ class Request:
             raise RequestError("data should not be empty")
 
     def serialize(self):
-        data = {"type": self.type.value, "data": self.data}
-        return json.dumps(data)
+        return msgpack.packb([self.type, self.data], use_bin_type=True)
 
     @staticmethod
     def deserialize(data):
-        try:
-            data = json.loads(data)
-        except ValueError, e:
-            raise RequestError(e)
-        return Request(Request.Type(data.get("type")), data.get("data"))
+        type, data = msgpack.unpackb(data, encoding='utf-8')
+        return Request(Request.Type(type), data)
 
     def get_url(self):
         return Request.Url[self.type] % self.data
