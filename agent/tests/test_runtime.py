@@ -8,7 +8,7 @@ import string
 from comnsense_agent.runtime import Runtime
 from comnsense_agent.message import Message, MESSAGE_RESPONSE
 from comnsense_agent.data import Event, EVENT_WORKBOOK_OPEN
-from comnsense_agent.data import Request, REQUEST_GETMODEL
+from comnsense_agent.data import Request
 from comnsense_agent.data import Response
 from comnsense_agent.data import Signal
 
@@ -53,7 +53,7 @@ class TestRuntimeInitialization(unittest.TestCase):
         self.assertFalse(isinstance(msg, tuple))
         self.assertTrue(msg.is_request())
         request = Request.deserialize(msg.payload)
-        self.assertEquals(request.type, REQUEST_GETMODEL)
+        self.assertEquals(request.type, Request.Type.GetContext)
         self.assertEquals(request.data, {"workbook": workbook})
         self.assertFalse(runtime.context.is_ready())
         self.assertEquals(runtime.context.workbook, workbook)

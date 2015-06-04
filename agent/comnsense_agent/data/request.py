@@ -1,18 +1,8 @@
 import logging
 import json
+import enum
 
 logger = logging.getLogger(__name__)
-
-
-REQUEST_AUTH = 0
-REQUEST_GETMODEL = 1
-REQUEST_SAVEMODEL = 2
-
-REQUESTS = [
-    REQUEST_AUTH,
-    REQUEST_GETMODEL,
-    REQUEST_SAVEMODEL,
-]
 
 
 class RequestError(RuntimeError):
@@ -20,30 +10,37 @@ class RequestError(RuntimeError):
 
 
 class Request:
+
+    @enum.unique
+    class Type(enum.IntEnum):
+        Auth = 0
+        GetContext = 1
+        SaveContext = 2
+
+    Url = {
+        Type.Auth: "agent/auth",
+        Type.GetContext: "agent/context/%(workbook)s",
+        Type.SaveContext: "agent/context/%(workbook)s",
+    }
+
+    Method = {
+        Type.Auth: "POST",
+        Type.GetContext: "GET",
+        Type.SaveContext: "POST",
+    }
+
     __slots__ = ("type", "data")
-
-    URLS = {
-        REQUEST_AUTH: "agent/auth",
-        REQUEST_GETMODEL: "agent/context/%(workbook)s",
-        REQUEST_SAVEMODEL: "agent/context/%(workbook)s",
-    }
-
-    METHODS = {
-        REQUEST_AUTH: "POST",
-        REQUEST_GETMODEL: "GET",
-        REQUEST_SAVEMODEL: "POST",
-    }
 
     def __init__(self, type, data):
         self.type = type
         self.data = data
-        if self.type not in REQUESTS:
-            raise RequestError("unknown request type: %s", self.type)
+        if not isinstance(type, Request.Type):
+            raise RequestError("type should be member of Request.Type")
         if not self.data:
-            raise RequestError("request data is empty")
+            raise RequestError("data should not be empty")
 
     def serialize(self):
-        data = {"type": self.type, "data": self.data}
+        data = {"type": self.type.value, "data": self.data}
         return json.dumps(data)
 
     @staticmethod
@@ -52,23 +49,29 @@ class Request:
             data = json.loads(data)
         except ValueError, e:
             raise RequestError(e)
-        return Request(data.get("type"), data.get("data"))
+        return Request(Request.Type(data.get("type")), data.get("data"))
 
     def get_url(self):
-        return Request.URLS[self.type] % self.data
+        return Request.Url[self.type] % self.data
 
     def get_method(self):
-        return Request.METHODS[self.type]
+        return Request.Method[self.type]
 
     def get_body(self):
-        return json.dumps(self.data)
+        if self.type == Request.Type.GetContext:
+            return ""
+        elif self.type == Request.Type.SaveContext:
+            return self.data["context"]
+        else:
+            return json.dumps(self.data)
 
     @staticmethod
     def getcontext(workbook):
         return Request(
-            REQUEST_GETMODEL, {"workbook": workbook})
+            Request.Type.GetContext, {"workbook": workbook})
 
     @staticmethod
     def savecontext(workbook, context):
         return Request(
-            REQUEST_GETMODEL, {"workbook": workbook, "context": context})
+            Request.Type.SaveContext,
+            {"workbook": workbook, "context": context})
