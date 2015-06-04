@@ -1,6 +1,9 @@
 Data structures
 ========================
 
+.. autoclass:: comnsense_agent.data.Event
+   :members:
+
 .. autoclass:: comnsense_agent.data.Signal
    :members:
 

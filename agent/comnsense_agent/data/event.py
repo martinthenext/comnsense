@@ -10,9 +10,30 @@ class EventError(RuntimeError):
 
 
 class Event:
+    """
+    Events should be ussed for transferring data between the Excel
+    and the `Agent`
+    """
 
     @enum.unique
     class Type(enum.IntEnum):
+        """
+        Event type enumeration
+
+        .. py:attribute:: WorkbookOpen
+
+           first event from workbook, contains only workbook id
+
+        .. py:attribute:: WorkbookBeforeClose
+
+           last event from workbook, contains only workbook id
+
+        .. py:attribute:: SheetChange
+
+           one or more cells was changed, contains workbook id,
+           changed sheet id and list of changed cell with new data
+        """
+
         WorkbookOpen = 0
         WorkbookBeforeClose = 1
         SheetChange = 2
@@ -20,22 +41,36 @@ class Event:
     __slots__ = ("type", "workbook", "sheet", "values")
 
     def __init__(self, *args):
-        for name, value in zip(self.__slots__, args):
+        for name, value in zip(self.__slots__[:len(args)], args):
             setattr(self, name, value)
         if not isinstance(self.type, Event.Type):
             raise EventError("type should be member of Event.Type")
         if not self.workbook:
             raise EventError("workbook should not be empty")
-        if self.values is None:
-            self.values = []
+        if not hasattr(self, "sheet"):
+            self.sheet = None
+        if not hasattr(self, "values") or self.values is None:
+            self.values = {}
 
     def serialize(self):
+        """
+        Make byte string representation of event
+
+        :return: byte string
+        """
+
         data = {name: getattr(self, name) for name in self.__slots__}
         data["type"] = self.type.value
         return json.dumps(data)
 
     @staticmethod
     def deserialize(payload):
+        """
+        Creates :py:class:`Event` from byte string representation
+
+        :param str data: Byte string representation
+        :return: :py:class:`Event` object
+        """
         data = None
         try:
             data = json.loads(payload)

@@ -17,6 +17,17 @@ class Signal:
 
     @enum.unique
     class Code(enum.IntEnum):
+        """
+        Signal code enumeration
+
+        .. py:attribute:: Stop
+
+           Stop signal code
+
+        .. py:attribute:: Ready
+
+           Ready signal code
+        """
         Stop = 0
         Ready = 1
 
@@ -55,7 +66,7 @@ class Signal:
     @staticmethod
     def ready(identity=None):
         """
-        Signal READY.
+        Signal `Signal.Code.Ready`.
         It should be used to notify agent about readiness of service.
 
         :param identity:  optional service identity.
@@ -68,7 +79,7 @@ class Signal:
     @staticmethod
     def stop():
         """
-        Signal STOP.
+        Signal `Signal.Code.Stop`.
         Agent should send this signal to service to stop it.
 
         :return: :py:class:`Signal`
