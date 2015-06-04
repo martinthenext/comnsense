@@ -5,10 +5,10 @@ import pickle
 import zmq
 from zmq.eventloop import ioloop, zmqstream
 
-from comnsense_agent.httpstream import HTTPStream
-import comnsense_agent.worker as W
-import comnsense_agent.message as M
-from comnsense_agent.data import Signal, SIGNAL_READY
+from comnsense_agent.serverstream import ServerStream
+from comnsense_agent.worker import run_worker
+from comnsense_agent.message import Message
+from comnsense_agent.data import Signal
 
 
 logger = logging.getLogger(__name__)
@@ -84,11 +84,11 @@ class Agent:
             if msg.is_event() or msg.is_request() or msg.is_signal():
                 if msg.ident not in workers or \
                         not workers[msg.ident].is_alive():
-                    worker = W.run_worker(msg.ident, worker_conn)
+                    worker = run_worker(msg.ident, worker_conn)
                     workers[msg.ident] = worker
                 if msg.is_signal():
                     signal = Signal.deserialize(msg.payload)
-                    if signal.code == SIGNAL_READY:
+                    if signal.code == Signal.Code.Ready:
                         logger.info("workbook %s is ready", msg.ident)
                     else:
                         logger.warn("unexpected signal: %s", signal)
@@ -106,7 +106,7 @@ class Agent:
                 logger.handle(pickle.loads(msg.payload))
             elif msg.is_signal():
                 signal = Signal.deserialize(msg.payload)
-                if signal.code == SIGNAL_READY:
+                if signal.code == Signal.Code.Ready:
                     logger.info("worker with ident %s is ready", msg.ident)
                 else:
                     logger.warn("unexpected signal: %s", signal)
@@ -116,7 +116,7 @@ class Agent:
         def on_server_recv(msg):
             worker.send_multipart(msg)
 
-        agent_stream.on_recv(M.Message.call(on_agent_recv))
-        worker_stream.on_recv(M.Message.call(on_worker_recv))
-        server_stream.on_recv(M.Message.call(on_server_recv))
+        agent_stream.on_recv(Message.call(on_agent_recv))
+        worker_stream.on_recv(Message.call(on_worker_recv))
+        server_stream.on_recv(Message.call(on_server_recv))
         loop.start()
