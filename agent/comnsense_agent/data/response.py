@@ -12,7 +12,7 @@ class ResponseError(RuntimeError):
 class Response:
     __slots__ = ("code", "data")
 
-    def __init__(self, code, data):
+    def __init__(self, code, data=None):
         self.code = code
         self.data = data
         if code < 100 or code > 599:
@@ -40,3 +40,7 @@ class Response:
     @staticmethod
     def ok(data):
         return Response(200, data)
+
+    @staticmethod
+    def notfound():
+        return Response(404)
