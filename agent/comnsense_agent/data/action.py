@@ -1,5 +1,6 @@
 import logging
 import json
+import enum
 
 logger = logging.getLogger()
 
