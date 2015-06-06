@@ -60,3 +60,19 @@ target/
 agent/allure/
 agent/allure-report/
 
+*.dll
+comnsense/comnsense/bin/Debug/comnsense.pdb
+*.vsto
+comnsense/comnsense/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+comnsense/packages/Newtonsoft.Json.6.0.8/Newtonsoft.Json.6.0.8.nupkg
+comnsense/packages/Newtonsoft.Json.6.0.8/tools/install.ps1
+comnsense/packages/ZeroMQ.4.1.0.15/ZeroMQ.4.1.0.15.nupkg
+comnsense/comnsense/obj/Debug/comnsense.Properties.Resources.resources
+comnsense/comnsense/bin/Debug/Newtonsoft.Json.xml
+comnsense/comnsense/obj/Debug/comnsense.csprojResolveAssemblyReference.cache
+comnsense/comnsense/obj/Debug/comnsense.csproj.GenerateResource.Cache
+comnsense/comnsense/obj/Debug/comnsense.csproj.FileListAbsolute.txt
+comnsense/comnsense/obj/Debug/comnsense.pdb
+comnsense/comnsense/obj/Debug/TemporaryGeneratedFile_036C0B5B-1481-4323-8D20-8F5ADCB23D92.cs
+comnsense/comnsense/obj/Debug/TemporaryGeneratedFile_E7A71F73-0F8D-4B9B-B56E-8E70B10BC5D3.cs
+comnsense/comnsense/obj/Debug/TemporaryGeneratedFile_5937a670-0e60-4077-877b-f7221da3dda1.cs
