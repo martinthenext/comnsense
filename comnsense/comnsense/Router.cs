@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 using System.Threading;
+using Json = Newtonsoft.Json;
 
 namespace comnsense
 {
@@ -59,7 +60,27 @@ namespace comnsense
                         msg = sock.ReceiveMessage();
                         String type = msg[0].ReadString();
                         String payload = msg[1].ReadString();
-                        // deserialize action here
+                        Action action = null;
+                        try
+                        {
+                            action = Json.JsonConvert.DeserializeObject<Action>(
+                                payload, new Json.JsonSerializerSettings { NullValueHandling = Json.NullValueHandling.Ignore });
+                        }
+                        catch
+                        {
+                            // ignore deserialization errors
+                        }
+                        if (action != null)
+                        {
+                            if (action.type == Action.ActionType.ComnsenseChange)
+                            {
+                                // apply change
+                            }
+                            if (action.type == Action.ActionType.RangeRequest)
+                            {
+                                // read range and send event
+                            }
+                        }
                         err = default(ZError);
                         return true; 
                     })

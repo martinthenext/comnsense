@@ -165,6 +165,7 @@
   -->
   <ItemGroup>
     <Compile Include="Action.cs" />
+    <Compile Include="Cell.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="EventPublisher.cs" />
     <Compile Include="CustomProperty.cs" />

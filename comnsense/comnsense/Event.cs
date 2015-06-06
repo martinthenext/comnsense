@@ -8,17 +8,6 @@ using Excel = Microsoft.Office.Interop.Excel;
 namespace comnsense
 {
     [Serializable()]
-    class Cell
-    {
-        public string key;
-        public string value;
-        public bool[] borders;
-        public string font;
-        public int color;
-        public int fontstyle;
-    }
-
-    [Serializable()]
     class Event
     {
         public enum EventType

@@ -6,7 +6,23 @@ using System.Threading.Tasks;
 
 namespace comnsense
 {
+    [Serializable()]
     class Action
     {
+        public enum ActionType
+        {
+            ComnsenseChange = 0,
+            RangeRequest = 1
+        }
+
+        public ActionType type;
+        public string workbook;
+        public string worksheet;
+        public string changeid;
+        public Cell[][] cells;
+        public bool font;
+        public bool borders;
+        public bool color;
+        public bool fontstyle;
     }
 }

@@ -19,7 +19,12 @@ namespace comnsense
         }
 
         public void Send(Event evt) {
-            String data = Json.JsonConvert.SerializeObject(evt);
+            String data = Json.JsonConvert.SerializeObject(
+                evt, Json.Formatting.None, 
+                new Json.JsonSerializerSettings 
+                    {
+                        NullValueHandling = Json.NullValueHandling.Ignore 
+                    });
             using (var message = new ZMessage())
             {
                 message.Add(new ZFrame(evt.workbook));
