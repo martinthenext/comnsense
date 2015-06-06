@@ -8,7 +8,6 @@ using Office = Microsoft.Office.Core;
 using Microsoft.Office.Tools.Excel;
 using System.Threading;
 using ZeroMQ;
-using System.Threading;
 
 namespace comnsense
 {
@@ -16,52 +15,100 @@ namespace comnsense
     {
         private ZContext context;
         private EventPublisher publisher;
-        private Thread router;
-        private CancellationTokenSource canceller;
+        private Dictionary<String, KeyValuePair<Thread, CancellationTokenSource>> routers;
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             this.context = new ZContext();
-            this.router = new Thread(() =>
-            {
-                Router r = new Router(this.context, this.Application);
-                r.Run(this.canceller.Token);
-            });
+            this.publisher = new EventPublisher(this.context);
+            this.routers = new Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>>();
             this.Application.WorkbookOpen += new Excel.AppEvents_WorkbookOpenEventHandler(ThisAddIn_WorkbookOpen);
             this.Application.WorkbookBeforeClose += new Excel.AppEvents_WorkbookBeforeCloseEventHandler(ThisAddIn_WorkbookBeforeClose);
             this.Application.SheetChange += new Excel.AppEvents_SheetChangeEventHandler(ThisAddIn_SheetChange);
             this.Application.WorkbookBeforeClose += new Excel.AppEvents_WorkbookBeforeCloseEventHandler(ThisAddIn_BeforeClose);
+            ((Excel.AppEvents_Event)this.Application).NewWorkbook += new Excel.AppEvents_NewWorkbookEventHandler(ThisAddIn_NewWorkbook);
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            this.router.Join();
+            foreach (KeyValuePair<String, KeyValuePair<Thread, CancellationTokenSource>> pair in this.routers)
+            {
+                Thread thread = pair.Value.Key;
+                thread.Join();
+            }
         }
 
         void ThisAddIn_WorkbookOpen(Excel.Workbook wb)
         {
-            Ident ident = new Ident(wb);
-            if (ident.get() == null)
-            {
-                // get ident from agent
-                ident.set(System.Guid.NewGuid().ToString());
-            }
-            this.publisher.Send(Event.WorkbookOpen(wb));
+            String ident = GetWorkbookIdent(wb);
+            RunRouter(ident);
+            this.publisher.Send(Event.WorkbookOpen(ident, wb));
+        }
+
+        void ThisAddIn_NewWorkbook(Excel.Workbook wb)
+        {
+            String ident = GetWorkbookIdent(wb);
+            RunRouter(ident);
+            this.publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
         private void ThisAddIn_WorkbookBeforeClose(Excel.Workbook wb, ref bool result)
         {
-            this.publisher.Send(Event.WorkbookBeforeClose(wb));
+            String ident = GetWorkbookIdent(wb);
+            this.publisher.Send(Event.WorkbookBeforeClose(ident, wb));
         }
 
         private void ThisAddIn_BeforeClose(Excel.Workbook wb, ref bool result)
         {
-            this.canceller.Cancel();
+            String ident = GetWorkbookIdent(wb);
+            if (this.routers.ContainsKey(ident)) {
+                KeyValuePair<Thread, CancellationTokenSource> pair;
+                if (this.routers.TryGetValue(ident, out pair)) {
+                    pair.Value.Cancel();
+                }
+            }
         }
 
         private void ThisAddIn_SheetChange(object sh, Excel.Range target)
         {
-            this.publisher.Send(Event.SheetChange((sh as Excel.Worksheet), target));
+            Excel.Workbook wb = ((Excel.Worksheet)sh).Parent;
+            String ident = GetWorkbookIdent(wb);
+            this.publisher.Send(Event.SheetChange(ident, (sh as Excel.Worksheet), target));
+          
+        }
+
+        private String GetWorkbookIdent(Excel.Workbook wb)
+        {
+            Ident ident = new Ident(wb);
+            if (ident.get() == null)
+            {
+                ident.set(System.Guid.NewGuid().ToString());
+            }
+            return ident.ToString();
+        }
+
+        private void RunRouter(String ident)
+        {
+            KeyValuePair<Thread, CancellationTokenSource> pair;
+            if (this.routers.TryGetValue(ident, out pair))
+            {
+                if ((!pair.Key.IsAlive) || (pair.Value.IsCancellationRequested))
+                {
+                    this.routers.Remove(ident);
+                }
+            }
+            if (!routers.ContainsKey(ident))
+            {
+                CancellationTokenSource canceller = new System.Threading.CancellationTokenSource();
+                Thread router = new Thread(() =>
+                {
+                    Router r = new Router(this.context, this.Application, ident);
+                    r.Run(canceller.Token);
+                });
+                routers.Add(ident.ToString(), new KeyValuePair<Thread, CancellationTokenSource>(router, canceller));
+                router.Start();
+
+            }
         }
 
         #region Код, автоматически созданный VSTO

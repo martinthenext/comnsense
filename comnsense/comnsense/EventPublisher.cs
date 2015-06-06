@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZeroMQ;
+using Json = Newtonsoft.Json;
 
 namespace comnsense
 {
     class EventPublisher: IDisposable
     {
-        public static const string Address = "inproc://events";
+        public const string Address = "inproc://events";
 
         public EventPublisher(ZContext ctx)
         {
@@ -18,10 +19,16 @@ namespace comnsense
         }
 
         public void Send(Event evt) {
-
+            String data = Json.JsonConvert.SerializeObject(evt);
+            using (var message = new ZMessage())
+            {
+                message.Add(new ZFrame(evt.workbook));
+                message.Add(new ZFrame(data));
+                this.socket.Send(message);
+            }
         }
 
-        public ~EventPublisher()
+        ~EventPublisher()
         {
             this.Dispose();
 

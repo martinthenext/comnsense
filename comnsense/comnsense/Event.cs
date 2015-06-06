@@ -8,53 +8,97 @@ using Excel = Microsoft.Office.Interop.Excel;
 namespace comnsense
 {
     [Serializable()]
+    class Cell
+    {
+        public string key;
+        public string value;
+        public bool[] borders;
+        public string font;
+        public int color;
+        public int fontstyle;
+    }
+
+    [Serializable()]
     class Event
     {
-        [NonSerialized()]
-        public static enum EventType
+        public enum EventType
         {
-            WorkbookOpen,
-            WorkbookBeforeClose,
-            SheetChange
+            WorkbookOpen = 0,
+            WorkbookBeforeClose = 1,
+            SheetChange = 2
         }
 
-        public static Event WorkbookOpen(Excel.Workbook wb)
+        public static Event WorkbookOpen(String ident, Excel.Workbook wb)
         {
             Event evt = new Event { 
                 type = EventType.WorkbookOpen, 
-                ident = new Ident(wb).ToString() 
+                workbook = ident 
             };
             return evt;
         }
 
-        public static Event WorkbookBeforeClose(Excel.Workbook wb)
+        public static Event WorkbookBeforeClose(String ident, Excel.Workbook wb)
         {
             Event evt = new Event { 
                 type = EventType.WorkbookBeforeClose, 
-                ident = new Ident(wb).ToString() 
+                workbook = ident 
             };
             return evt;
         }
 
-        public static Event SheetChange(Excel.Worksheet sh, Excel.Range range)
+        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range)
         {
-            List<KeyValuePair<String, String>> list = new List<KeyValuePair<string,string>>();
             Event evt = new Event { 
                 type = EventType.SheetChange,
-                ident = new Ident((sh.Parent as Excel.Workbook)).ToString(),
+                workbook = ident,
                 sheet = sh.Name
             };
-            foreach (Excel.Range cell in range.Cells)
-            {
-                list.Add(new KeyValuePair<string, string>(cell.Address, cell.Value2));
-            }
-            evt.values = list.ToArray();
+            
+            evt.cells = GetCellsFromRange(range);
             return evt;
+        }
+
+        private static Cell[][] GetCellsFromRange(Excel.Range range, bool border = false, 
+                                                  bool font = false, bool color = false,
+                                                  bool fontstyle = false) 
+        {
+            List<Cell[]> list = new List<Cell[]>();
+            foreach (Excel.Range row in range.Rows)
+            {
+                List<Cell> rowlist = new List<Cell>();
+                foreach (Excel.Range cell in row) {
+                    Cell item = new Cell {key = cell.Address.ToString(), value = cell.Value2.ToString()};
+                    if(border) {
+                        // not implemented
+                    }
+                    if (font) {
+                        item.font = cell.Font.Name.ToString();
+                    }
+                    if (color) {
+                        item.color = (int)cell.Interior.ColorIndex;
+                    }
+                    if (fontstyle) {
+                        item.fontstyle = 0;
+                        if (cell.Font.Bold) {
+                            item.fontstyle |= 1;
+                        }
+                        if (cell.Font.Italic) {
+                            item.fontstyle |= 2;
+                        }
+                        if (cell.Font.Underline) {
+                            item.fontstyle |= 4;
+                        }
+                    }
+                }
+                list.Add(rowlist.ToArray());
+            }
+            return list.ToArray();
+
         }
 
         public EventType type;
-        public String ident; // workbook ident
+        public String workbook; // workbook ident
         public String sheet; // sheet name
-        public KeyValuePair<String, String>[] values; // values
+        public Cell[][] cells; // array of rows of cells
     }
 }

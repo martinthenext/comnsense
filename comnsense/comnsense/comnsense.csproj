@@ -165,10 +165,8 @@
   -->
   <ItemGroup>
     <Compile Include="Action.cs" />
-    <Compile Include="ActionDeserializer.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="EventPublisher.cs" />
-    <Compile Include="EventSerializer.cs" />
     <Compile Include="CustomProperty.cs" />
     <Compile Include="Ident.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -185,9 +183,12 @@
     </Compile>
     <None Include="amd64\libsodium.so" />
     <None Include="amd64\libzmq.so" />
+    <None Include="comnsense_TemporaryKey.pfx" />
     <None Include="i386\libsodium.so" />
     <None Include="i386\libzmq.so" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -217,6 +218,15 @@
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>comnsense_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>D0626B0FD19EC33BA72433C620A61FA76048AF53</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

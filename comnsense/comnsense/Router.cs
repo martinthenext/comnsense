@@ -11,48 +11,18 @@ namespace comnsense
 {
     class Router
     {
-        public static const string Address = "tcp://127.0.0.1:8080";
-        public static const TimeSpan Interval = TimeSpan.FromMilliseconds(500);
+        public const string Address = "tcp://127.0.0.1:8888";
+        public static TimeSpan Interval = TimeSpan.FromMilliseconds(500);
 
         private ZContext ctx;
-        //private ZSocket subscriber;
-        //private ZSocket agent;
+        private String ident;
         private Excel.Application excel;
 
-        public Router(ZContext ctx, Excel.Application excel)
+        public Router(ZContext ctx, Excel.Application excel, String ident)
         {
             this.ctx = ctx;
             this.excel = excel;
-            //this.subscriber = new ZSocket(ctx, ZSocketType.SUB);
-            //this.agent = new ZSocket(ctx, ZSocketType.DEALER);
-        }
-
-        private bool SubscriberHandler(ZSocket socket, out ZMessage message, out ZError error)
-        {
-
-            message = socket.ReceiveMessage();
-            String payload = message[1].ReadString();
-            this.agent.Send(new ZFrame(payload));
-            error = default(ZError);
-            return true;
-        }
-
-        private bool EventHandler(ZSocket socket, out ZMessage message, out ZError error)
-        {
-            message = socket.ReceiveMessage();
-            error = null;
-            return true;
-        }
-
-        private bool AsyncHandler(ZSocket socket, out ZMessage message, out ZError error)
-        {
-            message = socket.ReceiveMessage();
-            String payload = message[0].ReadString();
-            socket.Send(new ZFrame(socket.IdentityString));
-            // do something with payload
-            excel.ActiveSheet.Cells[1, 1] = "FUUUUUCK!";
-            error = null;
-            return true;
+            this.ident = ident;
         }
 
         public void Run(CancellationToken ct)
@@ -61,9 +31,9 @@ namespace comnsense
                            agent = new ZSocket(this.ctx, ZSocketType.DEALER))
             {
                 subscriber.Connect(EventPublisher.Address);
-                subscriber.SetOption(ZSocketOption.SUBSCRIBE, "");  // any events
+                subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
 
-                agent.SetOption(ZSocketOption.IDENTITY, System.Guid.NewGuid().ToString());
+                //agent.SetOption(ZSocketOption.IDENTITY, this.ident);
                 agent.Connect(Router.Address);
 
                 ZError error = default(ZError);
@@ -76,12 +46,21 @@ namespace comnsense
                     ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                         msg = sock.ReceiveMessage();
                         String payload = msg[1].ReadString();
-                        agent.Send(new ZFrame(payload));
+                        using (var message = new ZMessage())
+                        {
+                            message.Add(new ZFrame(this.ident));
+                            message.Add(new ZFrame(payload));
+                            agent.Send(message);
+                        }
                         err = default(ZError);
                         return true; 
                     }), 
                     ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
-                        error = default(ZError);
+                        msg = sock.ReceiveMessage();
+                        String type = msg[0].ReadString();
+                        String payload = msg[1].ReadString();
+                        // deserialize action here
+                        err = default(ZError);
                         return true; 
                     })
                 };

@@ -14,7 +14,7 @@ namespace comnsense
             
         }
 
-        public String ToString() {
+        public override String ToString() {
             return this.get();
         }
     }

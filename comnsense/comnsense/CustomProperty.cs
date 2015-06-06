@@ -14,16 +14,23 @@ namespace comnsense
         {
             this.key = key;
             this.wb = wb;
+            this.cached = null;
         }
 
 
         public String get(String def = null) {
+            if (cached != null)
+            {
+                return cached;
+            }
             Office.DocumentProperties properties = (Office.DocumentProperties)this.wb.CustomDocumentProperties;
             foreach (Office.DocumentProperty prop in properties)
             {
                 if (prop.Name == this.key)
                 {
-                    return prop.Value.ToString();
+
+                    cached = prop.Value.ToString();
+                    return cached;
                 }
             }
             return def;
@@ -37,9 +44,11 @@ namespace comnsense
                 properties[this.key].Delete();
             }
             properties.Add(this.key, false, Office.MsoDocProperties.msoPropertyTypeString, ident);
+            cached = ident;
         }
 
         private String key;
         private Excel.Workbook wb;
+        private String cached;
     }
 }
