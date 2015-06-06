@@ -74,7 +74,7 @@ class TestEvent(unittest.TestCase):
         {"type": 0,
          "workbook": "dwaeqdasda",
          "sheet": 1,
-         "cells": [{"A1": "asdadad"}]
+         "cells": [[{"A1": "asdadad"}]]
         }
         """
         event = Event.deserialize(fixture).serialize()
