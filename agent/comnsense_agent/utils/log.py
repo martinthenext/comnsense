@@ -87,6 +87,9 @@ def worker_setup(socket, ident, level=None):
     config = {
         "version": 1,
         "handlers": {
+            "stream": {
+                "class": "logging.StreamHandler",
+            },
             "zmq": {
                 "class": "comnsense_agent.utils.log.ZLogHandler",
                 "socket": socket,
@@ -108,6 +111,8 @@ def worker_setup(socket, ident, level=None):
             "tornado": {},
         }
     }
+    if level == "DEBUG":
+        config["root"]["handlers"].append("stream")
     logging.config.dictConfig(config)
 
 
@@ -122,6 +127,6 @@ class ZLogHandler(logging.Handler):
                 dummy = self.format(record)
                 record.exc_info = None
             data = pickle.dumps(record)
-            self.socket.send_multipart(Message.log(data))
+            self.socket.send_multipart(list(Message.log(data)))
         except:
             self.handleError(record)

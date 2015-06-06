@@ -10,7 +10,7 @@ from zmq.eventloop import ioloop, zmqstream
 
 from comnsense_agent.message import Message
 import comnsense_agent.utils.log as L
-from comnsense_agent.data import Signal, SIGNAL_STOP
+from comnsense_agent.data import Signal
 from comnsense_agent.runtime import Runtime
 
 
@@ -25,6 +25,9 @@ class WorkerProcess:
 
     def join(self):
         return self.popen.wait()
+
+    def kill(self):
+        return self.popen.terminate()
 
     pid = property(lambda x: x.popen.pid)
 
@@ -58,13 +61,12 @@ def worker_main(ident, connection, loop=None, ctx=None):
             logger.warn("unexpected signal: %s", signal)
 
     def on_recv(msg):
-        logger.debug("on_recv: %s", msg)
         if msg.is_signal():
             on_signal_recv(msg)
         if msg.is_request():
             socket_stream.send_multipart(msg)
         elif msg.is_event() or msg.is_response():
-            answer = algorithm.run(msg)
+            answer = runtime.run(msg)
             if isinstance(answer, tuple):
                 for a in answer:
                     socket_stream.send_multipart(a)
@@ -75,8 +77,9 @@ def worker_main(ident, connection, loop=None, ctx=None):
 
     socket_stream.on_recv(Message.call(on_recv))
 
+    # TODO fix it, strange
     socket_stream.send_multipart(
-        Message.signal(Signal.ready()))
+        list(Message.signal(Signal.ready())))
 
     loop.start()
 

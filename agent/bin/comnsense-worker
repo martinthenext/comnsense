@@ -26,7 +26,10 @@ def parse_args(args=None):
 def main(args):
     loop = ioloop.IOLoop.instance()
     context = zmq.Context()
-    comnsense_agent.worker.worker_main(args.ident, args.connection)
+    try:
+        comnsense_agent.worker.worker_main(args.ident, args.connection)
+    except (SystemExit, KeyboardInterrupt):
+        pass
 
 
 if __name__ == '__main__':

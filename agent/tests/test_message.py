@@ -156,7 +156,7 @@ class MessageTest(unittest.TestCase):
         self.assertEquals(msg.payload, payload)
 
     def test_validate(self):
-        kind = random.choice(MESSAGES) + 100
+        kind = random.choice(MESSAGES) + "asd"
         ident = "".join(random.sample(string.ascii_letters, 10))
         payload = "".join(random.sample(string.ascii_letters, 10))
         with pytest.raises(InvalidMessageError):
@@ -164,3 +164,11 @@ class MessageTest(unittest.TestCase):
         msg = Message(ident, random.choice(MESSAGES), payload)
         with pytest.raises(InvalidMessageError):
             msg["kind"] = kind
+
+    def test_with_socket(self):
+        kind = random.choice(MESSAGES)
+        ident = "".join(random.sample(string.ascii_letters, 10))
+        payload = "".join(random.sample(string.ascii_letters, 10))
+        msg = Message(ident, kind, payload)
+        self.assertEquals(msg[:-1], [ident, kind])
+        self.assertEquals(msg[-1], payload)

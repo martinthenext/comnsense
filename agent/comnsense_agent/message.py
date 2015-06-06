@@ -2,12 +2,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-MESSAGE_EVENT = 0
-MESSAGE_ACTION = 1
-MESSAGE_REQUEST = 2
-MESSAGE_RESPONSE = 3
-MESSAGE_LOG = 4
-MESSAGE_SIGNAL = 5
+MESSAGE_EVENT = "event"
+MESSAGE_ACTION = "action"
+MESSAGE_REQUEST = "req"
+MESSAGE_RESPONSE = "res"
+MESSAGE_LOG = "log"
+MESSAGE_SIGNAL = "sig"
 
 MESSAGES = [
     MESSAGE_EVENT,
@@ -82,8 +82,8 @@ class Message:
 
     def __str__(self):
         if self.ident == Message.NO_IDENT:
-            return "MSG {kind: %s, payload: %s}" % (self.kind, self.payload)
-        return "MSG { ident:%s, kind:%s, payload:%s }" % (
+            return "MSG {kind: %s, payload: %r}" % (self.kind, self.payload)
+        return "MSG { ident:%r, kind:%s, payload:%r }" % (
             self.ident, self.kind, self.payload)
 
     def append(self, value):

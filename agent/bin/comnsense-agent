@@ -37,9 +37,23 @@ def main(args):
     global logger
     logger = logging.getLogger("comnsense_agent")
     agent = comnsense_agent.agent.Agent(args.bind, args.server)
-    loop = ioloop.IOLoop.instance()
-    context = zmq.Context()
-    agent.run(loop, context)
+    while True:
+        loop = ioloop.IOLoop.instance()
+        context = zmq.Context()
+        try:
+            agent.run(loop, context)
+        except (SystemExit, KeyboardInterrupt):
+            break
+        except Exception, e:
+            logger.exception(e)
+        finally:
+            context.destroy()
+            context.term()
+            loop.stop()
+            loop.start()
+            loop.close(True)
+            ioloop.IOLoop.clear_instance()
+            ioloop.install()
 
 
 if __name__ == '__main__':

@@ -27,14 +27,19 @@ class Agent:
         logger.debug("setup agent socket")
         agent = ctx.socket(zmq.ROUTER)
         agent.bind(self.bind_str)
+
+        def on_close(*args):
+            logger.warn("agent stream is closed: %s", args)
+
         agent_stream = zmqstream.ZMQStream(agent, loop)
+        agent_stream.set_close_callback(on_close)
         return agent_stream
 
     def setup_server(self, ctx, loop):
         logger.debug("setup server socket")
         if self.server_str.startswith("https://") or \
                 self.server_str.startswith("http://"):
-            server_stream = HTTPStream(self.server_str, loop)
+            server_stream = ServerStream(self.server_str, loop)
             return server_stream
         else:
             server = ctx.socket(zmq.DEALER)
@@ -61,7 +66,7 @@ class Agent:
         logger.debug("worker bind str: %s", conn_str)
 
         def on_close(*args):
-            logger.warn("worker is closed: %s", args)
+            logger.warn("worker stream is closed: %s", args)
 
         worker_stream = zmqstream.ZMQStream(worker, loop)
         worker_stream.set_close_callback(on_close)
@@ -119,4 +124,10 @@ class Agent:
         agent_stream.on_recv(Message.call(on_agent_recv))
         worker_stream.on_recv(Message.call(on_worker_recv))
         server_stream.on_recv(Message.call(on_server_recv))
-        loop.start()
+        try:
+            loop.start()
+        finally:
+            for worker in workers.values():
+                if worker.is_alive():
+                    worker.kill()
+                    worker.join()

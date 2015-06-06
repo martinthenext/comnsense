@@ -74,7 +74,7 @@ class Signal:
 
         :return: :py:class:`Signal`
         """
-        return Signal(Signal.Code.Stop, identity)
+        return Signal(Signal.Code.Ready, identity)
 
     @staticmethod
     def stop():
@@ -84,7 +84,7 @@ class Signal:
 
         :return: :py:class:`Signal`
         """
-        return Signal(Signal.Code.Ready)
+        return Signal(Signal.Code.Stop)
 
     def __eq__(self, sig):
         return isinstance(sig, Signal) and \
