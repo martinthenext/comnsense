@@ -14,20 +14,20 @@ class TestEvent(unittest.TestCase):
         type = random.choice(Event.Type.__members__.values())
         workbook = "".join(random.sample(string.ascii_letters, 10))
         sheet = "".join(random.sample(string.ascii_letters, 10))
-        values = dict([(u"A1", u"траливали"), (u"A2", u"дили-дили\"")])
-        event = Event(type, workbook, sheet, values)
+        cells = [[u"A1", u"траливали"], [u"A2", u"дили-дили\""]]
+        event = Event(type, workbook, sheet, cells)
         self.assertEquals(event.type, type)
         self.assertEquals(event.workbook, workbook)
         self.assertEquals(event.sheet, sheet)
-        self.assertEquals(event.values, values)
+        self.assertEquals(event.cells, cells)
         data = event.serialize()
         another = Event.deserialize(data)
         self.assertEquals(event.type, another.type)
         self.assertEquals(event.workbook, another.workbook)
         self.assertEquals(event.sheet, another.sheet)
-        self.assertEquals(event.values, another.values)
+        self.assertEquals(event.cells, another.cells)
 
-    def test_without_values(self):
+    def test_without_cells(self):
         type = random.choice(Event.Type.__members__.values())
         workbook = "".join(random.sample(string.ascii_letters, 10))
         sheet = "".join(random.sample(string.ascii_letters, 10))
@@ -35,28 +35,28 @@ class TestEvent(unittest.TestCase):
         self.assertEquals(event.type, type)
         self.assertEquals(event.workbook, workbook)
         self.assertEquals(event.sheet, sheet)
-        self.assertEquals(event.values, {})
+        self.assertEquals(event.cells, [])
         data = event.serialize()
         another = Event.deserialize(data)
         self.assertEquals(event.type, another.type)
         self.assertEquals(event.workbook, another.workbook)
         self.assertEquals(event.sheet, another.sheet)
-        self.assertEquals(event.values, another.values)
+        self.assertEquals(event.cells, another.cells)
 
-    def test_without_sheet_and_values(self):
+    def test_without_sheet_and_cells(self):
         type = random.choice(Event.Type.__members__.values())
         workbook = "".join(random.sample(string.ascii_letters, 10))
         event = Event(type, workbook)
         self.assertEquals(event.type, type)
         self.assertEquals(event.workbook, workbook)
         self.assertEquals(event.sheet, None)
-        self.assertEquals(event.values, {})
+        self.assertEquals(event.cells, [])
         data = event.serialize()
         another = Event.deserialize(data)
         self.assertEquals(event.type, another.type)
         self.assertEquals(event.workbook, another.workbook)
         self.assertEquals(event.sheet, another.sheet)
-        self.assertEquals(event.values, another.values)
+        self.assertEquals(event.cells, another.cells)
 
     def test_bad_type(self):
         workbook = "".join(random.sample(string.ascii_letters, 10))
@@ -74,7 +74,8 @@ class TestEvent(unittest.TestCase):
         {"type": 0,
          "workbook": "dwaeqdasda",
          "sheet": 1,
-         "values": {"A1": "asdadad"}}
+         "cells": [{"A1": "asdadad"}]
+        }
         """
         event = Event.deserialize(fixture).serialize()
         self.assertEquals(json.loads(fixture), json.loads(event))

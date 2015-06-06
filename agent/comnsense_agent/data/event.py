@@ -38,7 +38,7 @@ class Event:
         WorkbookBeforeClose = 1
         SheetChange = 2
 
-    __slots__ = ("type", "workbook", "sheet", "values")
+    __slots__ = ("type", "workbook", "sheet", "cells")
 
     def __init__(self, *args):
         for name, value in zip(self.__slots__[:len(args)], args):
@@ -49,8 +49,8 @@ class Event:
             raise EventError("workbook should not be empty")
         if not hasattr(self, "sheet"):
             self.sheet = None
-        if not hasattr(self, "values") or self.values is None:
-            self.values = {}
+        if not hasattr(self, "cells") or self.cells is None:
+            self.cells = []
 
     def serialize(self):
         """
@@ -79,5 +79,5 @@ class Event:
         type = Event.Type(data.get("type"))
         workbook = data.get("workbook")
         sheet = data.get("sheet")
-        values = data.get("values")
-        return Event(type, workbook, sheet, values)
+        cells = data.get("cells")
+        return Event(type, workbook, sheet, cells)
