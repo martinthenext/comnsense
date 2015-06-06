@@ -26,6 +26,42 @@ namespace comnsense
             this.ident = ident;
         }
 
+        private Excel.Workbook GetWorkbook() 
+        {
+            foreach (Excel.Workbook wb in this.excel.Workbooks)
+            {
+                Ident id = new Ident(wb);
+                if (ident == id.ToString())
+                {
+                    return wb;
+                }
+            }
+            return null;
+        }
+
+        private void ApplyChange(Action action) {
+            this.excel.EnableEvents = false;
+            try
+            {
+                if (action.workbook != ident)
+                {
+                    return;
+                }
+                Excel.Workbook wb = GetWorkbook();
+                foreach (Cell[] row in action.cells)
+                {
+                    foreach (Cell cel in row)
+                    {
+
+                    }
+                }
+            }
+            finally
+            {
+                this.excel.EnableEvents = true;
+            }
+        }
+
         public void Run(CancellationToken ct)
         {
             using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.PUB),
