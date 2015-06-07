@@ -78,6 +78,7 @@ namespace comnsense
                             item.fontstyle |= 4;
                         }
                     }
+                    rowlist.Add(item);
                 }
                 list.Add(rowlist.ToArray());
             }

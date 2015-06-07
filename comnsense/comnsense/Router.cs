@@ -64,13 +64,13 @@ namespace comnsense
 
         public void Run(CancellationToken ct)
         {
-            using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.PUB),
+            using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB),
                            agent = new ZSocket(this.ctx, ZSocketType.DEALER))
             {
-                subscriber.Connect(EventPublisher.Address);
                 subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
+                subscriber.Connect(EventPublisher.Address);
 
-                //agent.SetOption(ZSocketOption.IDENTITY, this.ident);
+                agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
                 agent.Connect(Router.Address);
 
                 ZError error = default(ZError);
@@ -85,7 +85,7 @@ namespace comnsense
                         String payload = msg[1].ReadString();
                         using (var message = new ZMessage())
                         {
-                            message.Add(new ZFrame(this.ident));
+                            message.Add(new ZFrame("event"));
                             message.Add(new ZFrame(payload));
                             agent.Send(message);
                         }
@@ -121,6 +121,7 @@ namespace comnsense
                         return true; 
                     })
                 };
+                
                 try
                 {
                     while (!ct.IsCancellationRequested)
