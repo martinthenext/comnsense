@@ -87,16 +87,20 @@ def worker_main(ident, connection, loop=None, ctx=None):
 
 def run_worker(ident, connection):
     logger = logging.getLogger(__name__)
+    env = copy.deepcopy(os.environ)
     start_script = os.path.realpath(
         os.path.join(os.path.dirname(sys.argv[0]), "comnsense-worker"))
     if not os.path.exists(start_script):
-        raise IOError("%s: no such file or directory", start_script)
-    cmd = [
-        sys.executable, start_script,
-        '-i', ident, '-c', connection]
+        if os.path.exists(start_script + ".exe"):
+            start_script = start_script + ".exe"
+        else:
+            raise IOError("%s: no such file or directory" % start_script)
+    
+    cmd = [start_script, '-i', ident, '-c', connection]
+    if not start_script.endswith(".exe"):
+        cmd.insert(0, sys.executable)
+        env['PYTHONPATH'] = os.path.join(os.path.dirname(__file__), "..")
     logger.debug("worker cmd: %s", cmd)
-    env = copy.deepcopy(os.environ)
-    env['PYTHONPATH'] = os.path.join(os.path.dirname(__file__), "..")
     proc = subprocess.Popen(cmd, close_fds=True, env=env)
     logger.info("worker for ident %s was started: %s", ident, proc.pid)
     return WorkerProcess(proc)

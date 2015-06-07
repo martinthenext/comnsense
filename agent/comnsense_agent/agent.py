@@ -1,6 +1,7 @@
 import logging
 import random
 import pickle
+import sys
 
 import zmq
 from zmq.eventloop import ioloop, zmqstream
@@ -22,6 +23,7 @@ class Agent:
         self.server_str = server_str
         logger.debug("server connection str: %s", server_str)
         self.port_range = (30000, 40000)
+        logger.debug("iam: %s", sys.argv)
 
     def setup_agent(self, ctx, loop):
         logger.debug("setup agent socket")
