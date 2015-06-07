@@ -18,10 +18,10 @@ def run_agent():
 
 
 def get_icon_file():
-    iconfile = os.path.join(get_path(), "resources", "icon.ico")
+    iconfile = os.path.join(get_path(), "resources", "icon.xpm")
     if os.path.exists(iconfile):
         return iconfile
-    iconfile = os.path.join(get_path(), "..", "resources", "icon.ico")
+    iconfile = os.path.join(get_path(), "..", "resources", "icon.xpm")
     if os.path.exists(iconfile):
         return iconfile
     return ""

@@ -22,12 +22,14 @@ if platform.system().lower() == "windows":
                    }
                }
     iconfile = os.path.join('resources', 'icon.ico')
+    pngfile = os.path.join('resources', 'icon.png')
+    xpmfile = os.path.join('resources', 'icon.xpm')
     import zmq.libzmq
     import zmq.libsodium
     data_files = [
         ('', (zmq.libzmq.__file__,
               zmq.libsodium.__file__,)),
-        ('resources', (iconfile,))
+        ('resources', (iconfile, pngfile, xpmfile))
     ]
 
 test_requirements = ['pytest', 'pytest-allure-adaptor', 'mock']
