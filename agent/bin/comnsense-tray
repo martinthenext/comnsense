@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+import sys
+import os
+import subprocess
+
+from PyQt4 import QtGui
+from PyQt4.QtCore import *
+
+
+def get_path():
+    return os.path.join(os.path.dirname(sys.argv[0]))
+
+
+def run_agent():
+    path = os.path.join(get_path(), "comnsense-agent")
+    proc = subprocess.Popen(path)
+    return proc
+
+
+def get_icon_file():
+    iconfile = os.path.join(get_path(), "resources", "icon.ico")
+    if os.path.exists(iconfile):
+        return iconfile
+    iconfile = os.path.join(get_path(), "..", "resources", "icon.ico")
+    if os.path.exists(iconfile):
+        return iconfile
+    return ""
+
+
+def main():
+    app = QtGui.QApplication(sys.argv)
+    trayIcon = QtGui.QSystemTrayIcon(QtGui.QIcon(get_icon_file()), app)
+    menu = QtGui.QMenu()
+
+    proc = run_agent()
+
+    def on_exit(*args, **kwargs):
+        proc.terminate()
+        QtGui.qApp.quit()
+
+    exitAction = menu.addAction("Exit")
+    exitAction.triggered.connect(on_exit)
+    trayIcon.setContextMenu(menu)
+
+    trayIcon.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()

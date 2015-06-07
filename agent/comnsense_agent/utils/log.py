@@ -56,12 +56,19 @@ def setup(level, filename=None):
         }
         config["root"]["handlers"].append("file")
     if platform.system().lower() == "windows":
-        config["handlers"]["syslog"] = {
-            "class": "logging.handlers.NTEventLogHandler",
-            "formatter": "syslog",
-            "appname": "Comnsense Agent",
-            "filters": ["ident"],
-        }
+        appdata = os.getenv('APPDATA')
+        if appdata and os.path.isdir(appdata):
+            if not os.path.isdir(os.path.join(appdata, "Comnsense")):
+                os.makedirs(os.path.join(appdata, "Comnsense"))
+            filename = os.path.join(appdata, "Comnsense", "Agent.log")
+            config["handlers"]["syslog"] = {
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "file",
+                "filename": filename,
+                "maxBytes": 1000000,
+                "backupCount": 50,
+                "filters": ["ident"],
+            }
     elif platform.system().lower() == "darwin":
         config["handlers"]["syslog"] = {
             "class": "logging.handlers.SysLogHandler",
