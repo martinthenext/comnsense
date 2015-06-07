@@ -13,7 +13,7 @@ options = {}
 data_files = []
 iconfile = ''
 if platform.system().lower() == "windows":
-    requirements.append('pywin32')
+    requirements.append('PyQt4')
     py2exe = __import__('py2exe', globals(), locals(), [], -1)
     options = {"py2exe": {
                    'includes': ['zmq.backend.cython', 'sip'],
