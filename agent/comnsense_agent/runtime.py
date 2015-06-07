@@ -73,5 +73,6 @@ class Runtime:
         with self.context as context:
             answer, self.currentState = \
                 self.currentState.next(context, message)
-            logger.debug("state after: %s", self.currentState.__class__.__name__)
+            logger.debug(
+                "state after: %s", self.currentState.__class__.__name__)
             return answer

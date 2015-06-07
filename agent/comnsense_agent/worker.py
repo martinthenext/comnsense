@@ -95,7 +95,7 @@ def run_worker(ident, connection):
             start_script = start_script + ".exe"
         else:
             raise IOError("%s: no such file or directory" % start_script)
-    
+
     cmd = [start_script, '-i', ident, '-c', connection]
     if not start_script.endswith(".exe"):
         cmd.insert(0, sys.executable)
