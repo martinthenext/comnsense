@@ -98,15 +98,15 @@ class Agent:
                     else:
                         logger.warn("unexpected signal: %s", signal)
                 else:
-                    worker_stream.send_multipart(msg)
+                    worker_stream.send_multipart(list(msg))
             else:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
         def on_worker_recv(msg):  # receive answer from worker
             if msg.is_action():
-                agent.send_multipart(msg)  # send answer to excel
+                agent_stream.send_multipart(list(msg))  # send answer to excel
             elif msg.is_request():  # send request to server
-                server.send_multipart(msg)
+                server_stream.send_multipart(list(msg))
             elif msg.is_log():  # log from worker
                 logger.handle(pickle.loads(msg.payload))
             elif msg.is_signal():
@@ -119,7 +119,7 @@ class Agent:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
         def on_server_recv(msg):
-            worker.send_multipart(msg)
+            worker_stream.send_multipart(msg)
 
         agent_stream.on_recv(Message.call(on_agent_recv))
         worker_stream.on_recv(Message.call(on_worker_recv))

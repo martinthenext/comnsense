@@ -61,17 +61,18 @@ def worker_main(ident, connection, loop=None, ctx=None):
             logger.warn("unexpected signal: %s", signal)
 
     def on_recv(msg):
+        logger.debug("worker on_recv: %s", msg)
         if msg.is_signal():
             on_signal_recv(msg)
         if msg.is_request():
-            socket_stream.send_multipart(msg)
+            socket_stream.send_multipart(list(msg))
         elif msg.is_event() or msg.is_response():
             answer = runtime.run(msg)
             if isinstance(answer, tuple):
                 for a in answer:
-                    socket_stream.send_multipart(a)
+                    socket_stream.send_multipart(list(a))
             elif answer is not None:
-                socket_stream.send_multipart(answer)
+                socket_stream.send_multipart(list(answer))
         else:
             logger.warn("unexpected message kind: %s", msg.kind)
 

@@ -30,7 +30,7 @@ class LocalFileStream:
         try:
             if not os.path.isdir(self.basepath):
                 os.makedirs(self.basepath)
-            self._send_multipart(message)
+            self._send_multipart(Message(*message))
         except Exception, e:
             logger.exception(e)
             raise
@@ -41,21 +41,22 @@ class LocalFileStream:
             context = self.get_context(req.data["workbook"])
             if context:
                 self.callback(
-                    message.ident, MESSAGE_RESPONSE,
-                    Response.ok(context).serialize())
+                    [message.ident, MESSAGE_RESPONSE,
+                     Response.ok(context).serialize()])
             else:
                 self.callback(
-                    message.ident, MESSAGE_RESPONSE,
-                    Response.notfound().serialize())
+                    [message.ident, MESSAGE_RESPONSE,
+                     Response.notfound().serialize()])
         elif req.type == Request.Type.SaveContext:
             context = req.data
             self.callback(
-                message.ident, MESSAGE_RESPONSE,
-                Response.accepted().serialize())
+                [message.ident, 
+                 MESSAGE_RESPONSE,
+                 Response.accepted().serialize()])
             self.save_context(workbook, context)
             self.callback(
-                message.ident, MESSAGE_RESPONSE,
-                Response.created().serialize())
+                [message.ident, MESSAGE_RESPONSE,
+                 Response.created().serialize()])
 
     def get_context(self, workbook):
         filename = os.path.join(self.basepath, workbook)

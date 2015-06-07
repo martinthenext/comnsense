@@ -56,29 +56,49 @@ namespace comnsense
             {
                 List<Cell> rowlist = new List<Cell>();
                 foreach (Excel.Range cell in row) {
-                    Cell item = new Cell {key = cell.Address.ToString(), value = cell.Value2.ToString()};
-                    if(border) {
-                        // not implemented
+                    String key = "";
+                    String value = "";
+                    if ((cell != null) && (cell.Address != null))
+                    {
+                        key = cell.Address.ToString();
                     }
-                    if (font) {
-                        item.font = cell.Font.Name.ToString();
+                    if ((cell != null) && (cell.Value2 != null))
+                    {
+                        value = cell.Value2.ToString();
                     }
-                    if (color) {
-                        item.color = (int)cell.Interior.ColorIndex;
-                    }
-                    if (fontstyle) {
-                        item.fontstyle = 0;
-                        if (cell.Font.Bold) {
-                            item.fontstyle |= 1;
+                    if (key != "")
+                    {
+                        Cell item = new Cell { key = key, value = value };
+                        if (border)
+                        {
+                            // not implemented
                         }
-                        if (cell.Font.Italic) {
-                            item.fontstyle |= 2;
+                        if ((cell.Font != null) && (cell.Font.Name != null) && font)
+                        {
+                            item.font = cell.Font.Name.ToString();
                         }
-                        if (cell.Font.Underline) {
-                            item.fontstyle |= 4;
+                        if ((cell.Interior != null) && (cell.Interior.ColorIndex != null) && color)
+                        {
+                            item.color = (int)cell.Interior.ColorIndex;
                         }
+                        if ((cell.Font != null) && fontstyle)
+                        {
+                            item.fontstyle = 0;
+                            if (cell.Font.Bold)
+                            {
+                                item.fontstyle |= 1;
+                            }
+                            if (cell.Font.Italic)
+                            {
+                                item.fontstyle |= 2;
+                            }
+                            if (cell.Font.Underline)
+                            {
+                                item.fontstyle |= 4;
+                            }
+                        }
+                        rowlist.Add(item);
                     }
-                    rowlist.Add(item);
                 }
                 list.Add(rowlist.ToArray());
             }
