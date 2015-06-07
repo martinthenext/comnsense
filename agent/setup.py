@@ -2,6 +2,7 @@
 from setuptools import setup
 import platform
 import sys
+import os
 
 requirements = ['pyzmq', 'tornado', 'msgpack-python']
 
@@ -20,7 +21,7 @@ if platform.system().lower() == "windows":
                    'dll_excludes': ['libzmq.pyd', 'msvcp90.dll']
                    }
                }
-    iconfile = 'resources/icon.ico'
+    iconfile = os.path.join('resources', 'icon.ico')
     import zmq.libzmq
     import zmq.libsodium
     data_files = [
