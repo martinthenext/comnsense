@@ -83,12 +83,16 @@ namespace comnsense
                     ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                         msg = sock.ReceiveMessage();
                         // We need the second frame
-                        msg.PopString(); 
-                        String payload = msg.PopString(Encoding.UTF8);
+                        ZFrame frame = msg.Last();
+                        String frame_str = frame.ReadString(Encoding.UTF8);
+
+                        long l = frame.Length;
+
+                        // Sending the received frame directly
                         using (var message = new ZMessage())
                         {
                             message.Add(new ZFrame("event"));
-                            message.Add(new ZFrame(payload));
+                            message.Add(frame);
                             agent.Send(message);
                         }
                         err = default(ZError);
