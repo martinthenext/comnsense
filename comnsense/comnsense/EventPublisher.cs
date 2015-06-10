@@ -29,7 +29,6 @@ namespace comnsense
             {
                 message.Add(new ZFrame(Encoding.UTF8.GetBytes(evt.workbook)));
                 message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
-                long l = message.Last().Length;
                 this.socket.Send(message);
             }
         }

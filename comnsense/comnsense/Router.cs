@@ -85,9 +85,7 @@ namespace comnsense
                         // We need the second frame
                         ZFrame frame = msg.Last();
                         String frame_str = frame.ReadString(Encoding.UTF8);
-
-                        long l = frame.Length;
-
+                        
                         // Sending the received frame directly
                         using (var message = new ZMessage())
                         {
