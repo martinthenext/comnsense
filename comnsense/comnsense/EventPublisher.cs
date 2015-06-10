@@ -27,8 +27,8 @@ namespace comnsense
                     });
             using (var message = new ZMessage())
             {
-                message.Add(new ZFrame(evt.workbook));
-                message.Add(new ZFrame(data));
+                message.Add(new ZFrame(Encoding.UTF8.GetBytes(evt.workbook)));
+                message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
                 this.socket.Send(message);
             }
         }
