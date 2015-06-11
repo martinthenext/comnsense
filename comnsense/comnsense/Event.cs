@@ -35,15 +35,16 @@ namespace comnsense
             return evt;
         }
 
-        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range)
+        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range, Excel.Range prevRange)
         {
             Event evt = new Event { 
                 type = EventType.SheetChange,
                 workbook = ident,
-                sheet = sh.Name
+                sheet = sh.Name,
             };
             
             evt.cells = GetCellsFromRange(range);
+            evt.prev_cells = GetCellsFromRange(prevRange);
             return evt;
         }
 
@@ -110,5 +111,6 @@ namespace comnsense
         public String workbook; // workbook ident
         public String sheet; // sheet name
         public Cell[][] cells; // array of rows of cells
+        public Cell[][] prev_cells; // previous cells for cell change events
     }
 }
