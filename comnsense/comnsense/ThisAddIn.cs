@@ -16,14 +16,14 @@ namespace comnsense
         private ZContext context;
         private EventPublisher publisher;
         private Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>> routers;
-        private Dictionary<string, Excel.Range> lastSelectedValues;
+        private Dictionary<string, Cell[][]> lastSelectedValues;
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             this.context = new ZContext();
             this.publisher = new EventPublisher(this.context);
             this.routers = new Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>>();
-            this.lastSelectedValues = new Dictionary<string, Excel.Range>();
+            this.lastSelectedValues = new Dictionary<string, Cell[][]>();
             this.Application.WorkbookOpen += new Excel.AppEvents_WorkbookOpenEventHandler(ThisAddIn_WorkbookOpen);
             this.Application.WorkbookBeforeClose += new Excel.AppEvents_WorkbookBeforeCloseEventHandler(ThisAddIn_WorkbookBeforeClose);
             this.Application.SheetSelectionChange += new Excel.AppEvents_SheetSelectionChangeEventHandler(ThisAddIn_SheetSelectionChange);
@@ -77,11 +77,11 @@ namespace comnsense
             Excel.Workbook wb = ((Excel.Worksheet)sh).Parent;
             String ident = GetWorkbookIdent(wb);
             if (this.lastSelectedValues.ContainsKey(ident)) {
-                this.lastSelectedValues[ident] = target;
+                this.lastSelectedValues[ident] = Event.GetCellsFromRange(target);
             }
             else
             {
-                this.lastSelectedValues.Add(ident, target);
+                this.lastSelectedValues.Add(ident, Event.GetCellsFromRange(target));
             }
         }
 

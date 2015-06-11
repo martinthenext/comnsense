@@ -35,7 +35,7 @@ namespace comnsense
             return evt;
         }
 
-        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range, Excel.Range prevRange)
+        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range, Cell[][] prevCells)
         {
             Event evt = new Event { 
                 type = EventType.SheetChange,
@@ -44,11 +44,17 @@ namespace comnsense
             };
             
             evt.cells = GetCellsFromRange(range);
-            evt.prev_cells = GetCellsFromRange(prevRange);
+
+            // Before sending the previous values of Range make sure they have the same dimentions
+            if (prevCells.GetLength(0) == evt.cells.GetLength(0))
+            {
+                evt.prev_cells = prevCells;
+            }
+
             return evt;
         }
 
-        private static Cell[][] GetCellsFromRange(Excel.Range range, bool border = false, 
+        public static Cell[][] GetCellsFromRange(Excel.Range range, bool border = false, 
                                                   bool font = false, bool color = false,
                                                   bool fontstyle = false) 
         {
