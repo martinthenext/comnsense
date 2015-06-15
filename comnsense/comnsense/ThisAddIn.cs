@@ -89,9 +89,12 @@ namespace comnsense
         {
             Excel.Workbook wb = ((Excel.Worksheet)sh).Parent;
             String ident = GetWorkbookIdent(wb);
-            this.publisher.Send(
-                Event.SheetChange(ident, (sh as Excel.Worksheet), target, this.lastSelectedValues[ident])
-            );
+            if (this.lastSelectedValues.ContainsKey(ident))
+            {
+                this.publisher.Send(
+                    Event.SheetChange(ident, (sh as Excel.Worksheet), target, this.lastSelectedValues[ident])
+                );
+            }
         }
 
         private String GetWorkbookIdent(Excel.Workbook wb)
