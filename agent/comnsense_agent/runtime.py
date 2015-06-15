@@ -54,10 +54,10 @@ class Ready:
         if msg.is_event():
             event = Event.deserialize(msg.payload)
             # test: write something in "A1" for jokes
-            json_to_send = """{"type" : 0, "workbook" : "f1f2d913-8de3-49b6-8993-f6b026686cda", "sheet": "\xd0\xb2\xd0\xb0\xd1\x81\xd0\xb8\xd0\xbb\xd0\xb8\xd0\xb9", "cells":[[{"key":"$A$1","value":"33","color":0,"fontstyle":0}]]}"""
+            json_to_send = """{"type" : 0, "workbook" : "f1f2d913-8de3-49b6-8993-f6b026686cda", "sheet": "\xd0\xb2\xd0\xb0\xd1\x81\xd0\xb8\xd0\xbb\xd0\xb8\xd0\xb9", "cells":[[{"key":"$A$1","value":"33"}]]}"""
             action = Action(Action.Type.ChangeCell, json_to_send)
             logger.debug("Action JSON is sent")
-            return Message.action(action), self
+            return Message.action(json_to_send), self
         return None, self
 
 

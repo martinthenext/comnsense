@@ -100,7 +100,15 @@ namespace comnsense
                     ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                         msg = sock.ReceiveMessage();
                         String type = msg[0].ReadString();
-                        String payload = msg[1].ReadString();
+
+                        long len = msg[1].Length;
+                        byte[] bytes = new byte[len];
+                        for (int i = 0; i < len; i++)
+                        {
+                            bytes[i] = (byte)msg[1].ReadByte();
+                        }
+                        String payload = Encoding.UTF8.GetString(bytes);
+
                         Action action = null;
                         try
                         {
