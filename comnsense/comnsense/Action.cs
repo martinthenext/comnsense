@@ -17,7 +17,7 @@ namespace comnsense
 
         public ActionType type;
         public string workbook;
-        public string worksheet;
+        public string sheet;
         public string changeid;
         public Cell[][] cells;
         public bool font;

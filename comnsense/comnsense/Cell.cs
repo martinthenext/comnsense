@@ -9,8 +9,8 @@ namespace comnsense
     [Serializable()]
     class Cell
     {
-        public string key;
-        public string value;
+        public string key; // Cell address
+        public string value; // Cell value
         public bool[] borders;
         public string font;
         public int color;

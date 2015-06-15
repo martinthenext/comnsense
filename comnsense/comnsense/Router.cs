@@ -48,11 +48,12 @@ namespace comnsense
                     return;
                 }
                 Excel.Workbook wb = GetWorkbook();
+                Excel.Worksheet ws = wb.Worksheets[action.sheet];
                 foreach (Cell[] row in action.cells)
                 {
-                    foreach (Cell cel in row)
+                    foreach (Cell cell in row)
                     {
-
+                        ws.get_Range(cell.key).Value2 = cell.value;
                     }
                 }
             }
@@ -84,7 +85,7 @@ namespace comnsense
                         msg = sock.ReceiveMessage();
                         // We need the second frame
                         ZFrame frame = msg.Last();
-                        String frame_str = frame.ReadString(Encoding.UTF8);
+                        // String frame_str = frame.ReadString(Encoding.UTF8);
                         
                         // Sending the received frame directly
                         using (var message = new ZMessage())
@@ -114,7 +115,7 @@ namespace comnsense
                         {
                             if (action.type == Action.ActionType.ComnsenseChange)
                             {
-                                // apply change
+                                this.ApplyChange(action);
                             }
                             if (action.type == Action.ActionType.RangeRequest)
                             {
