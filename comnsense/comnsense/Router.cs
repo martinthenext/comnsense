@@ -26,6 +26,17 @@ namespace comnsense
             this.ident = ident;
         }
 
+        public static string FrameToUnicodeString(ZFrame frame)
+        {
+            long len = frame.Length;
+            byte[] bytes = new byte[len];
+            for (int i = 0; i < len; i++)
+            {
+                bytes[i] = (byte)frame.ReadByte();
+            }
+            return Encoding.UTF8.GetString(bytes);
+        }
+
         private Excel.Workbook GetWorkbook() 
         {
             foreach (Excel.Workbook wb in this.excel.Workbooks)
@@ -100,14 +111,7 @@ namespace comnsense
                     ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                         msg = sock.ReceiveMessage();
                         String type = msg[0].ReadString();
-
-                        long len = msg[1].Length;
-                        byte[] bytes = new byte[len];
-                        for (int i = 0; i < len; i++)
-                        {
-                            bytes[i] = (byte)msg[1].ReadByte();
-                        }
-                        String payload = Encoding.UTF8.GetString(bytes);
+                        String payload = FrameToUnicodeString(msg[1]);
 
                         Action action = null;
                         try
