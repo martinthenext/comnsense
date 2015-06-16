@@ -71,6 +71,10 @@ namespace comnsense
                         {
                             range.Interior.ColorIndex = cell.color;
                         }
+                        if (cell.font != null)
+                        {
+                            range.Font.Name = cell.font;
+                        }
                     }
                 }
             }
