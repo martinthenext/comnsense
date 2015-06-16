@@ -55,6 +55,46 @@ namespace comnsense
             return null;
         }
 
+        // TODO refactor, this is awful
+        private void ApplyBorders(Borders borders, Excel.Range range)
+        {
+            if (borders.right != null)
+            {
+                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.right[0];
+                range.Borders[Excel.XlBordersIndex.xlEdgeRight].Weight = weight;
+
+                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.right[1];
+                range.Borders[Excel.XlBordersIndex.xlEdgeRight].LineStyle = lineStyle;
+            }
+
+            if (borders.left != null)
+            {
+                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.left[0];
+                range.Borders[Excel.XlBordersIndex.xlEdgeLeft].Weight = weight;
+
+                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.left[1];
+                range.Borders[Excel.XlBordersIndex.xlEdgeLeft].LineStyle = lineStyle;
+            }
+
+            if (borders.top != null)
+            {
+                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.top[0];
+                range.Borders[Excel.XlBordersIndex.xlEdgeTop].Weight = weight;
+
+                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.top[1];
+                range.Borders[Excel.XlBordersIndex.xlEdgeTop].LineStyle = lineStyle;
+            }
+
+            if (borders.bottom != null)
+            {
+                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.bottom[0];
+                range.Borders[Excel.XlBordersIndex.xlEdgeBottom].Weight = weight;
+
+                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.bottom[1];
+                range.Borders[Excel.XlBordersIndex.xlEdgeBottom].LineStyle = lineStyle;
+            }
+        }
+
         private void ApplyChange(Action action) {
             this.excel.EnableEvents = false;
             try
@@ -93,14 +133,7 @@ namespace comnsense
                         }
                         if (cell.borders != null)
                         {
-                            if (cell.borders.right != null)
-                            {
-                                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)cell.borders.right[0];
-                                range.Borders[Excel.XlBordersIndex.xlEdgeRight].Weight = weight;
-
-                                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)cell.borders.right[1];
-                                range.Borders[Excel.XlBordersIndex.xlEdgeRight].LineStyle = lineStyle;
-                            }
+                            ApplyBorders(cell.borders, range);
                         }
                     }
                 }

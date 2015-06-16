@@ -19,6 +19,26 @@ namespace comnsense
         public int[] right;
     }
 
+    /* Possible int values for the tuples
+     
+    XlBorderWeight
+        xlMedium = -4138,
+        xlHairline = 1,
+        xlThin = 2,
+        xlThick = 4,
+
+    XlLineStyle
+        xlLineStyleNone = -4142,
+        xlDouble = -4119,
+        xlDot = -4118,
+        xlDash = -4115,
+        xlContinuous = 1,
+        xlDashDot = 4,
+        xlDashDotDot = 5,
+        xlSlantDashDot = 13,
+    
+    */
+
 
     [Serializable()]
     class Cell
