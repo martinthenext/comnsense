@@ -64,7 +64,13 @@ namespace comnsense
                 {
                     foreach (Cell cell in row)
                     {
-                        ws.get_Range(cell.key).Value2 = cell.value;
+                        Excel.Range range = ws.get_Range(cell.key);
+                        range.Value2 = cell.value;
+                        // Applying color
+                        if (cell.color != null)
+                        {
+                            range.Interior.ColorIndex = cell.color;
+                        }
                     }
                 }
             }
