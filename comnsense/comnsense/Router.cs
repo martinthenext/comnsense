@@ -37,7 +37,7 @@ namespace comnsense
             return Encoding.UTF8.GetString(bytes);
         }
 
-        public static bool BitToBool(int bitmask, int position)
+        public static bool BitToBool(byte bitmask, int position)
         {
             return (bitmask & (1 << position)) != 0;
         }
@@ -90,6 +90,17 @@ namespace comnsense
                             range.Font.Bold = BitToBool(cell.fontstyle, 0);
                             range.Font.Italic = BitToBool(cell.fontstyle, 1);
                             range.Font.Underline = BitToBool(cell.fontstyle, 2);
+                        }
+                        if (cell.borders != null)
+                        {
+                            if (cell.borders.right != null)
+                            {
+                                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)cell.borders.right[0];
+                                range.Borders[Excel.XlBordersIndex.xlEdgeRight].Weight = weight;
+
+                                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)cell.borders.right[1];
+                                range.Borders[Excel.XlBordersIndex.xlEdgeRight].LineStyle = lineStyle;
+                            }
                         }
                     }
                 }

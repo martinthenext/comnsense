@@ -86,7 +86,7 @@ namespace comnsense
                         }
                         if ((cell.Interior != null) && (cell.Interior.ColorIndex != null) && color)
                         {
-                            item.color = (int)cell.Interior.ColorIndex;
+                            item.color = (byte)cell.Interior.ColorIndex;
                         }
                         if ((cell.Font != null) && fontstyle)
                         {
