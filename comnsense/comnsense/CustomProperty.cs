@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * This file handles the ComnsenseID - a unique identifier of an Excel file 
+ * 
+*/
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

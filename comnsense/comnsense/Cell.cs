@@ -12,8 +12,8 @@ namespace comnsense
         public string key; // Cell address
         public string value; // Cell value
         public bool[] borders;
-        public string font;
-        public int color;
-        public int fontstyle;
+        public string font; // Font name
+        public int color; // Excel color index
+        public int fontstyle; // Format bit mask:
     }
 }

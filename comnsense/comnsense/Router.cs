@@ -37,6 +37,11 @@ namespace comnsense
             return Encoding.UTF8.GetString(bytes);
         }
 
+        public static bool BitToBool(int bitmask, int position)
+        {
+            return (bitmask & (1 << position)) != 0;
+        }
+
         private Excel.Workbook GetWorkbook() 
         {
             foreach (Excel.Workbook wb in this.excel.Workbooks)
@@ -66,7 +71,10 @@ namespace comnsense
                     {
                         Excel.Range range = ws.get_Range(cell.key);
                         range.Value2 = cell.value;
-                        // Applying color
+
+                        // Applying cell properties
+                        // Matching Event.cs:90
+
                         if (cell.color != null)
                         {
                             range.Interior.ColorIndex = cell.color;
@@ -74,6 +82,14 @@ namespace comnsense
                         if (cell.font != null)
                         {
                             range.Font.Name = cell.font;
+                        }
+                        if (cell.fontstyle != null)
+                        {
+                            // Parsing format bitmask
+
+                            range.Font.Bold = BitToBool(cell.fontstyle, 0);
+                            range.Font.Italic = BitToBool(cell.fontstyle, 1);
+                            range.Font.Underline = BitToBool(cell.fontstyle, 2);
                         }
                     }
                 }
