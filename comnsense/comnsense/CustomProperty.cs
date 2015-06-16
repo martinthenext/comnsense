@@ -23,8 +23,8 @@ namespace comnsense
             {
                 return cached;
             }
-            Office.DocumentProperties properties = (Office.DocumentProperties)this.wb.CustomDocumentProperties;
-            foreach (Office.DocumentProperty prop in properties)
+            dynamic properties = this.wb.CustomDocumentProperties;
+            foreach (dynamic prop in properties)
             {
                 if (prop.Name == this.key)
                 {
