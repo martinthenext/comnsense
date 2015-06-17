@@ -2,6 +2,7 @@ import logging
 import random
 import pickle
 import sys
+import time
 
 import zmq
 from zmq.eventloop import ioloop, zmqstream
@@ -93,6 +94,8 @@ class Agent:
                         not workers[msg.ident].is_alive():
                     worker = run_worker(msg.ident, worker_conn)
                     workers[msg.ident] = worker
+                    # TODO redo this
+                    time.sleep(3)
                 if msg.is_signal():
                     signal = Signal.deserialize(msg.payload)
                     if signal.code == Signal.Code.Ready:
