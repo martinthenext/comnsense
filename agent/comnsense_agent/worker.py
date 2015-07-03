@@ -9,7 +9,7 @@ import zmq
 from zmq.eventloop import ioloop, zmqstream
 
 from comnsense_agent.message import Message
-import comnsense_agent.utils.log as L
+from comnsense_agent.utils.log import worker_setup as worker_logger_setup
 from comnsense_agent.data import Signal
 from comnsense_agent.runtime import Runtime
 
@@ -46,7 +46,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
         return socket_stream
 
     def setup_logger(socket):
-        L.worker_setup(socket, ident)
+        worker_logger_setup(socket, ident)
         return logging.getLogger(__name__)
 
     socket_stream = setup_socket()
@@ -85,21 +85,33 @@ def worker_main(ident, connection, loop=None, ctx=None):
     loop.start()
 
 
-def run_worker(ident, connection):
-    logger = logging.getLogger(__name__)
-    env = copy.deepcopy(os.environ)
-    start_script = os.path.realpath(
-        os.path.join(os.path.dirname(sys.argv[0]), "comnsense-worker"))
-    if not os.path.exists(start_script):
-        if os.path.exists(start_script + ".exe"):
-            start_script = start_script + ".exe"
+def get_worker_script(searchpath=None):
+    if searchpath is None:
+        searchpath = os.path.dirname(sys.argv[0])
+    script = os.path.realpath(
+        os.path.join(searchpath, "comnsense-worker"))
+    if not os.path.exists(script):
+        if os.path.exists(script + ".exe"):  # py2exe?
+            script = script + ".exe"
         else:
-            raise IOError("%s: no such file or directory" % start_script)
+            raise IOError("%s: no such file or directory" % script)
+    return script
 
-    cmd = [start_script, '-i', ident, '-c', connection]
-    if not start_script.endswith(".exe"):
+
+def get_worker_command(script, ident, connection, level="DEBUG"):
+    env = copy.deepcopy(os.environ)
+    cmd = [script, '-i', ident, '-c', connection, '-l', level]
+    if not script.endswith(".exe"):  # development mode
         cmd.insert(0, sys.executable)
-        env['PYTHONPATH'] = os.path.join(os.path.dirname(__file__), "..")
+        env['PYTHONPATH'] = os.path.realpath(
+            os.path.join(os.path.dirname(__file__), ".."))
+    return cmd, env
+
+
+def create_new_worker(ident, connection):
+    logger = logging.getLogger(__name__)
+    script = get_worker_script()
+    cmd, env = get_worker_command(script, ident, connection)
     logger.debug("worker cmd: %s", cmd)
     proc = subprocess.Popen(cmd, close_fds=True, env=env)
     logger.info("worker for ident %s was started: %s", ident, proc.pid)
