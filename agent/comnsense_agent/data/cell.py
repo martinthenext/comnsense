@@ -146,7 +146,7 @@ class Cell(object):
         assert isinstance(color, (int, NoneType))
         assert isinstance(fontstyle, (int, NoneType))
         assert isinstance(borders, Borders)
-        assert isinstance(font, (str, NoneType))
+        assert isinstance(font, (unicode, str, NoneType))
 
     def _check_fontstyle(self, mask):
         assert isinstance(mask, int)
