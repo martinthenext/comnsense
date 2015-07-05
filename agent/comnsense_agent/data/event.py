@@ -2,6 +2,9 @@ import logging
 import json
 import enum
 
+from comnsense_agent.data.cell import Cell
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -9,7 +12,7 @@ class EventError(RuntimeError):
     pass
 
 
-class Event:
+class Event(object):
     """
     Events should be used for transferring data between from the Excel
     to the `Agent`
@@ -38,7 +41,7 @@ class Event:
         WorkbookBeforeClose = 1
         SheetChange = 2
 
-    __slots__ = ("type", "workbook", "sheet", "cells")
+    __slots__ = ("type", "workbook", "sheet", "cells", "prev_cells")
 
     def __init__(self, *args):
         for name, value in zip(self.__slots__[:len(args)], args):
@@ -51,6 +54,8 @@ class Event:
             self.sheet = None
         if not hasattr(self, "cells") or self.cells is None:
             self.cells = []
+        if not hasattr(self, "prev_cells") or self.prev_cells is None:
+            self.prev_cells = []
 
     def serialize(self):
         """
@@ -61,6 +66,8 @@ class Event:
 
         data = {name: getattr(self, name) for name in self.__slots__}
         data["type"] = self.type.value
+        data["cells"] = Cell.table_to_python_object(self.cells)
+        data["prev_cells"] = Cell.table_to_python_object(self.prev_cells)
         return json.dumps(data)
 
     @staticmethod
@@ -71,13 +78,21 @@ class Event:
         :param str data: Byte string representation
         :return: :py:class:`Event` object
         """
+
+        def hook(dct):
+            for key in ["cells", "prev_cells"]:
+                if key in dct:
+                    dct[key] = Cell.table_from_python_object(dct[key])
+                return dct
+
         data = None
         try:
-            data = json.loads(payload)
+            data = json.loads(payload, object_hook=hook)
         except ValueError, e:
             raise EventError(e)
         type = Event.Type(data.get("type"))
         workbook = data.get("workbook")
         sheet = data.get("sheet")
         cells = data.get("cells")
-        return Event(type, workbook, sheet, cells)
+        prev_cells = data.get("prev_cells")
+        return Event(type, workbook, sheet, cells, prev_cells)

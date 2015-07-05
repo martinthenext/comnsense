@@ -8,7 +8,7 @@ import zmq
 from zmq.eventloop import ioloop, zmqstream
 
 from comnsense_agent.serverstream import ServerStream
-from comnsense_agent.worker import run_worker
+from comnsense_agent.worker import create_new_worker
 from comnsense_agent.message import Message
 from comnsense_agent.data import Signal
 
@@ -92,7 +92,7 @@ class Agent:
             if msg.is_event() or msg.is_request() or msg.is_signal():
                 if msg.ident not in workers or \
                         not workers[msg.ident].is_alive():
-                    worker = run_worker(msg.ident, worker_conn)
+                    worker = create_new_worker(msg.ident, worker_conn)
                     workers[msg.ident] = worker
                     # TODO redo this
                     time.sleep(3)

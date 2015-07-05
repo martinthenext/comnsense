@@ -30,8 +30,8 @@ class TestLocalFileStream(unittest.TestCase):
         self.assertEquals(len(callback.mock_calls), 1)
         kall = callback.mock_calls[0]
         args = kall[1]
-        self.assertEquals(len(args), 3)
-        res = Message(*args)
+        self.assertEquals(len(args), 1)
+        res = Message(*args[0])
         self.assertEquals(res.ident, ident)
         self.assertTrue(res.is_response())
         res = Response.deserialize(res.payload)

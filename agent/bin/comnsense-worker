@@ -20,6 +20,8 @@ def parse_args(args=None):
     parser.add_argument("-i", "--ident", type=str,
                         required=True,
                         help="worker identity")
+    parser.add_argument("-l", "--log-level", type=str,
+                        default="DEBUG", help="logging level")
     return parser.parse_args(args)
 
 
