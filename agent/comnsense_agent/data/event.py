@@ -66,10 +66,8 @@ class Event(object):
 
         data = {name: getattr(self, name) for name in self.__slots__}
         data["type"] = self.type.value
-        data["cells"] = [[cell.to_python_object() for cell in row]
-                         for row in data["cells"]]
-        data["prev_cells"] = [[cell.to_python_object() for cell in row]
-                              for row in data["prev_cells"]]
+        data["cells"] = Cell.table_to_python_object(self.cells)
+        data["prev_cells"] = Cell.table_to_python_object(self.prev_cells)
         return json.dumps(data)
 
     @staticmethod
@@ -82,17 +80,10 @@ class Event(object):
         """
 
         def hook(dct):
-            if "cells" in dct:
-                dct["cells"] = [
-                    [Cell.from_python_object(obj) for obj in row]
-                    for row in dct["cells"]
-                ]
-            if "prev_cells" in dct:
-                dct["prev_cells"] = [
-                    [Cell.from_python_object(obj) for obj in row]
-                    for row in dct["prev_cells"]
-                ]
-            return dct
+            for key in ["cells", "prev_cells"]:
+                if key in dct:
+                    dct[key] = Cell.table_from_python_object(dct[key])
+                return dct
 
         data = None
         try:

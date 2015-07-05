@@ -3,6 +3,7 @@ import uuid
 
 from comnsense_agent.message import Message
 from comnsense_agent.data import Event, Action, Request, Signal, Response
+from comnsense_agent.data import Cell, Border
 from comnsense_agent.context import Context
 
 logger = logging.getLogger(__name__)
@@ -53,11 +54,16 @@ class Ready:
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
-            # test: write something in "A1" for jokes
-            json_to_send = """{"type" : 0, "workbook" : "f1f2d913-8de3-49b6-8993-f6b026686cda", "sheet": "\xd0\xb2\xd0\xb0\xd1\x81\xd0\xb8\xd0\xbb\xd0\xb8\xd0\xb9", "cells":[[{"key":"$B$3","value":"33", "color":3, "font": "Times New Roman", "borders": {"right" : [2, 4], "bottom" : [1, -4119]}, "fontstyle": 5}]]}"""
-            action = Action(Action.Type.ChangeCell, json_to_send)
+            cell = Cell("$B$3", "33", color=3, font="Times New Roman")
+            cell.bold = True
+            cell.underline = True
+            cell.borders.right = Border(Border.Weight.xlContinuous,
+                                        Border.LineStyle.xlMedium)
+            cell.borders.bottom = Border(Border.Weight.xlContinuous,
+                                         Border.LineStyle.xlThick)
+            action = Action.change_from_event(event, [[cell]])
             logger.debug("Action JSON is sent")
-            return Message.action(json_to_send), self
+            return Message.action(action), self
         return None, self
 
 

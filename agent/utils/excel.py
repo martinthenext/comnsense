@@ -3,6 +3,8 @@ import argparse
 import uuid
 import zmq
 import threading
+import random
+import string
 
 
 try:
@@ -13,6 +15,9 @@ except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     import comnsense_agent
 
+from comnsense_agent.data import Event, Cell
+from comnsense_agent.message import Message
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -22,6 +27,13 @@ def parse_args():
     parser.add_argument("-i", "--ident", type=str,
                         default=str(uuid.uuid1()))
     return parser.parse_args()
+
+
+def get_random_cell():
+    key = "$%s$%d" % (random.choice(string.ascii_uppercase),
+                      random.choice(range(10)))
+    value = random.choice(string.ascii_letters)
+    return Cell(key, value)
 
 
 def loop(ctx, ident, agent, publ):
@@ -38,6 +50,8 @@ def loop(ctx, ident, agent, publ):
     poller.register(socket, zmq.POLLIN)
     poller.register(subscr, zmq.POLLIN)
 
+    sheet = "sheet"
+
     working = True
     while working:
         socks = dict(poller.poll())
@@ -46,13 +60,20 @@ def loop(ctx, ident, agent, publ):
         if subscr in socks and socks[subscr] == zmq.POLLIN:
             message = subscr.recv_multipart()
             print "from main", message
-            cmd = message[0]
+            cmd = message[0].upper()
             args = message[1:]
             if cmd == "END":
                 working = False
-            elif cmd == "EVENT":
-                payload = raw_input(">payload: ")
-                socket.send_multipart(["event",  payload])
+            elif cmd == "CHANGE":
+                event = Event(Event.Type.SheetChange, ident, sheet,
+                              [[get_random_cell()]], [[get_random_cell()]])
+                msg = Message.event(event)
+                socket.send_multipart(list(msg))
+                subscr.send_multipart(["OK"])
+            elif cmd == "OPEN":
+                event = Event(Event.Type.WorkbookOpen, ident, sheet)
+                msg = Message.event(event)
+                socket.send_multipart(list(msg))
                 subscr.send_multipart(["OK"])
 
 

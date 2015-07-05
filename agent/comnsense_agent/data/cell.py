@@ -213,6 +213,14 @@ class Cell(object):
         kwargs["fontstyle"] = obj.get("fontstyle")
         return Cell(key, value, **kwargs)
 
+    @staticmethod
+    def table_to_python_object(table):
+        return [[cell.to_python_object() for cell in row] for row in table]
+
+    @staticmethod
+    def table_from_python_object(obj):
+        return [[Cell.from_python_object(data) for data in row] for row in obj]
+
     def __repr__(self):
         main = "{%s: %s}" % (self.key, self.value)
         attrs = self.to_python_object()
