@@ -2,6 +2,9 @@ import logging
 import json
 import enum
 
+from comnsense_agent.data.cell import Cell
+
+
 logger = logging.getLogger()
 
 
