@@ -144,6 +144,41 @@ namespace comnsense
             }
         }
 
+        private void ServeRangeRequest(Action action)
+        {
+            // TODO lousy boilerplate from above
+            this.excel.EnableEvents = false;
+            try
+            {
+                if (action.workbook != ident)
+                {
+                    return;
+                }
+                Excel.Workbook wb = GetWorkbook();
+                Excel.Worksheet ws = wb.Worksheets[action.sheet];
+
+                // boilerplate ends
+                   
+                string rangeName = action.range_name;
+                Excel.Range range = ws.get_Range(rangeName, Type.Missing);
+                Cell[][] cellsToSend = Event.GetCellsFromRange(range);
+
+                Event responseEvent = new Event
+                {
+                    type = Event.EventType.RangeResponse,
+                    workbook = ident,
+                    sheet = ws.Name,
+                    cells = cellsToSend,
+                };
+
+                // TODO here is has to send it back
+            }
+            finally
+            {
+                this.excel.EnableEvents = true;
+            }
+        }
+
         public void Run(CancellationToken ct)
         {
             using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB),
@@ -201,7 +236,8 @@ namespace comnsense
                             }
                             if (action.type == Action.ActionType.RangeRequest)
                             {
-                                // read range and send event
+                                ServeRangeRequest(action);
+
                             }
                         }
                         err = default(ZError);

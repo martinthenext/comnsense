@@ -14,7 +14,8 @@ namespace comnsense
         {
             WorkbookOpen = 0,
             WorkbookBeforeClose = 1,
-            SheetChange = 2
+            SheetChange = 2,
+            RangeResponse = 3
         }
 
         public static Event WorkbookOpen(String ident, Excel.Workbook wb)
@@ -78,7 +79,7 @@ namespace comnsense
                         Cell item = new Cell { key = key, value = value };
                         if (border)
                         {
-                            // not implemented
+                            // TODO not implemented
                         }
                         if ((cell.Font != null) && (cell.Font.Name != null) && font)
                         {
