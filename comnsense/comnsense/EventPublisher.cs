@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+ * EventPublisher binds to a ZMQ Context and can publish Events to it to Router
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,12 +14,12 @@ namespace comnsense
 {
     class EventPublisher: IDisposable
     {
-        public const string Address = "inproc://events";
+        public const string RouterAddress = "inproc://events";
 
         public EventPublisher(ZContext ctx)
         {
             this.socket = new ZSocket(ctx, ZSocketType.PUB);
-            this.socket.Bind(EventPublisher.Address);
+            this.socket.Bind(EventPublisher.RouterAddress);
         }
 
         public void Send(Event evt) {
