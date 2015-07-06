@@ -5,7 +5,7 @@ import random
 import string
 import json
 
-from .test_cell import get_random_cell_key
+from .common import get_random_cell_key
 
 from comnsense_agent.data import Event, EventError
 from comnsense_agent.data import Cell, Border
