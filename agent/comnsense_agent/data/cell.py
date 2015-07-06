@@ -10,14 +10,14 @@ class Border(object):
     __slots__ = ("_weight", "_linestyle")
 
     @enum.unique
-    class LineStyle(enum.IntEnum):
+    class Weight(enum.IntEnum):
         xlMedium = -4138
         xlHairline = 1
         xlThin = 2
         xlThick = 4
 
     @enum.unique
-    class Weight(enum.IntEnum):
+    class LineStyle(enum.IntEnum):
         xlLineStyleNone = -4142
         xlDouble = -4119
         xlDot = -4118
