@@ -57,10 +57,10 @@ class Ready:
             cell = Cell("$B$3", "33", color=3, font="Times New Roman")
             cell.bold = True
             cell.underline = True
-            cell.borders.right = Border(Border.Weight.xlContinuous,
-                                        Border.LineStyle.xlMedium)
-            cell.borders.bottom = Border(Border.Weight.xlContinuous,
-                                         Border.LineStyle.xlThick)
+            cell.borders.right = Border(Border.Weight.xlMedium,
+                                        Border.LineStyle.xlContinuous)
+            cell.borders.bottom = Border(Border.Weight.xlThick,
+                                         Border.LineStyle.xlContinuous)
             action = Action.change_from_event(event, [[cell]])
             logger.debug("Action JSON is sent")
             return Message.action(action), self
