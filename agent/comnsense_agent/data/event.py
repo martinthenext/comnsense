@@ -35,11 +35,17 @@ class Event(object):
 
            one or more cells was changed, contains workbook id,
            changed sheet id and list of changed cell with new data
+
+        .. py:attribute:: RangeResponse
+
+           response for `Action.Type.RangeRequest`
+
         """
 
         WorkbookOpen = 0
         WorkbookBeforeClose = 1
         SheetChange = 2
+        RangeResponse = 3
 
     __slots__ = ("type", "workbook", "sheet", "cells", "prev_cells")
 
@@ -64,10 +70,15 @@ class Event(object):
         :return: byte string
         """
 
-        data = {name: getattr(self, name) for name in self.__slots__}
+        data = {}
         data["type"] = self.type.value
-        data["cells"] = Cell.table_to_python_object(self.cells)
-        data["prev_cells"] = Cell.table_to_python_object(self.prev_cells)
+        data["workbook"] = self.workbook
+        if self.sheet:
+            data["sheet"] = self.sheet
+        if self.cells:
+            data["cells"] = Cell.table_to_primitive(self.cells)
+        if self.prev_cells:
+            data["prev_cells"] = Cell.table_to_primitive(self.prev_cells)
         return json.dumps(data)
 
     @staticmethod
@@ -82,7 +93,7 @@ class Event(object):
         def hook(dct):
             for key in ["cells", "prev_cells"]:
                 if key in dct:
-                    dct[key] = Cell.table_from_python_object(dct[key])
+                    dct[key] = Cell.table_from_primitive(dct[key])
                 return dct
 
         data = None

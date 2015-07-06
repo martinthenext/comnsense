@@ -5,7 +5,7 @@ import random
 import string
 import json
 
-from .test_cell import get_random_cell_key
+from .common import get_random_cell_key
 
 from comnsense_agent.data import Event, EventError
 from comnsense_agent.data import Cell, Border
@@ -82,8 +82,8 @@ class TestEvent(unittest.TestCase):
              "value":"33",
              "color":3,
              "font": "Times New Roman",
-             "borders": {"right": [1, 4],
-                         "bottom" : [1, -4138]
+             "borders": {"right": [4, 1],
+                         "bottom" : [-4138, 1]
                         },
              "fontstyle": 5}
            ]
@@ -105,10 +105,10 @@ class TestEvent(unittest.TestCase):
         self.assertTrue(cell.underline)
         self.assertEquals(cell.font, "Times New Roman")
         self.assertEquals(cell.borders.right.weight,
-                          Border.Weight.xlContinuous)
+                          Border.Weight.xlThick)
         self.assertEquals(cell.borders.right.linestyle,
-                          Border.LineStyle.xlThick)
+                          Border.LineStyle.xlContinuous)
         self.assertEquals(cell.borders.bottom.weight,
-                          Border.Weight.xlContinuous)
+                          Border.Weight.xlMedium)
         self.assertEquals(cell.borders.bottom.linestyle,
-                          Border.LineStyle.xlMedium)
+                          Border.LineStyle.xlContinuous)

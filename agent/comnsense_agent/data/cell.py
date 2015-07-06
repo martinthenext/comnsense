@@ -53,15 +53,15 @@ class Border(object):
             value = Border.LineStyle(value)
         self._linestyle = value
 
-    def to_python_object(self):
+    def to_primitive(self):
         return [self.weight, self.linestyle]
 
     @staticmethod
-    def from_python_object(obj):
+    def from_primitive(obj):
         return Border(*obj)
 
     def __repr__(self):
-        return "Border: %s" % self.to_python_object()
+        return "Border: %s" % self.to_primitive()
 
     def __eq__(self, another):
         return self._weight == another._weight and \
@@ -84,32 +84,32 @@ class Borders(object):
         self.bottom = bottom
         self.right = right
 
-    def to_python_object(self):
+    def to_primitive(self):
         obj = {}
         if self.top:
-            obj["top"] = self.top.to_python_object()
+            obj["top"] = self.top.to_primitive()
         if self.left:
-            obj["left"] = self.left.to_python_object()
+            obj["left"] = self.left.to_primitive()
         if self.bottom:
-            obj["bottom"] = self.bottom.to_python_object()
+            obj["bottom"] = self.bottom.to_primitive()
         if self.right:
-            obj["right"] = self.right.to_python_object()
+            obj["right"] = self.right.to_primitive()
         if not obj:
             return None
         return obj
 
     @staticmethod
-    def from_python_object(obj):
+    def from_primitive(obj):
         if obj is None:
             return Borders()
         items = obj.items()
-        items = [(x[0], Border.from_python_object(x[1])) for x in items
+        items = [(x[0], Border.from_primitive(x[1])) for x in items
                  if x[1] is not None]
         kwargs = dict(items)
         return Borders(**kwargs)
 
     def __repr__(self):
-        return "Borders: %s" % self.to_python_object()
+        return "Borders: %s" % self.to_primitive()
 
     def __eq__(self, another):
         for attr in Borders.__slots__:
@@ -187,26 +187,28 @@ class Cell(object):
     def underline(self, value):
         self._set_fontstyle(Cell.FontStyle.underline.value, value)
 
-    def to_python_object(self):
-        obj = {"key": self.key, "value": self.value}
-        borders = self.borders.to_python_object()
+    def to_primitive(self):
+        obj = {"key": self.key}
+        if self.value is not None:
+            obj["value"] = self.value
+        borders = self.borders.to_primitive()
         if borders:
             obj["borders"] = borders
-        if self.color:
+        if self.color is not None:
             obj["color"] = self.color
-        if self.font:
+        if self.font is not None:
             obj["font"] = self.font
-        if self.fontstyle:
+        if self.fontstyle is not None:
             obj["fontstyle"] = self.fontstyle
         return obj
 
     @staticmethod
-    def from_python_object(obj):
+    def from_primitive(obj):
         key = obj.get("key")
         value = obj.get("value")
         kwargs = {}
         if obj.get("borders"):
-            borders = Borders.from_python_object(obj.get("borders"))
+            borders = Borders.from_primitive(obj.get("borders"))
             kwargs["borders"] = borders
         kwargs["color"] = obj.get("color")
         kwargs["font"] = obj.get("font")
@@ -214,28 +216,27 @@ class Cell(object):
         return Cell(key, value, **kwargs)
 
     @staticmethod
-    def table_to_python_object(table):
-        return [[cell.to_python_object() for cell in row] for row in table]
+    def table_to_primitive(table):
+        return [[cell.to_primitive() for cell in row] for row in table]
 
     @staticmethod
-    def table_from_python_object(obj):
-        return [[Cell.from_python_object(data) for data in row] for row in obj]
+    def table_from_primitive(obj):
+        return [[Cell.from_primitive(data) for data in row] for row in obj]
 
     def __repr__(self):
         main = "{%s: %s}" % (self.key, self.value)
-        attrs = self.to_python_object()
+        attrs = self.to_primitive()
         del attrs["key"]
         del attrs["value"]
         items = attrs.items()
         items = ["%s=%s" % x for x in items]
         if items:
-            return "%s[%s]" % (main, ", ".join(items))
-        return main
+            main = "%s[%s]" % (main, ", ".join(items))
+        return main.encode('utf-8')
 
     def __eq__(self, another):
         for attr in Cell.__slots__:
             if getattr(self, attr) != getattr(another, attr):
-                raise Exception(attr)
                 return False
         return True
 
