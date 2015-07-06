@@ -18,11 +18,16 @@ namespace comnsense
         public ActionType type;
         public string workbook;
         public string sheet;
+
+        // ComnsenseChange - related
         public string changeid;
         public Cell[][] cells;
         public bool font;
         public bool borders;
         public bool color;
         public bool fontstyle;
+
+        // RangeRequest - related
+        public string range_name; 
     }
 }

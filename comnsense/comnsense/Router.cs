@@ -12,12 +12,16 @@ namespace comnsense
 {
     class Router
     {
-        public const string Address = "tcp://127.0.0.1:8888";
+        public const string AgentAddress = "tcp://127.0.0.1:8888";
         public static TimeSpan Interval = TimeSpan.FromMilliseconds(500);
 
         private ZContext ctx;
         private String ident;
         private Excel.Application excel;
+
+        // This socket should be accessible to every method 
+        // in case you want to send Event right after Action has been received
+        private ZSocket agent;
 
         public Router(ZContext ctx, Excel.Application excel, String ident)
         {
@@ -144,98 +148,151 @@ namespace comnsense
             }
         }
 
+        // Here we send response straight away
+        private void ServeRangeRequest(Action action)
+        {
+            // TODO lousy boilerplate from above
+            this.excel.EnableEvents = false;
+            try
+            {
+                if (action.workbook != ident)
+                {
+                    return;
+                }
+                Excel.Workbook wb = GetWorkbook();
+                Excel.Worksheet ws = wb.Worksheets[action.sheet];
+
+                // boilerplate ends
+                   
+                string rangeName = action.range_name;
+                Excel.Range range = ws.get_Range(rangeName, Type.Missing);
+                Cell[][] cellsToSend = Event.GetCellsFromRange(range);
+
+                Event responseEvent = new Event
+                {
+                    type = Event.EventType.RangeResponse,
+                    workbook = ident,
+                    sheet = ws.Name,
+                    cells = cellsToSend,
+                };
+
+                // Getting JSON representation of the Event
+                String data = Json.JsonConvert.SerializeObject(
+                    responseEvent, Json.Formatting.None, 
+                    new Json.JsonSerializerSettings 
+                    {
+                        NullValueHandling = Json.NullValueHandling.Ignore 
+                    }
+                );
+
+                // Seding the message
+                using (var message = new ZMessage())
+                {
+                    message.Add(new ZFrame(Encoding.UTF8.GetBytes(responseEvent.workbook)));
+                    message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
+                    this.agent.Send(message);
+                }                
+            }
+            finally
+            {
+                this.excel.EnableEvents = true;
+            }
+        }
+
+        // This is run in a separate thread from ThidAddIn
         public void Run(CancellationToken ct)
         {
-            using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB),
-                           agent = new ZSocket(this.ctx, ZSocketType.DEALER))
-            {
-                subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
-                subscriber.Connect(EventPublisher.Address);
+            ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB);
 
-                agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
-                agent.Connect(Router.Address);
+            this.agent = new ZSocket(this.ctx, ZSocketType.DEALER);
 
-                ZError error = default(ZError);
-                ZMessage[] messages = null;
+            subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
+            subscriber.Connect(EventPublisher.RouterAddress);
 
-                ZSocket[] sockets = new ZSocket[] { 
-                    subscriber, agent };
+            agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
+            agent.Connect(Router.AgentAddress);
 
-                ZPollItem[] polls = new ZPollItem[] {
-                    ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
-                        msg = sock.ReceiveMessage();
-                        // We need the second frame
-                        ZFrame frame = msg.Last();
-                        // String frame_str = frame.ReadString(Encoding.UTF8);
+            ZError error = default(ZError);
+            ZMessage[] messages = null;
+
+            ZSocket[] sockets = new ZSocket[] { 
+                subscriber, agent };
+
+            ZPollItem[] polls = new ZPollItem[] {
+                ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
+                    msg = sock.ReceiveMessage();
+                    // We need the second frame
+                    ZFrame frame = msg.Last();
+                    // String frame_str = frame.ReadString(Encoding.UTF8);
                         
-                        // Sending the received frame directly
-                        using (var message = new ZMessage())
-                        {
-                            message.Add(new ZFrame("event"));
-                            message.Add(frame);
-                            agent.Send(message);
-                        }
-                        err = default(ZError);
-                        return true; 
-                    }), 
-                    ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
-                        msg = sock.ReceiveMessage();
-                        String type = msg[0].ReadString();
-                        String payload = FrameToUnicodeString(msg[1]);
-
-                        Action action = null;
-                        try
-                        {
-                            action = Json.JsonConvert.DeserializeObject<Action>(
-                                payload, new Json.JsonSerializerSettings { NullValueHandling = Json.NullValueHandling.Ignore });
-                        }
-                        catch
-                        {
-                            // ignore deserialization errors
-                        }
-                        if (action != null)
-                        {
-                            if (action.type == Action.ActionType.ComnsenseChange)
-                            {
-                                this.ApplyChange(action);
-                            }
-                            if (action.type == Action.ActionType.RangeRequest)
-                            {
-                                // read range and send event
-                            }
-                        }
-                        err = default(ZError);
-                        return true; 
-                    })
-                };
-                
-                try
-                {
-                    while (!ct.IsCancellationRequested)
+                    // Sending the received frame directly
+                    using (var message = new ZMessage())
                     {
-                        if (!sockets.Poll(polls, ZPoll.In, ref messages, out error, Router.Interval))
+                        message.Add(new ZFrame("event"));
+                        message.Add(frame);
+                        agent.Send(message);
+                    }
+                    err = default(ZError);
+                    return true; 
+                }), 
+                ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
+                    msg = sock.ReceiveMessage();
+                    String type = msg[0].ReadString();
+                    String payload = FrameToUnicodeString(msg[1]);
+
+                    Action action = null;
+                    try
+                    {
+                        action = Json.JsonConvert.DeserializeObject<Action>(
+                            payload, new Json.JsonSerializerSettings { NullValueHandling = Json.NullValueHandling.Ignore });
+                    }
+                    catch
+                    {
+                        // ignore deserialization errors
+                    }
+                    if (action != null)
+                    {
+                        if (action.type == Action.ActionType.ComnsenseChange)
                         {
-                            if (error == ZError.EAGAIN)
-                            {
-                                Thread.Sleep(1);
-                                continue;
-                            }
-
-                            if (error == ZError.ETERM)
-                            {
-                                break;
-                            }
-
-                            throw new ZException(error);
+                            this.ApplyChange(action);
                         }
+                        if (action.type == Action.ActionType.RangeRequest)
+                        {
+                            this.ServeRangeRequest(action);
+
+                        }
+                    }
+                    err = default(ZError);
+                    return true; 
+                })
+            };
+                
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    if (!sockets.Poll(polls, ZPoll.In, ref messages, out error, Router.Interval))
+                    {
+                        if (error == ZError.EAGAIN)
+                        {
+                            Thread.Sleep(1);
+                            continue;
+                        }
+
+                        if (error == ZError.ETERM)
+                        {
+                            break;
+                        }
+
+                        throw new ZException(error);
                     }
                 }
-                catch (ZException)
+            }
+            catch (ZException)
+            {
+                if (!ct.IsCancellationRequested)
                 {
-                    if (!ct.IsCancellationRequested)
-                    {
-                        throw;
-                    }
+                    throw;
                 }
             }
         }
