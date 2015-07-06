@@ -52,7 +52,7 @@ class Ready:
     Context is ready
 
     Test: Cell A3 changed -> Change cell B3
-          Cell A5 changed -> Request cell B3
+          Cell A5 changed -> Request cells B2:B4
     """
     def next(self, context, msg):
         if msg.is_event():
@@ -68,10 +68,11 @@ class Ready:
                     cell.borders.bottom = Border(Border.Weight.xlThick,
                                                  Border.LineStyle.xlContinuous)
                     action = Action.change_from_event(event, [[cell]])
-                    logger.debug("Action JSON is sent")
+                    logger.debug("Action JSON is sent to A3")
                     return Message.action(action), self
                 if first_cell.key == "$A$5":
-                    # TODO
+                    action = Action.request_from_event(event, "$B$2:$B$4")
+                    logger.debug("Request JSON is sent for B2:B4")
         return None, self
 
 
