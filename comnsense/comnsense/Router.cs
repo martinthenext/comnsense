@@ -148,8 +148,8 @@ namespace comnsense
             }
         }
 
-        // Here we send response straight away
-        private void ServeRangeRequest(Action action)
+        // Get a response message to serve a request straight away
+        private ZMessage ServeRangeRequest(Action action)
         {
             // TODO lousy boilerplate from above
             this.excel.EnableEvents = false;
@@ -157,7 +157,7 @@ namespace comnsense
             {
                 if (action.workbook != ident)
                 {
-                    return;
+                    return null;
                 }
                 Excel.Workbook wb = GetWorkbook();
                 Excel.Worksheet ws = wb.Worksheets[action.sheet];
@@ -186,12 +186,10 @@ namespace comnsense
                 );
 
                 // Seding the message
-                using (var message = new ZMessage())
-                {
-                    message.Add(new ZFrame(Encoding.UTF8.GetBytes(responseEvent.workbook)));
-                    message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
-                    this.agent.Send(message);
-                }                
+                var message = new ZMessage();
+                message.Add(new ZFrame(Encoding.UTF8.GetBytes(responseEvent.workbook)));
+                message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
+                return(message);
             }
             finally
             {
@@ -202,23 +200,23 @@ namespace comnsense
         // This is run in a separate thread from ThidAddIn
         public void Run(CancellationToken ct)
         {
-            ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB);
+            using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB),
+                           agent = new ZSocket(this.ctx, ZSocketType.DEALER))
+            {
+                subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
+                subscriber.Connect(EventPublisher.RouterAddress);
 
-            this.agent = new ZSocket(this.ctx, ZSocketType.DEALER);
+                agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
+                agent.Connect(Router.AgentAddress);
 
-            subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
-            subscriber.Connect(EventPublisher.RouterAddress);
+                ZError error = default(ZError);
+                ZMessage[] messages = null;
 
-            agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
-            agent.Connect(Router.AgentAddress);
-
-            ZError error = default(ZError);
-            ZMessage[] messages = null;
-
-            ZSocket[] sockets = new ZSocket[] { 
+                ZSocket[] sockets = new ZSocket[] { 
                 subscriber, agent };
 
-            ZPollItem[] polls = new ZPollItem[] {
+                ZPollItem[] polls = new ZPollItem[] {
+                // Receives publisher messages and forwards them
                 ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                     msg = sock.ReceiveMessage();
                     // We need the second frame
@@ -235,6 +233,7 @@ namespace comnsense
                     err = default(ZError);
                     return true; 
                 }), 
+                // Receives Actions 
                 ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
                     msg = sock.ReceiveMessage();
                     String type = msg[0].ReadString();
@@ -258,41 +257,42 @@ namespace comnsense
                         }
                         if (action.type == Action.ActionType.RangeRequest)
                         {
-                            this.ServeRangeRequest(action);
-
+                            ZMessage message = this.ServeRangeRequest(action);
+                            agent.SendMessage(message);
                         }
                     }
                     err = default(ZError);
                     return true; 
                 })
             };
-                
-            try
-            {
-                while (!ct.IsCancellationRequested)
+
+                try
                 {
-                    if (!sockets.Poll(polls, ZPoll.In, ref messages, out error, Router.Interval))
+                    while (!ct.IsCancellationRequested)
                     {
-                        if (error == ZError.EAGAIN)
+                        if (!sockets.Poll(polls, ZPoll.In, ref messages, out error, Router.Interval))
                         {
-                            Thread.Sleep(1);
-                            continue;
-                        }
+                            if (error == ZError.EAGAIN)
+                            {
+                                Thread.Sleep(1);
+                                continue;
+                            }
 
-                        if (error == ZError.ETERM)
-                        {
-                            break;
-                        }
+                            if (error == ZError.ETERM)
+                            {
+                                break;
+                            }
 
-                        throw new ZException(error);
+                            throw new ZException(error);
+                        }
                     }
                 }
-            }
-            catch (ZException)
-            {
-                if (!ct.IsCancellationRequested)
+                catch (ZException)
                 {
-                    throw;
+                    if (!ct.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                 }
             }
         }
