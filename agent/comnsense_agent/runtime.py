@@ -50,20 +50,28 @@ class WaitingContext:
 class Ready:
     """
     Context is ready
+
+    Test: Cell A3 changed -> Change cell B3
+          Cell A5 changed -> Request cell B3
     """
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
-            cell = Cell("$B$3", "33", color=3, font="Times New Roman")
-            cell.bold = True
-            cell.underline = True
-            cell.borders.right = Border(Border.Weight.xlMedium,
-                                        Border.LineStyle.xlContinuous)
-            cell.borders.bottom = Border(Border.Weight.xlThick,
-                                         Border.LineStyle.xlContinuous)
-            action = Action.change_from_event(event, [[cell]])
-            logger.debug("Action JSON is sent")
-            return Message.action(action), self
+            if event.type == Event.Type.SheetChange:
+                first_cell = event.cells[0][0]
+                if first_cell.key == "$A$3":
+                    cell = Cell("$B$3", "33", color=3, font="Times New Roman")
+                    cell.bold = True
+                    cell.underline = True
+                    cell.borders.right = Border(Border.Weight.xlMedium,
+                                                Border.LineStyle.xlContinuous)
+                    cell.borders.bottom = Border(Border.Weight.xlThick,
+                                                 Border.LineStyle.xlContinuous)
+                    action = Action.change_from_event(event, [[cell]])
+                    logger.debug("Action JSON is sent")
+                    return Message.action(action), self
+                if first_cell.key == "$A$5":
+                    # TODO
         return None, self
 
 
