@@ -219,3 +219,6 @@ $RECYCLE.BIN/
 # Mac desktop service store files
 .DS_Store
 
+# ZeroMQ native libs that automatically copied by MSBuild
+comnsense/comnsense/amd64/
+comnsense/comnsense/i386/

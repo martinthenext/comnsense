@@ -182,11 +182,19 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="amd64\libsodium.so" />
-    <None Include="amd64\libzmq.so" />
+    <None Include="amd64\libsodium.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="amd64\libzmq.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="comnsense_TemporaryKey.pfx" />
-    <None Include="i386\libsodium.so" />
-    <None Include="i386\libzmq.so" />
+    <None Include="i386\libsodium.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="i386\libzmq.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -211,10 +219,18 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="amd64\libsodium.dll" />
-    <Content Include="amd64\libzmq.dll" />
-    <Content Include="i386\libsodium.dll" />
-    <Content Include="i386\libzmq.dll" />
+    <Content Include="amd64\libsodium.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="amd64\libzmq.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="i386\libsodium.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="i386\libzmq.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -244,4 +260,12 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <Target Name="BeforeBuild">
+    <ItemGroup>
+      <ZeroMqNativeLibsForAmd64 Include="..\packages\ZeroMQ*\content\amd64\**\*.*" />
+      <ZeroMqNativeLibsForI386 Include="..\packages\ZeroMQ*\content\i386\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ZeroMqNativeLibsForAmd64)" DestinationFolder="$(MSBuildProjectDirectory)\amd64" />
+    <Copy SourceFiles="@(ZeroMqNativeLibsForI386)" DestinationFolder="$(MSBuildProjectDirectory)\i386" />
+  </Target>
 </Project>
