@@ -53,6 +53,8 @@ class Ready:
 
     Test: Cell A3 changed -> Change cell B3
           Cell A5 changed -> Request cells B2:B4
+                             If the middle cell (B3) is still 33
+                             Change cell D3
     """
     def next(self, context, msg):
         if msg.is_event():
@@ -81,6 +83,11 @@ class Ready:
             if event.type == Event.Type.RangeResponse:
                 logger.debug("Received RangeResponse")
                 logger.debug(str(event.cells))
+                if event.cells[1][0].value == "33":
+                    cell = Cell("$D3", "44", color=2)
+                    action = Action.change_from_event(event, [[cell]])
+                    return Message.action(action), self
+
         return None, self
 
 
