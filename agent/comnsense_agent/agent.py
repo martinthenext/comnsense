@@ -88,7 +88,7 @@ class Agent:
         workers = {}
 
         def on_agent_recv(msg):
-            logger.debug("on_agent_recv: %s", msg)
+            logger.debug("agent recv: %s", msg)
             if msg.is_event() or msg.is_request() or msg.is_signal():
                 if msg.ident not in workers or \
                         not workers[msg.ident].is_alive():
@@ -109,8 +109,8 @@ class Agent:
 
         def on_worker_recv(msg):  # receive answer from worker
             if msg.is_action():
+                logger.debug("agent send to excel: %s", msg)
                 agent_stream.send_multipart(list(msg))  # send answer to excel
-                logger.debug("send to excel: %s", msg)
             elif msg.is_request():  # send request to server
                 server_stream.send_multipart(list(msg))
             elif msg.is_log():  # log from worker
