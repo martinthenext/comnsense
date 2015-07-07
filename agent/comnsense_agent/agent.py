@@ -110,6 +110,7 @@ class Agent:
         def on_worker_recv(msg):  # receive answer from worker
             if msg.is_action():
                 agent_stream.send_multipart(list(msg))  # send answer to excel
+                logger.debug("send to excel: %s", msg)
             elif msg.is_request():  # send request to server
                 server_stream.send_multipart(list(msg))
             elif msg.is_log():  # log from worker
