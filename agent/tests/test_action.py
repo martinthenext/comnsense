@@ -192,3 +192,15 @@ class TestAction(unittest.TestCase):
         self.assertEquals(action.serialize(), fixture)
         another = Action.deserialize(fixture)
         self.assertEquals(action, another)
+
+    def test_flags_enumeration(self):
+        workbook = get_random_workbook_id()
+        sheet = get_random_sheet_name()
+        range_name = "%s:%s" % (get_random_cell_key(), get_random_cell_key())
+        action = Action.request(
+            workbook, sheet, range_name, Action.Flags.RequestColor)
+        self.assertEquals(action.flags, 1)
+        action = Action.request(
+            workbook, sheet, range_name,
+            Action.Flags.RequestColor | Action.Flags.RequestBorders)
+        self.assertEquals(action.flags, 9)

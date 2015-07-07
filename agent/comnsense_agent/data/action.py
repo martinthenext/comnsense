@@ -99,11 +99,14 @@ class Action(object):
                 self.arg = ""
         if not hasattr(self, "flags") or self.flags is None:
             self.flags = 0
+        if isinstance(self.flags, Action.Flags):
+            self.flags = self.flags.value
 
         assert ((self.type == Action.Type.ChangeCell and
                  isinstance(self.arg, list)) or
                 (self.type == Action.Type.RangeRequest and
                  isinstance(self.arg, (unicode, str))))
+        assert 0 <= self.flags <= 15
 
     @property
     def range_name(self):
@@ -136,6 +139,8 @@ class Action(object):
         data = {"type": self.type.value,
                 "workbook": self.workbook,
                 "sheet": self.sheet}
+        if isinstance(self.flags, Action.Flags):
+            self.flags = self.flags.value
         if self.flags > 0:
             data["flags"] = self.flags
         if self.type == Action.Type.ChangeCell:
