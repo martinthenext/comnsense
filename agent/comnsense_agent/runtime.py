@@ -57,8 +57,10 @@ class Ready:
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
+
             if event.type == Event.Type.SheetChange:
                 first_cell = event.cells[0][0]
+                
                 if first_cell.key == "$A$3":
                     cell = Cell("$B$3", "33", color=3, font="Times New Roman")
                     cell.bold = True
@@ -70,10 +72,15 @@ class Ready:
                     action = Action.change_from_event(event, [[cell]])
                     logger.debug("Action JSON is sent to A3")
                     return Message.action(action), self
+                
                 if first_cell.key == "$A$5":
                     action = Action.request_from_event(event, "$B$2:$B$4")
                     logger.debug("Request JSON is sent for B2:B4")
                     return Message.action(action), self
+
+            if event.type == Event.Type.RangeResponse:
+                logger.debug("Received RangeResponse")
+                logger.debug(str(event.cells))
         return None, self
 
 
