@@ -28,6 +28,6 @@ namespace comnsense
         public bool fontstyle;
 
         // RangeRequest - related
-        public string range_name; 
+        public string rangeName; 
     }
 }

@@ -164,7 +164,7 @@ namespace comnsense
 
                 // boilerplate ends
                    
-                string rangeName = action.range_name;
+                string rangeName = action.rangeName;
                 Excel.Range range = ws.get_Range(rangeName, Type.Missing);
                 Cell[][] cellsToSend = Event.GetCellsFromRange(range);
 
