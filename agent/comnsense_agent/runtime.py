@@ -73,6 +73,7 @@ class Ready:
                 if first_cell.key == "$A$5":
                     action = Action.request_from_event(event, "$B$2:$B$4")
                     logger.debug("Request JSON is sent for B2:B4")
+                    return Message.action(action), self
         return None, self
 
 
