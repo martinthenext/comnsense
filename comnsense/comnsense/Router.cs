@@ -187,7 +187,7 @@ namespace comnsense
 
                 // Seding the message
                 var message = new ZMessage();
-                message.Add(new ZFrame(Encoding.UTF8.GetBytes(responseEvent.workbook)));
+                message.Add(new ZFrame("event"));
                 message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
                 return(message);
             }
