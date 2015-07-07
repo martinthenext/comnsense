@@ -130,10 +130,11 @@ namespace comnsense
                         if (cell.fontstyle != null)
                         {
                             // Parsing format bitmask
-
-                            range.Font.Bold = BitToBool(cell.fontstyle, 0);
-                            range.Font.Italic = BitToBool(cell.fontstyle, 1);
-                            range.Font.Underline = BitToBool(cell.fontstyle, 2);
+                            if (cell.fontstyle.HasValue) {
+                                range.Font.Bold = BitToBool(cell.fontstyle.Value, 0);
+                                range.Font.Italic = BitToBool(cell.fontstyle.Value, 1);
+                                range.Font.Underline = BitToBool(cell.fontstyle.Value, 2);
+                            }
                         }
                         if (cell.borders != null)
                         {
@@ -165,8 +166,21 @@ namespace comnsense
                 // boilerplate ends
                    
                 string rangeName = action.rangeName;
+
+                // What is requested in addition to value?
+                bool isColorRequested = BitToBool(action.flags, 0);
+                bool isFontRequested = BitToBool(action.flags, 1);
+                bool isFontstyleRequested = BitToBool(action.flags, 2);
+                bool isBordersRequested = BitToBool(action.flags, 3);
+
+                // Getting range
                 Excel.Range range = ws.get_Range(rangeName, Type.Missing);
-                Cell[][] cellsToSend = Event.GetCellsFromRange(range);
+                Cell[][] cellsToSend = Event.GetCellsFromRange(range, 
+                    isBordersRequested,
+                    isFontRequested,
+                    isColorRequested,
+                    isFontstyleRequested
+                );
 
                 Event responseEvent = new Event
                 {

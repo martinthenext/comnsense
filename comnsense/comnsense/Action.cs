@@ -28,6 +28,7 @@ namespace comnsense
         public bool fontstyle;
 
         // RangeRequest - related
-        public string rangeName; 
+        public string rangeName;
+        public byte flags; // Which additional information is requested: color, style, fontstyle, borders
     }
 }

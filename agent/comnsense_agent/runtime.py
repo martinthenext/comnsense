@@ -76,15 +76,15 @@ class Ready:
                     return Message.action(action), self
                 
                 if first_cell.key == "$A$5":
-                    action = Action.request_from_event(event, "$B$2:$B$4")
+                    action = Action.request_from_event(event, "$B$2:$B$4", Action.Flags.RequestColor)
                     logger.debug("Request JSON is sent for B2:B4")
                     return Message.action(action), self
 
             if event.type == Event.Type.RangeResponse:
                 logger.debug("Received RangeResponse")
                 logger.debug(str(event.cells))
-                if event.cells[1][0].value == "33":
-                    cell = Cell("$D3", "44", color=2)
+                if event.cells[1][0].color == 3:
+                    cell = Cell("$D$3", "44", color=2)
                     action = Action.change_from_event(event, [[cell]])
                     return Message.action(action), self
 
