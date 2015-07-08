@@ -1,58 +1,47 @@
-﻿/*
- * This file handles the ComnsenseID - a unique identifier of an Excel file 
- * 
-*/
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
-using Office = Microsoft.Office.Core;
+﻿using System;
+using Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Core;
 
 namespace comnsense
 {
-    class CustomProperty
+    /// <summary>
+    /// This class handles the ComnsenseID - a unique identifier of an Excel file
+    /// </summary>
+    internal class CustomProperty
     {
-        public CustomProperty(String key, Excel.Workbook wb)
+        private string key;
+        private Workbook wb;
+        private string cached;
+
+        public CustomProperty(string key, Workbook wb)
         {
             this.key = key;
             this.wb = wb;
-            this.cached = null;
         }
 
-
-        public String get(String def = null) {
+        public string Get(string def = null)
+        {
             if (cached != null)
-            {
                 return cached;
-            }
-            dynamic properties = this.wb.CustomDocumentProperties;
+
+            dynamic properties = wb.CustomDocumentProperties;
             foreach (dynamic prop in properties)
             {
-                if (prop.Name == this.key)
-                {
-
-                    cached = prop.Value.ToString();
-                    return cached;
-                }
+                if (prop.Name != key)
+                    continue;
+                cached = prop.Value.ToString();
+                return cached;
             }
             return def;
         }
 
-        public void set(String ident)
+        public void Set(string ident)
         {
-            Office.DocumentProperties properties = (Office.DocumentProperties)this.wb.CustomDocumentProperties;
-            if (this.get() != null)
-            {
-                properties[this.key].Delete();
-            }
-            properties.Add(this.key, false, Office.MsoDocProperties.msoPropertyTypeString, ident);
+            var properties = (DocumentProperties) wb.CustomDocumentProperties;
+            if (Get() != null)
+                properties[key].Delete();
+            properties.Add(key, false, MsoDocProperties.msoPropertyTypeString, ident);
             cached = ident;
         }
-
-        private String key;
-        private Excel.Workbook wb;
-        private String cached;
     }
 }

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Interop.Excel;
 
 namespace comnsense
 {
-    [Serializable()]
-    class Event
+    [Serializable]
+    internal class Event
     {
         public enum EventType
         {
@@ -18,105 +15,98 @@ namespace comnsense
             RangeResponse = 3
         }
 
-        public static Event WorkbookOpen(String ident, Excel.Workbook wb)
+        public static Event WorkbookOpen(string ident, Workbook wb)
         {
-            Event evt = new Event { 
-                type = EventType.WorkbookOpen, 
-                workbook = ident 
+            return new Event
+            {
+                type = EventType.WorkbookOpen,
+                workbook = ident
             };
-            return evt;
         }
 
-        public static Event WorkbookBeforeClose(String ident, Excel.Workbook wb)
+        public static Event WorkbookBeforeClose(string ident, Workbook wb)
         {
-            Event evt = new Event { 
-                type = EventType.WorkbookBeforeClose, 
-                workbook = ident 
+            return new Event
+            {
+                type = EventType.WorkbookBeforeClose,
+                workbook = ident
             };
-            return evt;
         }
 
-        public static Event SheetChange(String ident, Excel.Worksheet sh, Excel.Range range, Cell[][] prevCells)
+        public static Event SheetChange(string ident, Worksheet sh, Range range, Cell[][] prevCells)
         {
-            Event evt = new Event { 
+            var @event = new Event
+            {
                 type = EventType.SheetChange,
                 workbook = ident,
                 sheet = sh.Name,
+                cells = GetCellsFromRange(range),
             };
-            
-            evt.cells = GetCellsFromRange(range);
+
 
             // Before sending the previous values of Range make sure they have the same dimentions
-            if (prevCells.GetLength(0) == evt.cells.GetLength(0))
-            {
-                evt.prev_cells = prevCells;
-            }
+            if (prevCells.GetLength(0) == @event.cells.GetLength(0))
+                @event.prev_cells = prevCells;
 
-            return evt;
+            return @event;
         }
 
-        public static Cell[][] GetCellsFromRange(Excel.Range range, bool border = false, 
-                                                  bool font = false, bool color = false,
-                                                  bool fontstyle = false) 
+        public static Cell[][] GetCellsFromRange(
+            Range range, 
+            bool border = false,
+            bool font = false, 
+            bool color = false,
+            bool fontstyle = false)
         {
-            List<Cell[]> list = new List<Cell[]>();
-            foreach (Excel.Range row in range.Rows)
+            var list = new List<Cell[]>();
+            foreach (Range row in range.Rows)
             {
-                List<Cell> rowlist = new List<Cell>();
-                foreach (Excel.Range cell in row) {
-                    String key = "";
-                    String value = "";
-                    if ((cell != null) && (cell.Address != null))
-                    {
+                var rowlist = new List<Cell>();
+                foreach (Range cell in row)
+                {
+                    string key = "";
+                    string value = "";
+                    if (cell != null && cell.Address != null)
                         key = cell.Address.ToString();
-                    }
-                    if ((cell != null) && (cell.Value2 != null))
-                    {
+                    if (cell != null && cell.Value2 != null)
                         value = cell.Value2.ToString();
-                    }
-                    if (key != "")
+
+                    if (key == "")
+                        continue;
+
+                    var item = new Cell {key = key, value = value};
+                    if (border)
                     {
-                        Cell item = new Cell { key = key, value = value };
-                        if (border)
-                        {
-                            // TODO not implemented
-                        }
-                        if ((cell.Font != null) && (cell.Font.Name != null) && font)
-                        {
-                            item.font = cell.Font.Name.ToString();
-                        }
-                        if ((cell.Interior != null) && (cell.Interior.ColorIndex != null) && color)
-                        {
-                            item.color = (byte)cell.Interior.ColorIndex;
-                        }
-                        if ((cell.Font != null) && fontstyle)
-                        {
-                            item.fontstyle = 0;
-                            if (cell.Font.Bold)
-                            {
-                                item.fontstyle |= 1;
-                            }
-                            if (cell.Font.Italic)
-                            {
-                                item.fontstyle |= 2;
-                            }
-                            if (cell.Font.Underline)
-                            {
-                                item.fontstyle |= 4;
-                            }
-                        }
-                        rowlist.Add(item);
+                        // TODO not implemented
                     }
+
+                    if (cell.Font != null && cell.Font.Name != null && font)
+                        item.font = cell.Font.Name.ToString();
+
+                    if (cell.Interior != null && cell.Interior.ColorIndex != null && color)
+                        item.color = (byte) cell.Interior.ColorIndex;
+
+                    if (cell.Font != null && fontstyle)
+                    {
+                        item.fontstyle = 0;
+                        if (cell.Font.Bold)
+                            item.fontstyle |= 1;
+                        if (cell.Font.Italic)
+                            item.fontstyle |= 2;
+                        if (cell.Font.Underline)
+                            item.fontstyle |= 4;
+                    }
+
+                    rowlist.Add(item);
                 }
                 list.Add(rowlist.ToArray());
             }
             return list.ToArray();
-
         }
 
         public EventType type;
-        public String workbook; // workbook ident
-        public String sheet; // sheet name
+        public string workbook; // workbook ident
+        public string sheet; // sheet name
         public Cell[][] cells; // array of rows of cells
         public Cell[][] prev_cells; // previous cells for cell change events
     }

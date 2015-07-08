@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
-
 
 namespace comnsense
 {
-    [Serializable()]
-    class Borders
+    [Serializable]
+    internal class Borders
     {
         // Tuples (weight, line style) 
         // (Excel.XlBorderWeight, Excel.XlLineStyle) encoded in ints
@@ -39,9 +33,8 @@ namespace comnsense
     
     */
 
-
-    [Serializable()]
-    class Cell
+    [Serializable]
+    internal class Cell
     {
         public string key; // Cell address
         public string value; // Cell value

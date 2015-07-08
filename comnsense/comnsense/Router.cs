@@ -1,43 +1,38 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
-using ZeroMQ;
 using System.Threading;
-using Json = Newtonsoft.Json;
+using Microsoft.Office.Interop.Excel;
+using Newtonsoft.Json;
+using ZeroMQ;
 
 namespace comnsense
 {
-    class Router
+    internal class Router
     {
         public const string AgentAddress = "tcp://127.0.0.1:8888";
-        public static TimeSpan Interval = TimeSpan.FromMilliseconds(500);
+        public static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(500);
 
-        private ZContext ctx;
-        private String ident;
-        private Excel.Application excel;
+        private readonly ZContext _context;
+        private readonly Application _excel;
+        private readonly string _ident;
 
         // This socket should be accessible to every method 
         // in case you want to send Event right after Action has been received
-        private ZSocket agent;
+        // private ZSocket agent;
 
-        public Router(ZContext ctx, Excel.Application excel, String ident)
+        public Router(ZContext context, Application excel, string ident)
         {
-            this.ctx = ctx;
-            this.excel = excel;
-            this.ident = ident;
+            _context = context;
+            _excel = excel;
+            _ident = ident;
         }
 
         public static string FrameToUnicodeString(ZFrame frame)
         {
-            long len = frame.Length;
-            byte[] bytes = new byte[len];
-            for (int i = 0; i < len; i++)
-            {
-                bytes[i] = (byte)frame.ReadByte();
-            }
+            var bytes = new byte[frame.Length];
+            for (var i = 0; i < bytes.Length; i++)
+                bytes[i] = (byte) frame.ReadByte();
             return Encoding.UTF8.GetString(bytes);
         }
 
@@ -46,106 +41,97 @@ namespace comnsense
             return (bitmask & (1 << position)) != 0;
         }
 
-        private Excel.Workbook GetWorkbook() 
+        private Workbook GetWorkbook()
         {
-            foreach (Excel.Workbook wb in this.excel.Workbooks)
-            {
-                Ident id = new Ident(wb);
-                if (ident == id.ToString())
-                {
-                    return wb;
-                }
-            }
-            return null;
+            return (from Workbook wb in _excel.Workbooks
+                    let id = new Ident(wb)
+                    where _ident == id.ToString()
+                    select wb).FirstOrDefault();
         }
 
         // TODO refactor, this is awful
-        private void ApplyBorders(Borders borders, Excel.Range range)
+        private void ApplyBorders(Borders borders, Range range)
         {
             if (borders.right != null)
             {
-                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.right[0];
-                range.Borders[Excel.XlBordersIndex.xlEdgeRight].Weight = weight;
+                var weight = (XlBorderWeight) borders.right[0];
+                range.Borders[XlBordersIndex.xlEdgeRight].Weight = weight;
 
-                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.right[1];
-                range.Borders[Excel.XlBordersIndex.xlEdgeRight].LineStyle = lineStyle;
+                var lineStyle = (XlLineStyle) borders.right[1];
+                range.Borders[XlBordersIndex.xlEdgeRight].LineStyle = lineStyle;
             }
 
             if (borders.left != null)
             {
-                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.left[0];
-                range.Borders[Excel.XlBordersIndex.xlEdgeLeft].Weight = weight;
+                var weight = (XlBorderWeight) borders.left[0];
+                range.Borders[XlBordersIndex.xlEdgeLeft].Weight = weight;
 
-                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.left[1];
-                range.Borders[Excel.XlBordersIndex.xlEdgeLeft].LineStyle = lineStyle;
+                var lineStyle = (XlLineStyle) borders.left[1];
+                range.Borders[XlBordersIndex.xlEdgeLeft].LineStyle = lineStyle;
             }
 
             if (borders.top != null)
             {
-                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.top[0];
-                range.Borders[Excel.XlBordersIndex.xlEdgeTop].Weight = weight;
+                var weight = (XlBorderWeight) borders.top[0];
+                range.Borders[XlBordersIndex.xlEdgeTop].Weight = weight;
 
-                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.top[1];
-                range.Borders[Excel.XlBordersIndex.xlEdgeTop].LineStyle = lineStyle;
+                var lineStyle = (XlLineStyle) borders.top[1];
+                range.Borders[XlBordersIndex.xlEdgeTop].LineStyle = lineStyle;
             }
 
             if (borders.bottom != null)
             {
-                Excel.XlBorderWeight weight = (Excel.XlBorderWeight)borders.bottom[0];
-                range.Borders[Excel.XlBordersIndex.xlEdgeBottom].Weight = weight;
+                var weight = (XlBorderWeight) borders.bottom[0];
+                range.Borders[XlBordersIndex.xlEdgeBottom].Weight = weight;
 
-                Excel.XlLineStyle lineStyle = (Excel.XlLineStyle)borders.bottom[1];
-                range.Borders[Excel.XlBordersIndex.xlEdgeBottom].LineStyle = lineStyle;
+                var lineStyle = (XlLineStyle) borders.bottom[1];
+                range.Borders[XlBordersIndex.xlEdgeBottom].LineStyle = lineStyle;
             }
         }
 
-        private void ApplyChange(Action action) {
-            this.excel.EnableEvents = false;
+        private void ApplyChange(Action action)
+        {
+            _excel.EnableEvents = false;
             try
             {
-                if (action.workbook != ident)
-                {
+                if (action.workbook != _ident)
                     return;
-                }
-                Excel.Workbook wb = GetWorkbook();
-                Excel.Worksheet ws = wb.Worksheets[action.sheet];
-                foreach (Cell[] row in action.cells)
+
+                var wb = GetWorkbook();
+                Worksheet ws = wb.Worksheets[action.sheet];
+
+                foreach (var row in action.cells)
                 {
-                    foreach (Cell cell in row)
+                    foreach (var cell in row)
                     {
-                        Excel.Range range = ws.get_Range(cell.key);
+                        var range = ws.Range[cell.key];
                         range.Value2 = cell.value;
 
                         // Applying cell properties
                         // Matching Event.cs:90
 
                         if (cell.color != null)
-                        {
                             range.Interior.ColorIndex = cell.color;
-                        }
+
                         if (cell.font != null)
-                        {
                             range.Font.Name = cell.font;
-                        }
+
                         if (cell.fontstyle != null)
                         {
                             // Parsing format bitmask
-                            if (cell.fontstyle.HasValue) {
-                                range.Font.Bold = BitToBool(cell.fontstyle.Value, 0);
-                                range.Font.Italic = BitToBool(cell.fontstyle.Value, 1);
-                                range.Font.Underline = BitToBool(cell.fontstyle.Value, 2);
-                            }
+                            range.Font.Bold = BitToBool(cell.fontstyle.Value, 0);
+                            range.Font.Italic = BitToBool(cell.fontstyle.Value, 1);
+                            range.Font.Underline = BitToBool(cell.fontstyle.Value, 2);
                         }
+
                         if (cell.borders != null)
-                        {
                             ApplyBorders(cell.borders, range);
-                        }
                     }
                 }
             }
             finally
             {
-                this.excel.EnableEvents = true;
+                _excel.EnableEvents = true;
             }
         }
 
@@ -153,163 +139,147 @@ namespace comnsense
         private ZMessage ServeRangeRequest(Action action)
         {
             // TODO lousy boilerplate from above
-            this.excel.EnableEvents = false;
+            _excel.EnableEvents = false;
             try
             {
-                if (action.workbook != ident)
-                {
+                if (action.workbook != _ident)
                     return null;
-                }
-                Excel.Workbook wb = GetWorkbook();
-                Excel.Worksheet ws = wb.Worksheets[action.sheet];
+                var wb = GetWorkbook();
+                Worksheet ws = wb.Worksheets[action.sheet];
 
                 // boilerplate ends
-                   
-                string rangeName = action.rangeName;
+
+                var rangeName = action.rangeName;
 
                 // What is requested in addition to value?
-                bool isColorRequested = BitToBool(action.flags, 0);
-                bool isFontRequested = BitToBool(action.flags, 1);
-                bool isFontstyleRequested = BitToBool(action.flags, 2);
-                bool isBordersRequested = BitToBool(action.flags, 3);
+                var isColorRequested = BitToBool(action.flags, 0);
+                var isFontRequested = BitToBool(action.flags, 1);
+                var isFontstyleRequested = BitToBool(action.flags, 2);
+                var isBordersRequested = BitToBool(action.flags, 3);
 
                 // Getting range
-                Excel.Range range = ws.get_Range(rangeName, Type.Missing);
-                Cell[][] cellsToSend = Event.GetCellsFromRange(range, 
+                var range = ws.Range[rangeName, Type.Missing];
+                var cellsToSend = Event.GetCellsFromRange(
+                    range,
                     isBordersRequested,
                     isFontRequested,
                     isColorRequested,
-                    isFontstyleRequested
-                );
+                    isFontstyleRequested);
 
-                Event responseEvent = new Event
+                var responseEvent = new Event
                 {
                     type = Event.EventType.RangeResponse,
-                    workbook = ident,
+                    workbook = _ident,
                     sheet = ws.Name,
                     cells = cellsToSend,
                 };
 
-                // Getting JSON representation of the Event
-                String data = Json.JsonConvert.SerializeObject(
-                    responseEvent, Json.Formatting.None, 
-                    new Json.JsonSerializerSettings 
-                    {
-                        NullValueHandling = Json.NullValueHandling.Ignore 
-                    }
-                );
+                var eventJson = JsonConvert.SerializeObject(
+                    responseEvent, 
+                    Formatting.None,
+                    new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
 
-                // Seding the message
-                var message = new ZMessage();
-                message.Add(new ZFrame("event"));
-                message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
-                return(message);
+                return new ZMessage {new ZFrame("event"), new ZFrame(Encoding.UTF8.GetBytes(eventJson))};
             }
             finally
             {
-                this.excel.EnableEvents = true;
+                _excel.EnableEvents = true;
             }
         }
 
         // This is run in a separate thread from ThidAddIn
         public void Run(CancellationToken ct)
         {
-            using (ZSocket subscriber = new ZSocket(this.ctx, ZSocketType.SUB),
-                           agent = new ZSocket(this.ctx, ZSocketType.DEALER))
+            using (var subscriber = new ZSocket(_context, ZSocketType.SUB))
+            using (var agent = new ZSocket(_context, ZSocketType.DEALER))
             {
-                subscriber.SetOption(ZSocketOption.SUBSCRIBE, this.ident);  // any events
+                subscriber.SetOption(ZSocketOption.SUBSCRIBE, _ident); // any events
                 subscriber.Connect(EventPublisher.RouterAddress);
 
                 agent.SetOption(ZSocketOption.IDENTITY, Guid.NewGuid().ToString());
-                agent.Connect(Router.AgentAddress);
+                agent.Connect(AgentAddress);
 
-                ZError error = default(ZError);
                 ZMessage[] messages = null;
+                ZSocket[] sockets = {subscriber, agent};
 
-                ZSocket[] sockets = new ZSocket[] { 
-                subscriber, agent };
+                ZPollItem[] polls =
+                {
+                    // Receives publisher messages and forwards them
+                    ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) =>
+                    {
+                        msg = sock.ReceiveMessage();
+                        // We need the second frame
+                        var frame = msg.Last();
+                        // String frame_str = frame.ReadString(Encoding.UTF8);
 
-                ZPollItem[] polls = new ZPollItem[] {
-                // Receives publisher messages and forwards them
-                ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
-                    msg = sock.ReceiveMessage();
-                    // We need the second frame
-                    ZFrame frame = msg.Last();
-                    // String frame_str = frame.ReadString(Encoding.UTF8);
-                        
-                    // Sending the received frame directly
-                    using (var message = new ZMessage())
-                    {
-                        message.Add(new ZFrame("event"));
-                        message.Add(frame);
-                        agent.Send(message);
-                    }
-                    err = default(ZError);
-                    return true; 
-                }), 
-                // Receives Actions 
-                ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) => {
-                    msg = sock.ReceiveMessage();
-                    String type = msg[0].ReadString();
-                    String payload = FrameToUnicodeString(msg[1]);
-
-                    Action action = null;
-                    try
-                    {
-                        action = Json.JsonConvert.DeserializeObject<Action>(
-                            payload, new Json.JsonSerializerSettings { NullValueHandling = Json.NullValueHandling.Ignore });
-                    }
-                    catch
-                    {
-                        // ignore deserialization errors
-                    }
-                    if (action != null)
-                    {
-                        if (action.type == Action.ActionType.ComnsenseChange)
+                        // Sending the received frame directly
+                        using (var message = new ZMessage())
                         {
-                            this.ApplyChange(action);
+                            message.Add(new ZFrame("event"));
+                            message.Add(frame);
+                            agent.Send(message);
                         }
-                        if (action.type == Action.ActionType.RangeRequest)
+                        err = default(ZError);
+                        return true;
+                    }),
+                    // Receives Actions 
+                    ZPollItem.Create((ZSocket sock, out ZMessage msg, out ZError err) =>
+                    {
+                        msg = sock.ReceiveMessage();
+                        var payload = FrameToUnicodeString(msg[1]);
+
+                        Action action = null;
+                        try
                         {
-                            ZMessage message = this.ServeRangeRequest(action);
-                            agent.SendMessage(message);
+                            action = JsonConvert.DeserializeObject<Action>(
+                                payload,
+                                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
                         }
-                    }
-                    err = default(ZError);
-                    return true; 
-                })
-            };
+                        catch
+                        {
+                            // ignore deserialization errors
+                        }
+                        if (action != null)
+                        {
+                            if (action.type == Action.ActionType.ComnsenseChange)
+                                ApplyChange(action);
+                            else if (action.type == Action.ActionType.RangeRequest)
+                            {
+                                var message = ServeRangeRequest(action);
+                                agent.SendMessage(message);
+                            }
+                        }
+                        err = default(ZError);
+                        return true;
+                    })
+                };
 
                 try
                 {
                     while (!ct.IsCancellationRequested)
                     {
-                        if (!sockets.Poll(polls, ZPoll.In, ref messages, out error, Router.Interval))
+                        ZError error;
+                        if (sockets.Poll(polls, ZPoll.In, ref messages, out error, Interval))
+                            continue;
+
+                        if (Equals(error, ZError.EAGAIN))
                         {
-                            if (error == ZError.EAGAIN)
-                            {
-                                Thread.Sleep(1);
-                                continue;
-                            }
-
-                            if (error == ZError.ETERM)
-                            {
-                                break;
-                            }
-
-                            throw new ZException(error);
+                            Thread.Sleep(1);
+                            continue;
                         }
+
+                        if (Equals(error, ZError.ETERM))
+                            break;
+
+                        throw new ZException(error);
                     }
                 }
                 catch (ZException)
                 {
                     if (!ct.IsCancellationRequested)
-                    {
                         throw;
-                    }
                 }
             }
         }
     }
-
 }

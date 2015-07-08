@@ -1,53 +1,55 @@
-﻿/*
- * EventPublisher binds to a ZMQ Context and can publish Events to it to Router
- */
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ZeroMQ;
-using Json = Newtonsoft.Json;
 
 namespace comnsense
 {
-    class EventPublisher: IDisposable
+    /// <summary>
+    ///  EventPublisher binds to a ZMQ Context and can publish Events to it to Router
+    /// </summary>
+    internal class EventPublisher : IDisposable
     {
         public const string RouterAddress = "inproc://events";
+        private readonly ZSocket _socket;
 
-        public EventPublisher(ZContext ctx)
+        public EventPublisher(ZContext context)
         {
-            this.socket = new ZSocket(ctx, ZSocketType.PUB);
-            this.socket.Bind(EventPublisher.RouterAddress);
+            _socket = new ZSocket(context, ZSocketType.PUB);
+            _socket.Bind(RouterAddress);
         }
 
-        public void Send(Event evt) {
-            String data = Json.JsonConvert.SerializeObject(
-                evt, Json.Formatting.None, 
-                new Json.JsonSerializerSettings 
-                    {
-                        NullValueHandling = Json.NullValueHandling.Ignore 
-                    });
+        public void Send(Event @event)
+        {
+            var data = JsonConvert.SerializeObject(
+                @event, 
+                Formatting.None, 
+                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
+
             using (var message = new ZMessage())
             {
-                message.Add(new ZFrame(Encoding.UTF8.GetBytes(evt.workbook)));
+                message.Add(new ZFrame(Encoding.UTF8.GetBytes(@event.workbook)));
                 message.Add(new ZFrame(Encoding.UTF8.GetBytes(data)));
-                this.socket.Send(message);
+                _socket.Send(message);
             }
-        }
-
-        ~EventPublisher()
-        {
-            this.Dispose();
-
         }
 
         public void Dispose()
         {
-            this.socket.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        private ZSocket socket;
+        ~EventPublisher()
+        {
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+                if (_socket != null)
+                    _socket.Dispose();
+        }
     }
 }
