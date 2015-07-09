@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace comnsense
 {
-    [Serializable()]
-    class Action
+    [Serializable]
+    internal class Action
     {
         public enum ActionType
         {

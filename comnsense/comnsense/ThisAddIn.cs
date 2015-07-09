@@ -1,148 +1,124 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using Excel = Microsoft.Office.Interop.Excel;
-using Office = Microsoft.Office.Core;
-using Microsoft.Office.Tools.Excel;
 using System.Threading;
+using Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 
 namespace comnsense
 {
     public partial class ThisAddIn
     {
-        private ZContext context;
-        private EventPublisher publisher;
-        private Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>> routers;
-        private Dictionary<string, Cell[][]> lastSelectedValues;
+        private ZContext _context;
+        private EventPublisher _publisher;
+        private Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>> _routers;
+        private Dictionary<string, Cell[][]> _lastSelectedValues;
 
-        private void ThisAddIn_Startup(object sender, System.EventArgs e)
+        private void ThisAddIn_Startup(object sender, EventArgs e)
         {
-            this.context = new ZContext();
-            this.publisher = new EventPublisher(this.context);
-            this.routers = new Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>>();
-            this.lastSelectedValues = new Dictionary<string, Cell[][]>();
-            this.Application.WorkbookOpen += new Excel.AppEvents_WorkbookOpenEventHandler(ThisAddIn_WorkbookOpen);
-            this.Application.WorkbookBeforeClose += new Excel.AppEvents_WorkbookBeforeCloseEventHandler(ThisAddIn_WorkbookBeforeClose);
-            this.Application.SheetSelectionChange += new Excel.AppEvents_SheetSelectionChangeEventHandler(ThisAddIn_SheetSelectionChange);
-            this.Application.SheetChange += new Excel.AppEvents_SheetChangeEventHandler(ThisAddIn_SheetChange);
-            this.Application.WorkbookBeforeClose += new Excel.AppEvents_WorkbookBeforeCloseEventHandler(ThisAddIn_BeforeClose);
-            ((Excel.AppEvents_Event)this.Application).NewWorkbook += new Excel.AppEvents_NewWorkbookEventHandler(ThisAddIn_NewWorkbook);
+            _context = new ZContext();
+            _publisher = new EventPublisher(_context);
+            _routers = new Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>>();
+            _lastSelectedValues = new Dictionary<string, Cell[][]>();
+
+            Application.WorkbookOpen += ThisAddIn_WorkbookOpen;
+            Application.WorkbookBeforeClose += ThisAddIn_WorkbookBeforeClose;
+            Application.SheetSelectionChange += ThisAddIn_SheetSelectionChange;
+            Application.SheetChange += ThisAddIn_SheetChange;
+            Application.WorkbookBeforeClose += ThisAddIn_BeforeClose;
+            ((AppEvents_Event) Application).NewWorkbook += ThisAddIn_NewWorkbook;
         }
 
-        private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
+        private void ThisAddIn_Shutdown(object sender, EventArgs e)
         {
-            foreach (KeyValuePair<String, KeyValuePair<Thread, CancellationTokenSource>> pair in this.routers)
-            {
-                Thread thread = pair.Value.Key;
+            foreach (Thread thread in _routers.Select(pair => pair.Value.Key))
                 thread.Join();
-            }
         }
 
-        void ThisAddIn_WorkbookOpen(Excel.Workbook wb)
+        private void ThisAddIn_WorkbookOpen(Workbook wb)
         {
-            String ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookIdent(wb);
             RunRouter(ident);
-            this.publisher.Send(Event.WorkbookOpen(ident, wb));
+            _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
-        void ThisAddIn_NewWorkbook(Excel.Workbook wb)
+        private void ThisAddIn_NewWorkbook(Workbook wb)
         {
-            String ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookIdent(wb);
             RunRouter(ident);
-            this.publisher.Send(Event.WorkbookOpen(ident, wb));
+            _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
-        private void ThisAddIn_WorkbookBeforeClose(Excel.Workbook wb, ref bool result)
+        private void ThisAddIn_WorkbookBeforeClose(Workbook wb, ref bool result)
         {
-            String ident = GetWorkbookIdent(wb);
-            this.publisher.Send(Event.WorkbookBeforeClose(ident, wb));
+            string ident = GetWorkbookIdent(wb);
+            _publisher.Send(Event.WorkbookBeforeClose(ident, wb));
         }
 
-        private void ThisAddIn_BeforeClose(Excel.Workbook wb, ref bool result)
+        private void ThisAddIn_BeforeClose(Workbook wb, ref bool result)
         {
-            String ident = GetWorkbookIdent(wb);
-            if (this.routers.ContainsKey(ident)) {
-                KeyValuePair<Thread, CancellationTokenSource> pair;
-                if (this.routers.TryGetValue(ident, out pair)) {
-                    pair.Value.Cancel();
-                }
-            }
+            string ident = GetWorkbookIdent(wb);
+            if (!_routers.ContainsKey(ident))
+                return;
+            KeyValuePair<Thread, CancellationTokenSource> pair;
+            if (_routers.TryGetValue(ident, out pair))
+                pair.Value.Cancel();
         }
 
-        private void ThisAddIn_SheetSelectionChange(object sh, Excel.Range target)
+        private void ThisAddIn_SheetSelectionChange(object sh, Range target)
         {
-            Excel.Workbook wb = ((Excel.Worksheet)sh).Parent;
-            String ident = GetWorkbookIdent(wb);
-            if (this.lastSelectedValues.ContainsKey(ident)) {
-                this.lastSelectedValues[ident] = Event.GetCellsFromRange(target);
-            }
+            Workbook wb = ((Worksheet) sh).Parent;
+            string ident = GetWorkbookIdent(wb);
+            if (_lastSelectedValues.ContainsKey(ident))
+                _lastSelectedValues[ident] = Event.GetCellsFromRange(target);
             else
+                _lastSelectedValues.Add(ident, Event.GetCellsFromRange(target));
+        }
+
+        private void ThisAddIn_SheetChange(object sh, Range target)
+        {
+            var worksheet = ((Worksheet) sh);
+            Workbook wb = worksheet.Parent;
+            string ident = GetWorkbookIdent(wb);
+            if (_lastSelectedValues.ContainsKey(ident))
             {
-                this.lastSelectedValues.Add(ident, Event.GetCellsFromRange(target));
+                _publisher.Send(
+                    Event.SheetChange(ident, worksheet, target, _lastSelectedValues[ident]));
             }
         }
 
-        private void ThisAddIn_SheetChange(object sh, Excel.Range target)
+        private string GetWorkbookIdent(Workbook wb)
         {
-            Excel.Workbook wb = ((Excel.Worksheet)sh).Parent;
-            String ident = GetWorkbookIdent(wb);
-            if (this.lastSelectedValues.ContainsKey(ident))
-            {
-                this.publisher.Send(
-                    Event.SheetChange(ident, (sh as Excel.Worksheet), target, this.lastSelectedValues[ident])
-                );
-            }
-        }
-
-        private String GetWorkbookIdent(Excel.Workbook wb)
-        {
-            Ident ident = new Ident(wb);
-            if (ident.get() == null)
-            {
-                ident.set(System.Guid.NewGuid().ToString());
-            }
+            var ident = new Ident(wb);
+            if (ident.Get() == null)
+                ident.Set(Guid.NewGuid().ToString());
             return ident.ToString();
         }
 
-        private void RunRouter(String ident)
+        private void RunRouter(string ident)
         {
             KeyValuePair<Thread, CancellationTokenSource> pair;
-            if (this.routers.TryGetValue(ident, out pair))
-            {
+            if (_routers.TryGetValue(ident, out pair))
                 if ((!pair.Key.IsAlive) || (pair.Value.IsCancellationRequested))
-                {
-                    this.routers.Remove(ident);
-                }
-            }
-            if (!routers.ContainsKey(ident))
-            {
-                CancellationTokenSource canceller = new System.Threading.CancellationTokenSource();
-                Thread router = new Thread(() =>
-                {
-                    Router r = new Router(this.context, this.Application, ident);
-                    r.Run(canceller.Token);
-                });
-                routers.Add(ident.ToString(), new KeyValuePair<Thread, CancellationTokenSource>(router, canceller));
-                router.Start();
+                    _routers.Remove(ident);
 
-            }
+            if (_routers.ContainsKey(ident))
+                return;
+
+            var canceller = new CancellationTokenSource();
+            var routerThread = new Thread(() =>
+            {
+                var router = new Router(_context, Application, ident);
+                router.Run(canceller.Token);
+            });
+            _routers.Add(ident, new KeyValuePair<Thread, CancellationTokenSource>(routerThread, canceller));
+            routerThread.Start();
         }
 
-        #region Код, автоматически созданный VSTO
-
-        /// <summary>
-        /// Обязательный метод для поддержки конструктора - не изменяйте
-        /// содержимое данного метода при помощи редактора кода.
-        /// </summary>
         private void InternalStartup()
         {
-            this.Startup += new System.EventHandler(ThisAddIn_Startup);
-            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            Startup += ThisAddIn_Startup;
+            Shutdown += ThisAddIn_Shutdown;
         }
-        
-        #endregion
     }
 }
