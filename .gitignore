@@ -222,3 +222,4 @@ $RECYCLE.BIN/
 # ZeroMQ native libs that automatically copied by MSBuild
 comnsense/comnsense/amd64/
 comnsense/comnsense/i386/
+*.egg-info

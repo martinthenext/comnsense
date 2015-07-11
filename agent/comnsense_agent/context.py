@@ -1,7 +1,37 @@
 import logging
 import copy
 
+from comnsense_agent.message import Message
+from comnsense_agent.data import Action
+
 logger = logging.getLogger(__name__)
+
+
+class Table(object):
+    __slots__ = ("_sheet", "header")
+
+    def __init__(self, sheet, header=None):
+        self._sheet = sheet
+        if header is None:
+            header = []
+        self.header = header
+
+    def request_header(self):
+        header_range = "$A$1:$AZ$1"
+        return Message.action(Action.request(
+            self._sheet._context.workbook,
+            self._sheet.name, header_range))
+
+
+class Sheet(object):
+    __slots__ = ("_context", "name", "tables")
+
+    def __init__(self, context, name, tables=None):
+        self.name = name
+        if tables is None:
+            tables = []
+        self.tables = tables
+        self._context = context
 
 
 class Context(object):
@@ -9,6 +39,7 @@ class Context(object):
         self._copy = None
         self._workbook = None
         self._ready = False
+        self.sheets = {}
 
     @property
     def workbook(self):

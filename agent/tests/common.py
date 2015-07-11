@@ -63,10 +63,11 @@ def get_random_cell_int_value():
     return str(random.choice(range(1, 65535)))
 
 
-def get_random_cell(key=None):
+def get_random_cell(key=None, value=None):
     if key is None:
         key = get_random_cell_key()
-    value = get_random_cell_value()
+    if value is None:
+        value = get_random_cell_value()
     cell = Cell(key, value)
     if random.randint(0, 1) > 0:
         cell.borders = get_random_borders()

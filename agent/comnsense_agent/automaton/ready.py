@@ -4,6 +4,8 @@ from comnsense_agent.message import Message
 from comnsense_agent.data import Event, Action, Request, Signal, Response
 from comnsense_agent.data import Cell, Border
 
+from comnsense_agent.context import Sheet, Table
+
 from comnsense_agent.automaton import State
 
 logger = logging.getLogger(__name__)
@@ -12,15 +14,23 @@ logger = logging.getLogger(__name__)
 class Ready:
     """
     Context is ready
-
-    Test: Cell A3 changed -> Change cell B3
-          Cell A5 changed -> Request cells B2:B4
-                             If the middle cell (B3) is still 33
-                             Change cell D3
     """
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
+            if event.sheet not in context.sheets:
+                sheet = Sheet(context, event.sheet)
+                context.sheets[event.sheet] = sheet
+            else:
+                sheet = context.sheets[event.sheet]
+
+            table = Table(sheet)
+            context.sheets[event.sheet].tables.append(table)
+
+            if not table.header:
+                response = table.header_response()
+                context.return_state = self
+                return response, State.WaitingHeader
 
             if event.type == Event.Type.SheetChange:
                 first_cell = event.cells[0][0]
