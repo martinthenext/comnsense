@@ -8,13 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class Table(object):
-    __slots__ = ("_sheet", "header")
+    __slots__ = ("_sheet", "header", "stats")
 
     def __init__(self, sheet, header=None):
         self._sheet = sheet
-        if header is None:
-            header = []
         self.header = header
+        self.stats = {}
 
     def request_header(self):
         header_range = "$A$1:$AZ$1"

@@ -28,7 +28,10 @@ class WaitingHeader:
                 table = context.sheets[event.sheet].tables[0]
                 if empty < 0:  # not found
                     logger.debug("cound not found empty value")
-                    table.header += header
+                    if table.header is None:
+                        table.header = header
+                    else:
+                        table.header += header
                     # TODO return request for next part
                     state = context.return_state
                     context.return_state = None
@@ -40,7 +43,10 @@ class WaitingHeader:
                     # TODO think about it, what if sheet is actually ugly
                     return None, state
                 else:
-                    table.header += header[:empty]
+                    if table.header is None:
+                        table.header = header[:empty]
+                    else:
+                        table.header += header[:empty]
                     state = context.return_state
                     context.return_state = None
                     return None, state

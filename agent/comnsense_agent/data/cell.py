@@ -187,6 +187,14 @@ class Cell(object):
     def underline(self, value):
         self._set_fontstyle(Cell.FontStyle.underline.value, value)
 
+    @property
+    def column(self):
+        return self.key.split("$")[1]
+
+    @property
+    def row(self):
+        return self.key.split("$")[2]
+
     def to_primitive(self):
         obj = {"key": self.key}
         if self.value is not None:

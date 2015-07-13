@@ -107,3 +107,43 @@ class Event(object):
         cells = data.get("cells")
         prev_cells = data.get("prev_cells")
         return Event(type, workbook, sheet, cells, prev_cells)
+
+    def _get_rows(self, cells):
+        rows = {}
+        for row in cells:
+            for cell in row:
+                row.setdefault(cell.row, []).append(cell)
+        return rows
+
+    def _get_columns(self, cells):
+        columns = {}
+        for row in cells:
+            for cell in row:
+                columns.setdefault(cell.column, []).append(cell)
+        return columns
+
+    @property
+    def rows(self):
+        return self._get_rows(self.cells)
+
+    @property
+    def prev_rows(self):
+        return self._get_rows(self.prev_cells)
+
+    @property
+    def columns(self):
+        return self._get_columns(self.cells)
+
+    @property
+    def prev_columns(self):
+        return self._get_columns(self.prev_cells)
+
+    @property
+    def previous(self, cell):
+        row = sef.prev_rows.get(cell.row)
+        if row is None:
+            return None
+        row = [x for x in row if x.key == cell.key]
+        if not row:
+            return None
+        return row[0]

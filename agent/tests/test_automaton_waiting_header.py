@@ -72,7 +72,7 @@ class TestStateWaitingHeader(unittest.TestCase):
         self.assertEquals(answer, None)
         self.assertEquals(state, next_state)
         self.assertEquals(self.context.return_state, None)
-        self.assertEquals(table.header, [])
+        self.assertEquals(table.header, None)
 
     def test_no_empty_cells_range_response(self):
         workbook = get_random_workbook_id()

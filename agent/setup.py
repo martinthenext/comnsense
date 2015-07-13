@@ -4,7 +4,7 @@ import platform
 import sys
 import os
 
-requirements = ['pyzmq', 'tornado', 'msgpack-python']
+requirements = ['pyzmq', 'tornado', 'msgpack-python', "numpy"]
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 4:
     requirements.append('enum34')
@@ -41,7 +41,10 @@ setup(name='comnsense-agent',
       author_email='team@comnsense.io',
       packages=["comnsense_agent",
                 "comnsense_agent.data",
-                "comnsense_agent.utils"],
+                "comnsense_agent.utils",
+                "comnsense_agent.automaton",
+                "comnsense_agent.algorithm",
+                "comnsense_agent.algorithm.laptev"],
       install_requires=requirements,
       test_suite='tests',
       test_require=test_requirements,
