@@ -61,6 +61,7 @@ class feature_extractor(object):
             # todo: need a mapping from feature names to indices
             pass
 
+
 class column_analyzer(object):
     ''' extract patterns from a column
     '''
@@ -69,7 +70,8 @@ class column_analyzer(object):
         self.re_word = re.compile(r'[a-zA-Z]+')
         self.re_number = re.compile(r'\d+')
         self.re_white = re.compile(r'\s+')
-        self.re_punctuation = re.compile(r'[\.\,\-\_\/]+') # todo
+        # TODO ask Dmitry about it
+        self.re_punctuation = re.compile(r'[\.\,\-\_\/]+')
 
         self.patterns_dict = defaultdict(int)
         for value in column:
@@ -98,7 +100,7 @@ class column_analyzer(object):
             value = self.re_number.sub('0', value)
             return '%d words %d numbers' % (
                         len(re.findall('w', value)),
-                        len(re.findall('0', value)) )
+                        len(re.findall('0', value)))
         elif level == 3:
             value = self.re_word.sub('w', value)
             value = self.re_number.sub('0', value)
@@ -107,5 +109,5 @@ class column_analyzer(object):
             return value
 
     def get_rows_with_pattern(self, column, level, pattern):
-        checker = lambda v: self.get_pattern(v, level) == pattern
+        checker = (lambda v: self.get_pattern(v, level) == pattern)
         return map(checker, column)
