@@ -32,7 +32,12 @@ if platform.system().lower() == "windows":
         ('resources', (iconfile, pngfile, xpmfile))
     ]
 
-test_requirements = ['pytest', 'pytest-allure-adaptor', 'mock']
+test_requirements = [
+    'pytest',
+    'pytest-allure-adaptor',
+    'pytest-cov',
+    'mock',
+    'pep8']
 
 setup(name='comnsense-agent',
       version='0.0.1',
