@@ -27,7 +27,7 @@ class Ready:
             context.sheets[event.sheet].tables.append(table)
 
             if table.header is None:
-                response = table.header_response()
+                response = table.request_header()
                 context.return_state = self
                 return response, State.WaitingHeader
 
