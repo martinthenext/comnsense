@@ -23,8 +23,12 @@ class Ready:
             else:
                 sheet = context.sheets[event.sheet]
 
-            table = Table(sheet)
-            context.sheets[event.sheet].tables.append(table)
+            # TODO assuming that just one table on sheet
+            if context.sheet[event.sheet].tables:
+                table = context.sheets[event.sheet].tables[0]
+            else:
+                table = Table(sheet)
+                context.sheets[event.sheet].tables.append(table)
 
             if table.header is None:
                 response = table.request_header()
