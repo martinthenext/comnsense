@@ -21,6 +21,24 @@ class Table(object):
             self._sheet._context.workbook,
             self._sheet.name, header_range))
 
+    def __repr__(self):
+        if self.header is None:
+            header = None
+        else:
+            header = ["%s: %s" % (cell.column, cell.value)
+                      for cell in self.header]
+        if not self.stats:
+            stats = "{}"
+        else:
+            stats = {}
+            for key, value in self.stats.items:
+                if isinstance(value, dict):
+                    stats[key] = value.keys()
+                else:
+                    raise NotImplementedError()
+        result = u"Table {header: %s, stats: %s}" % (header, stats)
+        return result
+
 
 class Sheet(object):
     __slots__ = ("_context", "name", "tables")
@@ -31,6 +49,11 @@ class Sheet(object):
             tables = []
         self.tables = tables
         self._context = context
+
+    def __repr__(self):
+        result = u"Sheet {name: %s, tables: %%s}" % self.name
+        tables = [repr(t) for t in self.tables]
+        return result % tables
 
 
 class Context(object):

@@ -20,8 +20,10 @@ class Ready:
             if event.sheet not in context.sheets:
                 sheet = Sheet(context, event.sheet)
                 context.sheets[event.sheet] = sheet
+                logger.debug("new sheet: %s", sheet)
             else:
                 sheet = context.sheets[event.sheet]
+                logger.debug("sheet: %s", sheet)
 
             # TODO assuming that just one table on sheet
             if context.sheet[event.sheet].tables:
@@ -29,15 +31,20 @@ class Ready:
             else:
                 table = Table(sheet)
                 context.sheets[event.sheet].tables.append(table)
+                logger.debug("new table: %s", table)
 
             if table.header is None:
+                logger.debug("lets try to find header in table")
                 response = table.request_header()
                 context.return_state = self
                 return response, State.WaitingHeader
 
             if event.type in (Event.Type.SheetChange,
                               Event.Type.RangeResponse):
+                logger.debug("time to laptev's algorithm")
                 algorithm = OnlineQuery()
                 return algorithm.query(context, event), self
+            else:
+                return None, self
 
         return None, self
