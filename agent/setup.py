@@ -4,7 +4,7 @@ import platform
 import sys
 import os
 
-requirements = ['pyzmq==14.6.0', 'tornado', 'msgpack-python', "numpy==1.9.2"]
+requirements = ['pyzmq>=14.6.0', 'tornado', 'msgpack-python', "numpy==1.9.2"]
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 4:
     requirements.append('enum34')
@@ -16,13 +16,14 @@ if platform.system().lower() == "windows":
     py2exe = __import__('py2exe', globals(), locals(), [], -1)
     options = {"py2exe": {
                    'includes': ['zmq.backend.cython', 'sip'],
-                   'excludes': ['zmq.libzmq'],
+                   'excludes': ['zmq.libzmq', '_tkinter', 'Tkinter'],
                    'dll_excludes': ['libzmq.pyd', 'msvcp90.dll']
                    }
                }
     iconfile = os.path.join('resources', 'icon.ico')
     pngfile = os.path.join('resources', 'icon.png')
     xpmfile = os.path.join('resources', 'icon.xpm')
+    import numpy
     import zmq.libzmq
     import zmq.libsodium
     data_files = [
