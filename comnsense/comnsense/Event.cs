@@ -62,7 +62,7 @@ namespace comnsense
             foreach (Range row in range.Rows)
             {
                 var rowlist = new List<Cell>();
-                foreach (Range cell in row)
+                foreach (Range cell in row.Cells)
                 {
                     string key = "";
                     string value = "";
