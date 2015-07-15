@@ -26,7 +26,7 @@ class Ready:
                 logger.debug("sheet: %s", sheet)
 
             # TODO assuming that just one table on sheet
-            if context.sheet[event.sheet].tables:
+            if context.sheets[event.sheet].tables:
                 table = context.sheets[event.sheet].tables[0]
             else:
                 table = Table(sheet)
