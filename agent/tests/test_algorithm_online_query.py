@@ -87,3 +87,6 @@ class TestOnlineQuery(unittest.TestCase):
             c_data,
             [("$C$1", "VC1", ""),
              ("$C$2", "VC2", "")])
+
+    def test_get_action_no_stats(self):
+        pass

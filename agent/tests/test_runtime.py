@@ -12,8 +12,10 @@ from comnsense_agent.data import Request
 from comnsense_agent.data import Response
 from comnsense_agent.data import Signal
 
+from .common import COMNSENSE_WIKI
 
-@allure.testcase('https://github.com/martinthenext/comnsense/wiki/Runtime-test:-Initialization')
+
+@allure.testcase(COMNSENSE_WIKI + '/Runtime-test:-Initialization')
 class TestRuntimeInitialization(unittest.TestCase):
     @pytest.allure.step("creating new runtime")
     def get_new_runtime(self):

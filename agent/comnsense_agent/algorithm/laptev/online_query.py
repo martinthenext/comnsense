@@ -46,8 +46,8 @@ class OnlineQuery(object):
             [cell.value if cell else "" for cell in cells],
             [cell.value if cell else "" for cell in prev_cells])
 
-    def get_action(self, event, value, prev_value, stats, n_points):
-        assert event.type in (Event.Type.RangeResponse, Event.Type.SheetChange)
+    def get_action(self, event_type, value, prev_value, stats, n_points):
+        assert event_type in (Event.Type.RangeResponse, Event.Type.SheetChange)
         action = None
 
         # we have no stats, always CheckNew
@@ -55,7 +55,7 @@ class OnlineQuery(object):
             return OnlineQuery.Action.CheckNew
 
         # it is response, it is definitly old data
-        if event.type == Event.Type.RangeResponse:
+        if event_type == Event.Type.RangeResponse:
             action = OnlineQuery.Action.CheckOld
 
         # no prev value, CheckNew

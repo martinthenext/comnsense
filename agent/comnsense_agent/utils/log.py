@@ -24,7 +24,8 @@ def setup(level, filename=None):
         },
         "formatters": {
             "file": {
-                "format": "%(asctime)s: %(levelname)s: %(ident)s: %(name)s: %(message)s",
+                "format": ("%(asctime)s: %(levelname)s: "
+                           "%(ident)s: %(name)s: %(message)s"),
             },
             "syslog": {
                 "format": "comnsense-agent: %(ident)s: %(name)s: %(message)s",

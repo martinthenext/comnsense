@@ -11,6 +11,8 @@ from comnsense_agent.data import Cell
 RUSSIAN_LETTERS = u"абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 TEST_LETTERS = string.ascii_letters + RUSSIAN_LETTERS + RUSSIAN_LETTERS.upper()
 
+COMNSENSE_WIKI = 'https://github.com/martinthenext/comnsense/wiki'
+
 
 def get_random_workbook_id():
     return str(uuid.uuid1())

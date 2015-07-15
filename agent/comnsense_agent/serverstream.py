@@ -50,7 +50,7 @@ class LocalFileStream:
         elif req.type == Request.Type.SaveContext:
             context = req.data
             self.callback(
-                [message.ident, 
+                [message.ident,
                  MESSAGE_RESPONSE,
                  Response.accepted().serialize()])
             self.save_context(workbook, context)

@@ -142,7 +142,7 @@ class TestAction(unittest.TestCase):
              "cells": Cell.table_to_primitive(cells),
              "flags": flags
              })
-        self.assertEquals(action.serialize(), fixture)
+        self.assertEquals(json.loads(action.serialize()), json.loads(fixture))
         another = Action.deserialize(fixture)
         self.assertEquals(action, another)
 
