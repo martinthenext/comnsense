@@ -4,7 +4,7 @@ import platform
 import sys
 import os
 
-requirements = ['pyzmq==14.7.0', 'tornado', 'msgpack-python', "numpy==1.9.2"]
+requirements = ['pyzmq==14.6.0', 'tornado', 'msgpack-python', "numpy==1.9.2"]
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 4:
     requirements.append('enum34')
