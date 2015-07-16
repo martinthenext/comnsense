@@ -134,12 +134,7 @@ class ZLogHandler(logging.Handler):
             if record.exc_info:
                 dummy = self.format(record)
                 record.exc_info = None
-            data = None
-            try:
-                data = pickle.dumps(record)
-            except TypeError:
-                self.format(record)
-                data = pickle.dumps(record)
+            data = pickle.dumps(record)
             self.socket.send_multipart(list(Message.log(data)))
         except:
             self.handleError(record)
