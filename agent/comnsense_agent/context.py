@@ -37,7 +37,7 @@ class Table(object):
                 else:
                     raise NotImplementedError()
         result = u"Table {header: %s, stats: %s}" % (header, stats)
-        return result
+        return result.encode('utf-8')
 
 
 class Sheet(object):
@@ -53,7 +53,8 @@ class Sheet(object):
     def __repr__(self):
         result = u"Sheet {name: %s, tables: %%s}" % self.name
         tables = [repr(t) for t in self.tables]
-        return result % tables
+        result = result % tables
+        return result.encode('utf-8')
 
 
 class Context(object):

@@ -4,6 +4,8 @@ import enum
 from numpy import *
 
 from .feature_extractor import column_analyzer
+from comnsense_agent.data import Event, Cell, Action
+from comnsense_agent.message import Message
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,8 @@ class OnlineQuery(object):
                 rows[cell.row].append(cell)
             else:
                 rows[cell.row] = [cell]
-        return Action.change_from_event(event, list(rows.values()))
+        return Message.action(
+            Action.change_from_event(event, list(rows.values())))
 
     def query(self, context, event):
         # TODO assuming sheet contains just one table
@@ -172,7 +175,7 @@ class OnlineQuery(object):
             data = self.get_data(event, column)
 
             for key, value, prev_value in data:
-                action = self.get_action(event, value, prev_value,
+                action = self.get_action(event.type, value, prev_value,
                                          stats_dump, n_points)
 
                 if action == OnlineQuery.Action.CheckNew:
@@ -193,7 +196,8 @@ class OnlineQuery(object):
                 if action != OnlineQuery.Action.CheckOld:  # save dump
                     self.save_stats(table, column, n_points, stats)
 
-                if action in (ActionKind.CheckOld, ActionKind.CheckNew):
+                if action in (OnlineQuery.Action.CheckOld,
+                              OnlineQuery.Action.CheckNew):
                     decision = self.check(value, n_points, stats)
                     if decision == 0:
                         answer_cells.append(

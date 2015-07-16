@@ -14,9 +14,15 @@ class Ready:
     """
     Context is ready
     """
+    algorithm = OnlineQuery()
+
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
+            if event.type == Event.Type.WorkbookBeforeClose:
+                # TODO do something here before shutdown worker
+                return None, None  # special value to close runtime
+
             if event.sheet not in context.sheets:
                 sheet = Sheet(context, event.sheet)
                 context.sheets[event.sheet] = sheet
@@ -43,9 +49,9 @@ class Ready:
             if event.type in (Event.Type.SheetChange,
                               Event.Type.RangeResponse):
                 logger.debug("time to laptev's algorithm")
-                algorithm = OnlineQuery()
-                return algorithm.query(context, event), self
+                return self.algorithm.query(context, event), self
             else:
+                logger.warn("unexpected event: %s", event)
                 return None, self
 
         return None, self

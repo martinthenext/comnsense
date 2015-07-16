@@ -147,3 +147,12 @@ class Event(object):
         if not row:
             return None
         return row[0]
+
+    def __eq__(self, another):
+        for attr in Event.__slots__:
+            if getattr(self, attr) != getattr(another, attr):
+                return False
+        return True
+
+    def __ne__(self, another):
+        return not self.__eq__(another)
