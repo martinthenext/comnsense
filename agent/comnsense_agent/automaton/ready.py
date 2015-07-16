@@ -20,10 +20,11 @@ class Ready:
             if event.sheet not in context.sheets:
                 sheet = Sheet(context, event.sheet)
                 context.sheets[event.sheet] = sheet
-                logger.debug("new sheet: %s", sheet)
+                # TODO remove repr here
+                logger.debug("new sheet: %s", repr(sheet))
             else:
                 sheet = context.sheets[event.sheet]
-                logger.debug("sheet: %s", sheet)
+                logger.debug("sheet: %s", repr(sheet))
 
             # TODO assuming that just one table on sheet
             if context.sheets[event.sheet].tables:
@@ -31,7 +32,7 @@ class Ready:
             else:
                 table = Table(sheet)
                 context.sheets[event.sheet].tables.append(table)
-                logger.debug("new table: %s", table)
+                logger.debug("new table: %s", repr(table))
 
             if table.header is None:
                 logger.debug("lets try to find header in table")

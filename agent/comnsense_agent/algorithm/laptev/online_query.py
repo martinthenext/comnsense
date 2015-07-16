@@ -162,7 +162,7 @@ class OnlineQuery(object):
                 rows[cell.row] = [cell]
         return Action.change_from_event(event, list(rows.values()))
 
-    def query(context, event):
+    def query(self, context, event):
         # TODO assuming sheet contains just one table
         table = context.sheets[event.sheet].tables[0]
         answer_cells = []
