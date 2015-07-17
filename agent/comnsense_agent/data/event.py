@@ -93,8 +93,9 @@ class Event(object):
         def hook(dct):
             for key in ["cells", "prev_cells"]:
                 if key in dct:
+                    logger.debug("key in deserialize method: %s", repr(key))
                     dct[key] = Cell.table_from_primitive(dct[key])
-                return dct
+            return dct
 
         data = None
         try:
@@ -105,6 +106,7 @@ class Event(object):
         workbook = data.get("workbook")
         sheet = data.get("sheet")
         cells = data.get("cells")
+        logger.debug("cells in deserialize method: %s", repr(cells))
         prev_cells = data.get("prev_cells")
         return Event(type, workbook, sheet, cells, prev_cells)
 
@@ -136,6 +138,7 @@ class Event(object):
 
     @property
     def prev_columns(self):
+        logger.debug("prev_cells: %s", repr(self.prev_cells))
         return self._get_columns(self.prev_cells)
 
     @property
