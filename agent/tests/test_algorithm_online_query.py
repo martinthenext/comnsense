@@ -49,7 +49,7 @@ def sheetname():
 def test_algorithm_on_blank_sheet(workbook, sheetname):
     """
         Case:
-            creating column with english latters on empty sheet
+            creating column with english letters on empty sheet
     """
     allure.attach("workbook", workbook)
     allure.attach("sheetname", sheetname)
