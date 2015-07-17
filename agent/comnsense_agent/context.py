@@ -31,7 +31,7 @@ class Table(object):
             stats = "{}"
         else:
             stats = {}
-            for key, value in self.stats.items:
+            for key, value in self.stats.items():
                 if isinstance(value, dict):
                     stats[key] = value.keys()
                 else:
