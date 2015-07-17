@@ -235,7 +235,8 @@ class Cell(object):
         main = "{%s: %s}" % (self.key, self.value)
         attrs = self.to_primitive()
         del attrs["key"]
-        del attrs["value"]
+        if self.value is not None:
+            del attrs["value"]
         items = attrs.items()
         items = ["%s=%s" % x for x in items]
         if items:
