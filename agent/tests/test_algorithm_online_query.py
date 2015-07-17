@@ -1,9 +1,14 @@
+# encoding=utf-8
 import pytest
 import unittest
 import mock
 import random
 import string
 import pickle
+import allure
+import json
+from collections import namedtuple
+from hamcrest import *
 
 
 from .common import get_random_workbook_id, get_random_cell
@@ -11,6 +16,84 @@ from .common import get_random_sheet_name
 from comnsense_agent.context import Context, Sheet, Table
 from comnsense_agent.data import Event, Cell
 from comnsense_agent.algorithm.laptev import OnlineQuery
+
+
+def get_blank_context(workbook, sheetname):
+    context = mock.Mock()
+    context.sheets = {}
+    sheet = Sheet(context, sheetname)
+    table = Table(sheet)
+    sheet.tables = [table]
+    context.sheets[sheetname] = sheet
+    return context
+
+
+def get_random_lowercase_ascii_string():
+    max_length = 10
+    min_length = 1
+    length = random.randint(min_length, max_length)
+    result = "".join(random.sample(string.ascii_lowercase, length))
+    return result
+
+
+@pytest.yield_fixture
+def workbook():
+    yield get_random_workbook_id()
+
+
+@pytest.yield_fixture
+def sheetname():
+    yield get_random_sheet_name()
+
+
+def test_algorithm_on_blank_sheet(workbook, sheetname):
+    """
+        Case:
+            creating column with english latters on empty sheet
+    """
+    allure.attach("workbook", workbook)
+    allure.attach("sheetname", sheetname)
+
+    algorithm = OnlineQuery()
+
+    column = "A"
+    event_count = 5
+
+    def get_event(num, value=None):
+        key = "$%s$%d" % (column, num)
+        if value is None:
+            value = get_random_lowercase_ascii_string()
+        cells = [[Cell(key, value)]]
+        prev_cells = [[Cell(key, "")]]
+        event = Event(Event.Type.SheetChange, workbook,
+                      sheetname, cells, prev_cells)
+        allure.attach("event", event.serialize(),
+                      type=allure.attach_type.JSON)
+        return event
+
+    def get_stats(context):
+        table = context.sheets[sheetname].tables[0]
+        n_points, stats = algorithm.get_stats(table, column)
+        allure.attach("n_points", str(n_points))
+        allure.attach("stats", json.dumps(stats, indent=2),
+                      allure.attach_type.JSON)
+        return n_points, stats
+
+    with allure.step("create blank context"):
+        context = get_blank_context(workbook, sheetname)
+
+    for num in range(1, event_count + 1):
+        with allure.step("send event: %d" % num):
+            event = get_event(num)
+            action = algorithm.query(context, event)
+            n_points, stats = get_stats(context)
+            assert_that(action, none())
+
+    with allure.step("send wrong event"):
+        event = get_event(event_count + 1, "1")
+        action = algorithm.query(context, event)
+        n_points, stats = get_stats(context)
+        assert_that(action, not_none())
 
 
 class TestOnlineQuery(unittest.TestCase):
@@ -37,7 +120,7 @@ class TestOnlineQuery(unittest.TestCase):
         orig_n_points = 10
         column = random.choice(string.ascii_uppercase)
 
-        self.table.stats["QueryOnline"] = \
+        self.table.stats["OnlineQuery"] = \
             {column: pickle.dumps((orig_n_points, orig_stats))}
         n_points, stats = alg.get_stats(self.table, column)
         self.assertEquals(n_points, orig_n_points)
@@ -50,7 +133,7 @@ class TestOnlineQuery(unittest.TestCase):
         column = random.choice(string.ascii_uppercase)
 
         alg.save_stats(self.table, column, orig_n_points, orig_stats)
-        n_points, stats = pickle.loads(self.table.stats["QueryOnline"][column])
+        n_points, stats = pickle.loads(self.table.stats["OnlineQuery"][column])
 
         self.assertEquals(n_points, orig_n_points)
         self.assertEquals(stats, orig_stats)

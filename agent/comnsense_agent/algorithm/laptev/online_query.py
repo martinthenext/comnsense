@@ -5,7 +5,6 @@ from numpy import *
 
 from .feature_extractor import column_analyzer
 from comnsense_agent.data import Event, Cell, Action
-from comnsense_agent.message import Message
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class OnlineQuery(object):
         CellUnmarked = 3
 
     def __init__(self):
-        self.CONST_ALG_NAME = "QueryOnline"
+        self.CONST_ALG_NAME = "OnlineQuery"
         self.CONST_N_LAYERS = 3
         # pattern occurs 10 times rarer than the average pattern
         self.CONST_BINOM_THRESHOLD = 0.1
@@ -157,13 +156,14 @@ class OnlineQuery(object):
 
     def make_answer(self, event, cells):
         rows = {}
+        if not cells:
+            return None
         for cell in cells:
             if cell.row in rows:
                 rows[cell.row].append(cell)
             else:
                 rows[cell.row] = [cell]
-        return Message.action(
-            Action.change_from_event(event, list(rows.values())))
+        return Action.change_from_event(event, list(rows.values()))
 
     def query(self, context, event):
         # TODO assuming sheet contains just one table
@@ -202,11 +202,11 @@ class OnlineQuery(object):
                     if decision == 0:
                         answer_cells.append(
                             Cell(key, value, color=self.CONST_WRONG_COLOR))
-                    else:
-                        answer_cells.append(
-                            Cell(key, value, color=self.CONST_RIGHT_COLOR))
-                else:
-                    answer_cells.append(
-                        Cell(key, value, color=self.CONST_RiGHT_COLOR))
+                #     else:
+                #         answer_cells.append(
+                #             Cell(key, value, color=self.CONST_RIGHT_COLOR))
+                # else:
+                #     answer_cells.append(
+                #         Cell(key, value, color=self.CONST_RiGHT_COLOR))
 
         return self.make_answer(event, answer_cells)

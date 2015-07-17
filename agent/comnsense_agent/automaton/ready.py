@@ -49,7 +49,11 @@ class Ready:
             if event.type in (Event.Type.SheetChange,
                               Event.Type.RangeResponse):
                 logger.debug("time to laptev's algorithm")
-                return self.algorithm.query(context, event), self
+                action = self.algorithm.query(context, event)
+                if action is not None:
+                    return Message.action(action), self
+                else:
+                    return None, self
             else:
                 logger.warn("unexpected event: %s", event)
                 return None, self
