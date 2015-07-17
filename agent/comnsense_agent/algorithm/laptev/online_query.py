@@ -153,6 +153,7 @@ class OnlineQuery(object):
                         decision = 1
                     else:
                         decision = -1
+        return decision
 
     def make_answer(self, event, cells):
         rows = {}

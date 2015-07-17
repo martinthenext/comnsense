@@ -14,7 +14,7 @@ from hamcrest import *
 from .common import get_random_workbook_id, get_random_cell
 from .common import get_random_sheet_name
 from comnsense_agent.context import Context, Sheet, Table
-from comnsense_agent.data import Event, Cell
+from comnsense_agent.data import Event, Cell, Action
 from comnsense_agent.algorithm.laptev import OnlineQuery
 
 
@@ -57,7 +57,7 @@ def test_algorithm_on_blank_sheet(workbook, sheetname):
     algorithm = OnlineQuery()
 
     column = "A"
-    event_count = 5
+    event_count = 10
 
     def get_event(num, value=None):
         key = "$%s$%d" % (column, num)
@@ -87,13 +87,20 @@ def test_algorithm_on_blank_sheet(workbook, sheetname):
             event = get_event(num)
             action = algorithm.query(context, event)
             n_points, stats = get_stats(context)
+
             assert_that(action, none())
 
     with allure.step("send wrong event"):
         event = get_event(event_count + 1, "1")
         action = algorithm.query(context, event)
         n_points, stats = get_stats(context)
-        assert_that(action, not_none())
+
+        assert_that(action, instance_of(Action))
+        allure.attach("action", action.serialize(),
+                      allure.attach_type.JSON)
+
+        cell = action.cells[0][0]
+        assert_that(cell.color, 3)
 
 
 class TestOnlineQuery(unittest.TestCase):
