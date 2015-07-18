@@ -1,6 +1,6 @@
-import pickle
-import logging
 import enum
+import logging
+import pickle
 
 from .feature_extractor import column_analyzer
 from comnsense_agent.data import Event, Cell, Action
