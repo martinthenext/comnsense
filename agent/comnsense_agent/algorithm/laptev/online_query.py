@@ -1,7 +1,6 @@
 import pickle
 import logging
 import enum
-from numpy import *
 
 from .feature_extractor import column_analyzer
 from comnsense_agent.data import Event, Cell, Action
@@ -10,6 +9,12 @@ logger = logging.getLogger(__name__)
 
 
 class OnlineQuery(object):
+    ALG_NAME = "OnlineQuery"
+    N_LAYERS = 3
+    # pattern occurs 10 times rarer than the average pattern
+    BINOM_THRESHOLD = 0.1
+    RIGHT_COLOR = 0
+    WRONG_COLOR = 3
 
     @enum.unique
     class Action(enum.IntEnum):
@@ -18,26 +23,18 @@ class OnlineQuery(object):
         CellCorrected = 2
         CellUnmarked = 3
 
-    def __init__(self):
-        self.CONST_ALG_NAME = "OnlineQuery"
-        self.CONST_N_LAYERS = 3
-        # pattern occurs 10 times rarer than the average pattern
-        self.CONST_BINOM_THRESHOLD = 0.1
-        self.CONST_RIGHT_COLOR = 0
-        self.CONST_WRONG_COLOR = 3
-
     def get_stats(self, table, column):
-        stats = table.stats.get(self.CONST_ALG_NAME, {}).get(column)
+        stats = table.stats.get(self.ALG_NAME, {}).get(column)
         if stats is None:
             return 0, []
         else:
             return pickle.loads(stats)
 
     def save_stats(self, table, column, n_points, stats):
-        if self.CONST_ALG_NAME not in table.stats:
-            table.stats[self.CONST_ALG_NAME] = {}
+        if self.ALG_NAME not in table.stats:
+            table.stats[self.ALG_NAME] = {}
         stats = pickle.dumps((n_points, stats))
-        table.stats[self.CONST_ALG_NAME][column] = stats
+        table.stats[self.ALG_NAME][column] = stats
 
     def get_data(self, event, column):
         cells = event.columns.get(column, [])
@@ -67,7 +64,7 @@ class OnlineQuery(object):
         if value and prev_value:
             action = OnlineQuery.Action.CellCorrected
 
-        for level in range(self.CONST_N_LAYERS):
+        for level in range(self.N_LAYERS):
             ca = column_analyzer([], level)
             pattern = ca.get_pattern(value, level)
             if pattern not in stats[level]:  # new pattern
@@ -82,7 +79,7 @@ class OnlineQuery(object):
     def add_value_to_stats(self, value, n_points, stats_dump):
         n_points += 1
         stats = []
-        for level in range(self.CONST_N_LAYERS):
+        for level in range(self.N_LAYERS):
             ca = column_analyzer([value], level=level)
             temp = stats_dump[level] if len(stats_dump) > level else {}
             for (pattern, occurances) in ca.patterns_dict.items():
@@ -95,14 +92,14 @@ class OnlineQuery(object):
         return n_points, stats
 
     def record_unmarked(self, value, n_points, stats):
-        for level in range(self.CONST_N_LAYERS):
+        for level in range(self.N_LAYERS):
             ca = column_analyzer([], level)
             pattern = ca.get_pattern(value, level)
             stats[level][pattern][1] += 1  # correct
         return n_points, stats
 
     def record_corrected(self, value, prev_value, n_points, stats):
-        for level in range(self.CONST_N_LAYERS):
+        for level in range(self.N_LAYERS):
             ca = column_analyzer([], level)
             pattern_was = ca.get_pattern(prev_value, level)
             stats[level][pattern_was][2] += 1  # incorrect
@@ -119,7 +116,7 @@ class OnlineQuery(object):
         # usually one needs the number of data points n >= 10*k,
         # where k is the number of bins (patterns per layer)
         # however, we will always use layers 0 and 1
-        for level in range(self.CONST_N_LAYERS):
+        for level in range(self.N_LAYERS):
             if level < 2 or n_points >= 10 * len(stats[level]):
                 ca = column_analyzer([], level)
                 pattern = ca.get_pattern(value, level)
@@ -147,9 +144,9 @@ class OnlineQuery(object):
                     # TODO if it crosses zero -
                     #      cannot reject H_0, => maybe wrong
                     # TODO tried Wilson confint, but it did not work
-                    if float(np)/n_points < self.CONST_BINOM_THRESHOLD:
+                    if float(np)/n_points < self.BINOM_THRESHOLD:
                         decision = 0
-                    elif float(np)/n_points > 1.0 - self.CONST_BINOM_THRESHOLD:
+                    elif float(np)/n_points > 1.0 - self.BINOM_THRESHOLD:
                         decision = 1
                     else:
                         decision = -1
@@ -202,12 +199,6 @@ class OnlineQuery(object):
                     decision = self.check(value, n_points, stats)
                     if decision == 0:
                         answer_cells.append(
-                            Cell(key, value, color=self.CONST_WRONG_COLOR))
-                #     else:
-                #         answer_cells.append(
-                #             Cell(key, value, color=self.CONST_RIGHT_COLOR))
-                # else:
-                #     answer_cells.append(
-                #         Cell(key, value, color=self.CONST_RiGHT_COLOR))
+                            Cell(key, value, color=self.WRONG_COLOR))
 
         return self.make_answer(event, answer_cells)

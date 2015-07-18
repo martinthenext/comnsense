@@ -1,10 +1,5 @@
 import logging
-import json
 import os
-
-import tornado
-import tornado.web
-import tornado.httpclient
 
 from comnsense_agent.data import Request, Response
 from comnsense_agent.message import Message, MESSAGE_RESPONSE
@@ -12,7 +7,7 @@ from comnsense_agent.message import Message, MESSAGE_RESPONSE
 logger = logging.getLogger(__name__)
 
 
-class LocalFileStream:
+class LocalFileStream(object):
     def __init__(self, server_str, loop, api="v1"):
         self.basepath = os.path.expanduser(os.path.join("~", "comnsense", api))
         self.loop = loop
@@ -53,7 +48,7 @@ class LocalFileStream:
                 [message.ident,
                  MESSAGE_RESPONSE,
                  Response.accepted().serialize()])
-            self.save_context(workbook, context)
+            self.save_context(context["workbook"], context)
             self.callback(
                 [message.ident, MESSAGE_RESPONSE,
                  Response.created().serialize()])

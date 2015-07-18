@@ -3,8 +3,7 @@ import logging
 from comnsense_agent.algorithm.laptev import OnlineQuery
 from comnsense_agent.automaton import State
 from comnsense_agent.context import Sheet, Table
-from comnsense_agent.data import Cell, Border
-from comnsense_agent.data import Event, Action, Request, Signal, Response
+from comnsense_agent.data import Event
 from comnsense_agent.message import Message
 
 logger = logging.getLogger(__name__)

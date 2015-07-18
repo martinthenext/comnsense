@@ -1,9 +1,5 @@
 import logging
-import uuid
 
-from comnsense_agent.message import Message
-from comnsense_agent.data import Event, Action, Request, Signal, Response
-from comnsense_agent.data import Cell, Border
 from comnsense_agent.context import Context
 
 from comnsense_agent.automaton.initialization import WaitingWorkbookID
@@ -22,7 +18,7 @@ State.Ready = Ready()
 State.WaitingHeader = WaitingHeader()
 
 
-class Runtime:
+class Runtime(object):
     def __init__(self):
         self.currentState = State.WaitingWorkbookID
         self.context = Context()

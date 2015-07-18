@@ -1,10 +1,6 @@
 import logging
 
-
-from comnsense_agent.message import Message
-from comnsense_agent.data import Event, Action, Request, Signal, Response
-
-from comnsense_agent.automaton import State
+from comnsense_agent.data import Event
 
 logger = logging.getLogger(__name__)
 

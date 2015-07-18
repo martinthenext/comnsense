@@ -1,6 +1,6 @@
+import enum
 import logging
 import msgpack
-import enum
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ class RequestError(RuntimeError):
     pass
 
 
-class Request:
+class Request(object):
     """
     Events should be used for transferring data between from the `Agent`
     to the Server

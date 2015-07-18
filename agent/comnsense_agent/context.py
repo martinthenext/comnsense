@@ -1,8 +1,7 @@
 import logging
-import copy
 
-from comnsense_agent.message import Message
 from comnsense_agent.data import Action
+from comnsense_agent.message import Message
 
 logger = logging.getLogger(__name__)
 

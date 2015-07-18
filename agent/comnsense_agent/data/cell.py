@@ -1,5 +1,5 @@
-import logging
 import enum
+import logging
 
 from types import NoneType
 
@@ -64,8 +64,8 @@ class Border(object):
         return "Border: %s" % self.to_primitive()
 
     def __eq__(self, another):
-        return self._weight == another._weight and \
-                self._linestyle == another._linestyle
+        return self.weight == another.weight and \
+                self.linestyle == another.linestyle
 
     def __ne__(self, another):
         return not self.__eq__(another)

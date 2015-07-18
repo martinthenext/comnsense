@@ -1,6 +1,6 @@
+import enum
 import logging
 import msgpack
-import enum
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ class SignalError(RuntimeError):
     pass
 
 
-class Signal:
+class Signal(object):
     """
     Signals should be used for service messages in interservice communication.
     It shall not contain the data if possible.

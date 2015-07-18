@@ -1,9 +1,8 @@
-import logging
-import time
-import sys
-import subprocess
 import copy
+import logging
 import os
+import subprocess
+import sys
 
 import zmq
 from zmq.eventloop import ioloop, zmqstream
@@ -14,7 +13,7 @@ from comnsense_agent.data import Signal
 from comnsense_agent.runtime import Runtime
 
 
-class WorkerProcess:
+class WorkerProcess(object):
     __slots__ = ("popen",)
 
     def __init__(self, popen):

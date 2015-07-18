@@ -1,5 +1,4 @@
 import logging
-import json
 import msgpack
 
 logger = logging.getLogger(__name__)
@@ -9,7 +8,7 @@ class ResponseError(RuntimeError):
     pass
 
 
-class Response:
+class Response(object):
     __slots__ = ("code", "data")
 
     def __init__(self, code, data=None):

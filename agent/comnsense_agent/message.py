@@ -23,7 +23,7 @@ class InvalidMessageError(RuntimeError):
     pass
 
 
-class Message:
+class Message(object):
     NO_IDENT = 0
     __slots__ = ("ident", "kind", "payload")
 
@@ -52,8 +52,11 @@ class Message:
         if self.ident == Message.NO_IDENT:
             shift = 1
         if isinstance(key, slice):
+            start = key.start if key.start is not None else 0
+            stop = key.stop if key.stop is not None else self.__len__()
+            step = key.step if key.step is not None else 1
             return [getattr(self, x) for x in
-                    self.__slots__[key.start + shift: key.stop + shift]]
+                    self.__slots__[start + shift: stop + shift: step]]
         if isinstance(key, int):
             key = self.__slots__[key + shift]
         if key not in self.__slots__:

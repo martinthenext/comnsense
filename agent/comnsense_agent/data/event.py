@@ -1,6 +1,6 @@
-import logging
-import json
 import enum
+import json
+import logging
 
 from comnsense_agent.data.cell import Cell
 
@@ -143,7 +143,7 @@ class Event(object):
 
     @property
     def previous(self, cell):
-        row = sef.prev_rows.get(cell.row)
+        row = self.prev_rows.get(cell.row)
         if row is None:
             return None
         row = [x for x in row if x.key == cell.key]
