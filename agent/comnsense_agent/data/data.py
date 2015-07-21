@@ -4,9 +4,6 @@ logger = logging.getLogger(__name__)
 
 
 class Data(object):
-    class SerializationError(RuntimeError):
-        pass
-
     class ValidationError(RuntimeError):
         pass
 

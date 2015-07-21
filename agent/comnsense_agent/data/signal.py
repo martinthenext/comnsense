@@ -1,15 +1,15 @@
 import enum
 import logging
-import msgpack
 import types
 
 from .data import Data
 from comnsense_agent.utils.exception import convert_exception
+from comnsense_agent.utils.serialization import MsgpackSerializable
 
 logger = logging.getLogger(__name__)
 
 
-class Signal(Data):
+class Signal(MsgpackSerializable, Data):
     """
     Signals should be used for service messages in interservice communication.
     It shall not contain the data if possible.
@@ -55,32 +55,6 @@ class Signal(Data):
             raise Data.ValidationError("data should be a str")
 
     @staticmethod
-    @convert_exception(Data.SerializationError)
-    def deserialize(data):
-        """
-        Creates :py:class:`Signal` from byte string representation
-
-        :param str data: Byte string representation
-        :return: :py:class:`Signal` object
-        """
-        code, data = msgpack.unpackb(data, encoding='utf-8')
-        return Signal(Signal.Code(code), data)
-
-    @convert_exception(Data.SerializationError)
-    def serialize(self):
-        """
-        Make byte string representation of signal
-
-        :return: byte string
-        """
-        return msgpack.packb([self.code.value, self.data], use_bin_type=True)
-
-    def __repr__(self):
-        if self._data is None:
-            return "Signal {code:%d}" % self._code
-        return "Signal {code:%d, data:%s}" % (self._code, self._data)
-
-    @staticmethod
     def ready(identity=None):
         """
         Signal `Signal.Code.Ready`.
@@ -102,3 +76,16 @@ class Signal(Data):
         :return: :py:class:`Signal`
         """
         return Signal(Signal.Code.Stop)
+
+    def __getstate__(self):
+        return [self._code.value, self._data]
+
+    def __setstate__(self, state):
+        code, self._data = state
+        self._code = Signal.Code(code)
+        self.validate()
+
+    def __repr__(self):
+        if self._data is None:
+            return "Signal {code:%d}" % self._code
+        return "Signal {code:%d, data:%s}" % (self._code, self._data)

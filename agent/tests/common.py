@@ -18,8 +18,12 @@ def get_random_workbook_id():
     return str(uuid.uuid1())
 
 
-def get_random_sheet_name():
+def get_random_string():
     return u"".join(random.sample(TEST_LETTERS, 10))
+
+
+def get_random_sheet_name():
+    return get_random_string()
 
 
 def get_random_linestyle():

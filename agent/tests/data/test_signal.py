@@ -49,7 +49,7 @@ def test_signal_property(code, data):
 @pytest.mark.parametrize("code,data", FIXTURES)
 def test_signal_deserialization(code, data):
     serialized = msgpack.packb([code.value, data], use_bin_type=True)
-    allure.attach("signal", serialized, allure.attach_type.OTHER)
+    allure.attach("signal", serialized)
     signal = Signal.deserialize(serialized)
     assert_that(signal.code, equal_to(code))
     assert_that(signal.data, equal_to(data))
@@ -59,7 +59,7 @@ def test_signal_deserialization(code, data):
 @pytest.mark.parametrize("code,data", FIXTURES)
 def test_signal_deserialization(code, data):
     serialized = msgpack.packb([code.value, data], use_bin_type=True)
-    allure.attach("signal", serialized, allure.attach_type.OTHER)
+    allure.attach("signal", serialized)
     signal = Signal.deserialize(serialized)
     assert_that(signal.code, equal_to(code))
     assert_that(signal.data, equal_to(data))
@@ -69,9 +69,9 @@ def test_signal_deserialization(code, data):
 @pytest.mark.parametrize("code,data", FIXTURES)
 def test_signal_serialization(code, data):
     expected = msgpack.packb([code.value, data], use_bin_type=True)
-    allure.attach("expected", expected, allure.attach_type.OTHER)
+    allure.attach("expected", expected)
     serialized = Signal(code, data).serialize()
-    allure.attach("serialized", serialized, allure.attach_type.OTHER)
+    allure.attach("serialized", serialized)
     assert_that(expected, equal_to(serialized))
 
 
