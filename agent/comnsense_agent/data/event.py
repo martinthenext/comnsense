@@ -114,7 +114,7 @@ class Event(object):
         rows = {}
         for row in cells:
             for cell in row:
-                row.setdefault(cell.row, []).append(cell)
+                rows.setdefault(cell.row, []).append(cell)
         return rows
 
     def _get_columns(self, cells):

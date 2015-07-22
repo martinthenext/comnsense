@@ -13,6 +13,7 @@ from hamcrest import *
 
 from .common import get_random_workbook_id, get_random_cell
 from .common import get_random_sheet_name
+from .fixtures.excel import workbook, sheetname
 from comnsense_agent.context import Context, Sheet, Table
 from comnsense_agent.data import Event, Cell, Action
 from comnsense_agent.algorithm.laptev import OnlineQuery
@@ -34,16 +35,6 @@ def get_random_lowercase_ascii_string():
     length = random.randint(min_length, max_length)
     result = "".join(random.sample(string.ascii_lowercase, length))
     return result
-
-
-@pytest.yield_fixture
-def workbook():
-    yield get_random_workbook_id()
-
-
-@pytest.yield_fixture
-def sheetname():
-    yield get_random_sheet_name()
 
 
 def test_algorithm_on_blank_sheet(workbook, sheetname):
