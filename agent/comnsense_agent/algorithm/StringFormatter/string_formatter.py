@@ -5,15 +5,8 @@ class StringFormatter(EventHander):
     """
     StringFormatter autoformats a sequence of edits.
     Edit - a cell change there previous value is not empty
-
-    Wait for any edit which is not just a number
-    Train a StringTransformer on the change
-    If the next edit is in the same column:
-        Apply the trained formatter on the prev value
-        If the result == new value, you confirmed StringFormatter does it right
-    Apply
-    
     """
+
     class State:
         # Wait for any edit where the new value is not a number
         AwaitingFirstEdit = 0
