@@ -2,7 +2,7 @@ import logging
 import string
 import enum
 
-from .event_handler import EventHandler
+from ..event_handler import EventHandler
 from comnsense_agent.data import Event, Action
 
 logger = logging.getLogger(__name__)
