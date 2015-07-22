@@ -44,3 +44,13 @@ def header_range_response(workbook, sheetname, blank=10, start=0, end=52):
     event = Event(Event.Type.RangeResponse,
                   workbook, sheetname, [cells])
     yield event
+
+
+@pytest.yield_fixture
+def random_sheet_change(workbook, sheetname):
+    key = "$%s$%s" % (next(random_column()), next(random_row()))
+    event = Event(Event.Type.SheetChange,
+                  workbook, sheetname,
+                  [[Cell(key, get_random_string())]],
+                  [[Cell(key, get_random_string())]])
+    yield event
