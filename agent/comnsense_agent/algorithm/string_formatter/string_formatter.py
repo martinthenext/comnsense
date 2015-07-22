@@ -60,15 +60,18 @@ class StringFormatter(EventHander):
         if len(event.cells[0]) > 1:
             return
         cell = event.cells[0][0]
-        prev_cell = event.prev_cells[0][0]
 
         # Also, in any state we are only insterested in edits
         # If user is adding new values and not editing we start over
+        if not event.prev_cells:
+            return
+
+        prev_cell = event.prev_cells[0][0]
         if not prev_cell.value:
             self.start_over()
             return
 
-        if not self.is_numeric(cell.value):
+        if self.is_numeric(cell.value):
             self.start_over()
             return
 
