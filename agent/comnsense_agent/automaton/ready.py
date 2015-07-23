@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from comnsense_agent.algorithm.laptev import OnlineQuery
 from comnsense_agent.algorithm.header_detector import HeaderDetector
+from comnsense_agent.algorithm.string_formatter import StringFormatter
 
 from comnsense_agent.automaton import State
 from comnsense_agent.data import Event
@@ -19,7 +20,8 @@ class Ready:
 
     def add_new_sheet(self, context, sheet):
         context.sheets_event_handlers[sheet] = OrderedDict([
-            (HeaderDetector.__name__, HeaderDetector())
+            (HeaderDetector.__name__, HeaderDetector()),
+            (StringFormatter.__name__, StringFormatter()),
             (OnlineQuery.__name__, OnlineQuery()),
         ])
 
