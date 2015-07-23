@@ -33,9 +33,9 @@ class Ready:
                 return None, None  # special value to close runtime
 
             if event.sheet not in context.sheets_event_handlers:
-                self.add_new_sheet(context, sheet)
+                self.add_new_sheet(context, event.sheet)
                 # TODO remove repr here
-                logger.debug("new sheet: %s", repr(sheet))
+                logger.debug("new sheet: %s", event.sheet)
 
             handlers = context.sheets_event_handlers[event.sheet]
 
