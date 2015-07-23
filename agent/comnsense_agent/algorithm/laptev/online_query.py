@@ -182,7 +182,7 @@ class OnlineQuery(EventHandler):
                         value, n_points, stats)
 
                 if action == OnlineQuery.Action.CellCorrected:
-                    n_points, stats = self.record_unmarked(
+                    n_points, stats = self.record_corrected(
                         value, prev_value, n_points, stats)
 
                 if action != OnlineQuery.Action.CheckOld:  # save dump

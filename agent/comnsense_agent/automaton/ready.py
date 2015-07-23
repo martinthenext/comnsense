@@ -16,7 +16,6 @@ class Ready:
     """
     Context is ready
     """
-    algorithm = OnlineQuery()
 
     def add_new_sheet(self, context, sheet):
         context.sheets_event_handlers[sheet] = OrderedDict([
