@@ -49,9 +49,10 @@ class OnlineQuery(EventHandler):
         if n_points == 0:
             return OnlineQuery.Action.CheckNew
 
-        # it is response, it is definitly old data
+        # it is response, it is definitely old data
         if event_type == Event.Type.RangeResponse:
             action = OnlineQuery.Action.CheckOld
+            return OnlineQuery.Action.Skip
 
         # no prev value, CheckNew
         if value and not prev_value:
@@ -166,6 +167,7 @@ class OnlineQuery(EventHandler):
             for key, value, prev_value in data:
                 action = self.get_action(event.type, value, prev_value,
                                          stats_dump, n_points)
+                logger.debug("action: %s",  action.value)
 
                 if action == OnlineQuery.Action.CheckNew:
                     n_points, stats = self.add_value_to_stats(
