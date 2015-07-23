@@ -1,7 +1,6 @@
 import allure
 import pytest
 import mock
-from functools import partial
 from hamcrest import *
 
 from ..fixtures.excel import workbook, sheetname, header_range_response

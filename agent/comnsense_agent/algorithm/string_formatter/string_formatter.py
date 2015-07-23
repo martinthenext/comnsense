@@ -1,13 +1,13 @@
 import logging
 
 from .transformer import StringTransformer
-from ..event_handler import EventHander
-from comnsense.data import Action
+from ..event_handler import EventHandler
+from comnsense_agent.data import Action
 
 logger = logging.getLogger(__name__)
 
 
-class StringFormatter(EventHander):
+class StringFormatter(EventHandler):
     """
     StringFormatter autoformats a sequence of edits.
     Edit - a cell change there previous value is not empty
@@ -40,7 +40,7 @@ class StringFormatter(EventHander):
         self.prev_edit_row_index = None
         self.state = StringFormatter.State.AwaitingFirstEdit
 
-    def is_numeric(value):
+    def is_numeric(self, value):
         """
         Check if a value is an int, float or a string repr of those
 
@@ -58,7 +58,7 @@ class StringFormatter(EventHander):
         except ValueError:
             return False
 
-    def handle(event, context):
+    def handle(self, event, context):
         # In any state, we are only interested in single cell events
         if len(event.cells) > 1:
             return
@@ -66,15 +66,16 @@ class StringFormatter(EventHander):
             return
         cell = event.cells[0][0]
 
-        # Also, in any state we are only insterested in edits
-        # If user is adding new values and not editing we start over
-        if not event.prev_cells:
-            return
+        if self.state != StringFormatter.State.ConfirmedChangingCells:
+            # Also, in any state we are only insterested in edits
+            # If user is adding new values and not editing we start over
+            if not event.prev_cells:
+                return
 
-        prev_cell = event.prev_cells[0][0]
-        if not prev_cell.value:
-            self.start_over()
-            return
+            prev_cell = event.prev_cells[0][0]
+            if not prev_cell.value:
+                self.start_over()
+                return
 
         if self.is_numeric(cell.value):
             self.start_over()
@@ -126,6 +127,7 @@ class StringFormatter(EventHander):
             # We have ordered a value of a cell, see it it's empty
             if not cell.value:
                 self.start_over()
+                return
 
             # It has a value, transform it and push it back
             new_value = self.transformer.transform(cell.value)
