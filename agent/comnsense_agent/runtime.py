@@ -5,7 +5,6 @@ from comnsense_agent.context import Context
 from comnsense_agent.automaton.initialization import WaitingWorkbookID
 from comnsense_agent.automaton.initialization import WaitingContext
 from comnsense_agent.automaton.ready import Ready
-from comnsense_agent.automaton.header_request import WaitingHeader
 
 from comnsense_agent.automaton import State
 
@@ -15,7 +14,6 @@ logger = logging.getLogger(__name__)
 State.WaitingWorkbookID = WaitingWorkbookID()
 State.WaitingContext = WaitingContext()
 State.Ready = Ready()
-State.WaitingHeader = WaitingHeader()
 
 
 class Runtime(object):
