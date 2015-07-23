@@ -24,6 +24,7 @@ class OnlineQuery(EventHandler):
         CheckOld = 1
         CellCorrected = 2
         CellUnmarked = 3
+        Skip = 4
 
     def get_stats(self, column):
         stats = self.stats.get(column) or (0, [])
@@ -42,7 +43,7 @@ class OnlineQuery(EventHandler):
 
     def get_action(self, event_type, value, prev_value, stats, n_points):
         assert event_type in (Event.Type.RangeResponse, Event.Type.SheetChange)
-        action = None
+        action = OnlineQuery.Action.Skip
 
         # we have no stats, always CheckNew
         if n_points == 0:
@@ -65,10 +66,6 @@ class OnlineQuery(EventHandler):
             pattern = ca.get_pattern(value, level)
             if pattern not in stats[level]:  # new pattern
                 return OnlineQuery.Action.CheckNew
-
-        # value deleted, CellUnmarked
-        if not value and prev_value:
-            return OnlineQuery.Action.CellUnmarked
 
         return action
 
