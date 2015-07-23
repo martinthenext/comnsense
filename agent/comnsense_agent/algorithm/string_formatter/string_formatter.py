@@ -1,6 +1,11 @@
+import logging
+
 from .transformer import StringTransformer
-# TODO import EventHander
+from ..event_handler import EventHander
 from comnsense.data import Action
+
+logger = logging.getLogger(__name__)
+
 
 class StringFormatter(EventHander):
     """
@@ -28,7 +33,7 @@ class StringFormatter(EventHander):
 
     def __init__(self):
         self.start_over()
-    
+
     def start_over(self):
         self.transformer = None
         self.prev_edit_column = None
@@ -46,7 +51,7 @@ class StringFormatter(EventHander):
         >>> is_numeric('42.LOL')
         False
         """
-        
+
         try:
             float(value)
             return True
@@ -78,11 +83,11 @@ class StringFormatter(EventHander):
         if self.state == StringFormatter.State.AwaitingFirstEdit:
             self.transformer = StringTransformer()
             self.transformer.train_by_example(prev_cell.value, cell.value)
-            
+
             self.prev_edit_column = cell.column
             self.prev_edit_row_index = int(cell.row)
-            
-            self.state = StringFormatter.State.AwaitingSecondEdit 
+
+            self.state = StringFormatter.State.AwaitingSecondEdit
             return
 
         if self.state == StringFormatter.State.AwaitingSecondEdit:
@@ -108,15 +113,15 @@ class StringFormatter(EventHander):
                         event.sheet,
                         range_to_request
                 )
-                
+
                 self.state = StringFormatter.State.ConfirmedChangingCells
-                return [ action ]
+                return [action]
 
             else:
                 # We didn't guess
                 self.start_over()
                 return
-        
+
         if self.state == StringFormatter.State.ConfirmedChangingCells:
             # We have ordered a value of a cell, see it it's empty
             if not cell.value:
@@ -130,7 +135,7 @@ class StringFormatter(EventHander):
                     Action.Type.ChangeCell,
                     event.workbook,
                     event.sheet,
-                    [[ cell ]]
+                    [[cell]]
             )
 
             # Request a new cell further down
@@ -143,5 +148,4 @@ class StringFormatter(EventHander):
                     range_to_request
             )
 
-            return [ change_action, request_action ]
- 
+            return [change_action, request_action]
