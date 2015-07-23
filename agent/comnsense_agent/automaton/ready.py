@@ -1,8 +1,10 @@
 import logging
+from collections import OrderedDict
 
 from comnsense_agent.algorithm.laptev import OnlineQuery
+from comnsense_agent.algorithm.header_detector import HeaderDetector
+
 from comnsense_agent.automaton import State
-from comnsense_agent.context import Sheet, Table
 from comnsense_agent.data import Event
 from comnsense_agent.message import Message
 
@@ -15,6 +17,12 @@ class Ready:
     """
     algorithm = OnlineQuery()
 
+    def add_new_sheet(self, context, sheet):
+        context.sheets_event_handlers[sheet] = OrderedDict([
+            (HeaderDetector.__name__, HeaderDetector())
+            (OnlineQuery.__name__, OnlineQuery()),
+        ])
+
     def next(self, context, msg):
         if msg.is_event():
             event = Event.deserialize(msg.payload)
@@ -22,39 +30,27 @@ class Ready:
                 # TODO do something here before shutdown worker
                 return None, None  # special value to close runtime
 
-            if event.sheet not in context.sheets:
-                sheet = Sheet(context, event.sheet)
-                context.sheets[event.sheet] = sheet
+            if event.sheet not in context.sheets_event_handlers:
+                self.add_new_sheet(context, sheet)
                 # TODO remove repr here
                 logger.debug("new sheet: %s", repr(sheet))
-            else:
-                sheet = context.sheets[event.sheet]
-                logger.debug("sheet: %s", repr(sheet))
 
-            # TODO assuming that just one table on sheet
-            if context.sheets[event.sheet].tables:
-                table = context.sheets[event.sheet].tables[0]
-            else:
-                table = Table(sheet)
-                context.sheets[event.sheet].tables.append(table)
-                logger.debug("new table: %s", repr(table))
-
-            if table.header is None:
-                logger.debug("lets try to find header in table")
-                response = table.request_header()
-                context.return_state = self
-                return response, State.WaitingHeader
+            handlers = context.sheets_event_handlers[event.sheet]
 
             if event.type in (Event.Type.SheetChange,
                               Event.Type.RangeResponse):
-                logger.debug("time to laptev's algorithm")
-                action = self.algorithm.query(context, event)
-                if action is not None:
-                    return Message.action(action), self
-                else:
-                    return None, self
+                answer = None
+                for name, handler in handlers.iteritems():
+                    logger.debug("call %s handler", name)
+                    actions = handler.handle(event, context)
+                    if actions:
+                        if answer is None:
+                            answer = tuple(map(Message.action, actions))
+                        else:
+                            logger.warn("skip this actions from %s", name)
+                return answer, self
             else:
-                logger.warn("unexpected event: %s", event)
+                logger.warn("unexpected event: %s", str(event))
                 return None, self
 
         return None, self

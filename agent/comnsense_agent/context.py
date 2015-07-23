@@ -6,62 +6,12 @@ from comnsense_agent.message import Message
 logger = logging.getLogger(__name__)
 
 
-class Table(object):
-    __slots__ = ("_sheet", "header", "stats")
-
-    def __init__(self, sheet, header=None):
-        self._sheet = sheet
-        self.header = header
-        self.stats = {}
-
-    def request_header(self):
-        header_range = "$A$1:$AZ$1"
-        return Message.action(Action.request(
-            self._sheet._context.workbook,
-            self._sheet.name, header_range))
-
-    def __repr__(self):
-        if self.header is None:
-            header = None
-        else:
-            header = ["%s: %s" % (cell.column, cell.value)
-                      for cell in self.header]
-        if not self.stats:
-            stats = "{}"
-        else:
-            stats = {}
-            for key, value in self.stats.items():
-                if isinstance(value, dict):
-                    stats[key] = value.keys()
-                else:
-                    raise NotImplementedError()
-        result = u"Table {header: %s, stats: %s}" % (header, stats)
-        return result.encode('utf-8')
-
-
-class Sheet(object):
-    __slots__ = ("_context", "name", "tables")
-
-    def __init__(self, context, name, tables=None):
-        self.name = name
-        if tables is None:
-            tables = []
-        self.tables = tables
-        self._context = context
-
-    def __repr__(self):
-        result = u"Sheet {name: %s, tables: %%s}" % self.name
-        tables = [repr(t) for t in self.tables]
-        result = result % tables
-        return result.encode('utf-8')
-
-
 class Context(object):
     def __init__(self):
         self._copy = None
         self._workbook = None
         self._ready = False
-        self.sheets = {}
+        self.sheets_event_handlers = {}
 
     @property
     def workbook(self):
