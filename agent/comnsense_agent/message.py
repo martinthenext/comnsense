@@ -83,11 +83,14 @@ class Message(object):
     def __reversed__(self):
         raise NotImplementedError("could not reverse message")
 
-    def __str__(self):
+    def __repr__(self):
         if self.ident == Message.NO_IDENT:
             return "MSG {kind: %s, payload: %r}" % (self.kind, self.payload)
         return "MSG { ident:%r, kind:%s, payload:%r }" % (
             self.ident, self.kind, self.payload)
+
+    def __str__(self):
+        return repr(self)
 
     def append(self, value):
         raise NotImplementedError("could not append to message")
