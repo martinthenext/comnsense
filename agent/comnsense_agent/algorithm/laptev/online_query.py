@@ -1,20 +1,23 @@
 import enum
 import logging
-import pickle
 
+from ..event_handler import EventHandler
 from .feature_extractor import column_analyzer
 from comnsense_agent.data import Event, Cell, Action
 
 logger = logging.getLogger(__name__)
 
 
-class OnlineQuery(object):
+class OnlineQuery(EventHandler):
     ALG_NAME = "OnlineQuery"
     N_LAYERS = 3
     # pattern occurs 10 times rarer than the average pattern
     BINOM_THRESHOLD = 0.5
     RIGHT_COLOR = 0
     WRONG_COLOR = 3
+
+    def __init__(self):
+        self.stats = {}
 
     @enum.unique
     class Action(enum.IntEnum):
@@ -23,18 +26,12 @@ class OnlineQuery(object):
         CellCorrected = 2
         CellUnmarked = 3
 
-    def get_stats(self, table, column):
-        stats = table.stats.get(self.ALG_NAME, {}).get(column)
-        if stats is None:
-            return 0, []
-        else:
-            return pickle.loads(stats)
+    def get_stats(self, column):
+        stats = self.stats.get(column) or (0, [])
+        return stats
 
-    def save_stats(self, table, column, n_points, stats):
-        if self.ALG_NAME not in table.stats:
-            table.stats[self.ALG_NAME] = {}
-        stats = pickle.dumps((n_points, stats))
-        table.stats[self.ALG_NAME][column] = stats
+    def save_stats(self, column, n_points, stats):
+        self.stats[column] = (n_points, stats)
 
     def get_data(self, event, column):
         cells = event.columns.get(column, [])
@@ -155,21 +152,19 @@ class OnlineQuery(object):
     def make_answer(self, event, cells):
         rows = {}
         if not cells:
-            return None
+            return
         for cell in cells:
             if cell.row in rows:
                 rows[cell.row].append(cell)
             else:
                 rows[cell.row] = [cell]
-        return Action.change_from_event(event, list(rows.values()))
+        return [Action.change_from_event(event, list(rows.values()))]
 
-    def query(self, context, event):
-        # TODO assuming sheet contains just one table
-        table = context.sheets[event.sheet].tables[0]
+    def handle(self, event, context):
         answer_cells = []
 
         for column in event.columns:
-            n_points, stats_dump = self.get_stats(table, column)
+            n_points, stats_dump = self.get_stats(column)
             data = self.get_data(event, column)
 
             for key, value, prev_value in data:
@@ -192,7 +187,7 @@ class OnlineQuery(object):
                         value, prev_value, n_points, stats)
 
                 if action != OnlineQuery.Action.CheckOld:  # save dump
-                    self.save_stats(table, column, n_points, stats)
+                    self.save_stats(column, n_points, stats)
 
                 if action in (OnlineQuery.Action.CheckOld,
                               OnlineQuery.Action.CheckNew):
