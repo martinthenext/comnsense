@@ -34,10 +34,10 @@ def transform_reverse_string(before):
 # Rank transformations by what we can be more sure in
 
 transformations = [
-    transform_reverse_string,
     transform_equality,
     transform_upper_case,
     transform_lower_case,
+    transform_reverse_string,
 ]
 
 class StringTransformer(object):
