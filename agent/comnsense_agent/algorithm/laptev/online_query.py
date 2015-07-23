@@ -12,7 +12,7 @@ class OnlineQuery(object):
     ALG_NAME = "OnlineQuery"
     N_LAYERS = 3
     # pattern occurs 10 times rarer than the average pattern
-    BINOM_THRESHOLD = 0.1
+    BINOM_THRESHOLD = 0.5
     RIGHT_COLOR = 0
     WRONG_COLOR = 3
 

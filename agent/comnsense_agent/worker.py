@@ -60,7 +60,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
             logger.warn("unexpected signal: %s", signal)
 
     def on_recv(msg):
-        logger.debug("worker on_recv: %s", msg)
+        logger.debug("worker on_recv: %s", repr(msg))
         if msg.is_signal():
             on_signal_recv(msg)
         if msg.is_request():

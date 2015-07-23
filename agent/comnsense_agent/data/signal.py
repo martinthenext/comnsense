@@ -89,3 +89,6 @@ class Signal(MsgpackSerializable, Data):
         if self._data is None:
             return "Signal {code:%d}" % self._code
         return "Signal {code:%d, data:%s}" % (self._code, self._data)
+
+    def __str__(self):
+        return repr(self)
