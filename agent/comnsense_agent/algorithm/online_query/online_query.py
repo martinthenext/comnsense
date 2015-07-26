@@ -236,7 +236,7 @@ class OnlineQueryColumn(object):
             begin = self.interval.end
         else:
             begin = 1
-        end = begin + max_rows_count
+        end = begin + max_rows_count - 1
         return Action.request_from_event(event, range_name % (begin, end))
 
     def make_action_change(self, event, cells):
