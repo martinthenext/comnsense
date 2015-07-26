@@ -5,16 +5,19 @@ from collections import defaultdict
 #        therefore this needs to accept the whole table
 
 
-class column_analyzer(object):
+class ColumnAnalyzer(object):
     ''' extract patterns from a column
     '''
+
+    N_LEVELS = 4
+
     def __init__(self, column, level=0):
         # for italian maybe include \' to re_words
-        self.re_word = re.compile(r'[a-zA-Z]+')
-        self.re_number = re.compile(r'\d+')
-        self.re_white = re.compile(r'\s+')
+        self.re_word = re.compile(r'[^\d\s\.\,\-\_\/]+', re.U)
+        self.re_number = re.compile(r'\d+', re.U)
+        self.re_white = re.compile(r'\s+', re.U)
         # TODO ask Dmitry about it
-        self.re_punctuation = re.compile(r'[\.\,\-\_\/]+')
+        self.re_punctuation = re.compile(r'[\.\,\-\_\/]+', re.U)
 
         self.patterns_dict = defaultdict(int)
         for value in column:

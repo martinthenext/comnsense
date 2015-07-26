@@ -9,34 +9,32 @@ from hamcrest import *
 
 
 from ..fixtures.excel import workbook, sheetname
+from ..fixtures.strings import random_word, random_first_last_name
+from ..fixtures.strings import random_address, random_number
 from comnsense_agent.data import Event, Cell, Action
 from comnsense_agent.algorithm.laptev import OnlineQuery
 
 
-def get_random_lowercase_ascii_string():
-    max_length = 10
-    min_length = 1
-    length = random.randint(min_length, max_length)
-    result = "".join(random.sample(string.ascii_lowercase, length))
-    return result
+FIXTURES = [([next(random_word()) for _ in range(10)], next(random_number())),
+            ([next(random_number()) for _ in range(10)], next(random_word())),
+            ([next(random_address()) for _ in range(10)], next(random_word())),
+            # min 20 points, see online_query.py#check
+            ([next(random_first_last_name()) for _ in range(20)],
+             next(random_word()))]
 
 
 @allure.feature("Online Query")
-def test_online_query_on_blank_sheet(workbook, sheetname):
-    """
-        Case:
-            creating column with english letters on empty sheet
-    """
+@allure.story("Blank Column")
+@pytest.mark.parametrize("values,wrong", FIXTURES)
+def test_online_query_on_blank_sheet(workbook, sheetname, values, wrong):
     algorithm = OnlineQuery()
     context = mock.Mock()
 
     column = "A"
-    event_count = 10
+    event_count = len(values)
 
-    def get_event(num, value=None):
+    def get_event(num, value):
         key = "$%s$%d" % (column, num)
-        if value is None:
-            value = get_random_lowercase_ascii_string()
         cells = [[Cell(key, value)]]
         prev_cells = [[Cell(key, "")]]
         event = Event(Event.Type.SheetChange, workbook,
@@ -45,24 +43,26 @@ def test_online_query_on_blank_sheet(workbook, sheetname):
                       type=allure.attach_type.JSON)
         return event
 
-    def get_stats():
-        n_points, stats = algorithm.get_stats(column)
-        allure.attach("n_points", str(n_points))
-        allure.attach("stats", json.dumps(stats, indent=2),
+    def attach_stats():
+        stats = algorithm.columns[column].stats
+        state = algorithm.columns[column].state
+        interval = algorithm.columns[column].interval
+        allure.attach("points", str(stats.points))
+        allure.attach("stats", json.dumps(stats.stats, indent=2),
                       allure.attach_type.JSON)
-        return n_points, stats
+        allure.attach("state", str(state.value))
+        allure.attach("interval", str(interval))
 
-    for num in range(1, event_count + 1):
-        with allure.step("send event: %d" % num):
-            event = get_event(num)
+    for num, value in enumerate(values, 1):
+        with allure.step("send event: %d: %s" % (num, value)):
+            event = get_event(num, value)
             actions = algorithm.handle(event, context)
-            n_points, stats = get_stats()
-            assert_that(actions, none())
+            attach_stats()
 
-    with allure.step("send wrong event"):
-        event = get_event(event_count + 1, "1")
+    with allure.step("send wrong event: %s" % wrong):
+        event = get_event(event_count + 1, wrong)
         actions = algorithm.handle(event, context)
-        n_points, stats = get_stats()
+        attach_stats()
         assert_that(actions, has_length(1))
         action = actions[0]
         assert_that(action, instance_of(Action))

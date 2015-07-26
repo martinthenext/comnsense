@@ -1,127 +1,209 @@
 import enum
 import logging
+import copy
+from collections import namedtuple
 
 from ..event_handler import EventHandler
-from .feature_extractor import column_analyzer
-from comnsense_agent.data import Event, Cell, Action
+from .feature_extractor import ColumnAnalyzer
+from comnsense_agent.data import Event, Action
 
 logger = logging.getLogger(__name__)
 
 
 class OnlineQuery(EventHandler):
-    N_LAYERS = 3
-    # pattern occurs 10 times rarer than the average pattern
-    BINOM_THRESHOLD = 0.5
-    RIGHT_COLOR = 0
-    WRONG_COLOR = 3
-
     def __init__(self):
-        self.stats = {}
+        self.columns = {}
 
-    @enum.unique
-    class Action(enum.IntEnum):
-        CheckNew = 0
-        CheckOld = 1
-        CellCorrected = 2
-        CellUnmarked = 3
-        Skip = 4
+    def handle(self, event, context):
+        answer = []
 
-    def get_stats(self, column):
-        stats = self.stats.get(column) or (0, [])
-        return stats
+        for column in event.columns:
+            logger.debug("column: %s", column)
+            cells = event.columns.get(column, [])
+            prev_cells = event.prev_columns.get(column, [None] * len(cells))
 
-    def save_stats(self, column, n_points, stats):
-        self.stats[column] = (n_points, stats)
+            if column not in self.columns:
+                self.columns[column] = OnlineQueryColumn(column)
 
-    def get_data(self, event, column):
-        cells = event.columns.get(column, [])
-        prev_cells = event.prev_columns.get(column, [None] * len(cells))
-        return zip(
-            [cell.key if cell else "" for cell in cells],
-            [cell.value if cell else "" for cell in cells],
-            [cell.value if cell else "" for cell in prev_cells])
+            answer += self.columns[column].handle(event, cells, prev_cells)
 
-    def get_action(self, event_type, value, prev_value, stats, n_points):
-        assert event_type in (Event.Type.RangeResponse, Event.Type.SheetChange)
-        action = OnlineQuery.Action.Skip
+        return answer
 
-        # we have no stats, always CheckNew
-        if n_points == 0:
-            return OnlineQuery.Action.CheckNew
 
-        # it is response, it is definitely old data
-        if event_type == Event.Type.RangeResponse:
-            action = OnlineQuery.Action.CheckOld
-            return OnlineQuery.Action.Skip
+class OnlineQueryColumn(object):
+    BINOM_THRESHOLD = 0.1
+    MIN_POINTS_READY = int(1.0 / BINOM_THRESHOLD)
 
-        # no prev value, CheckNew
-        if value and not prev_value:
-            return OnlineQuery.Action.CheckNew
+    Stats = namedtuple("Stats", ("points", "stats"))
 
-        # old value is changed, CellCorrected
-        if value and prev_value:
-            action = OnlineQuery.Action.CellCorrected
+    Interval = namedtuple("Interval", ("begin", "end"))
 
-        for level in range(self.N_LAYERS):
-            ca = column_analyzer([], level)
-            pattern = ca.get_pattern(value, level)
-            if pattern not in stats[level]:  # new pattern
-                return OnlineQuery.Action.CheckNew
+    class State(enum.Enum):
+        begin = "begin"
+        waiting_response = "waiting response"
+        ready = "ready"
 
-        return action
+    def __init__(self, column):
+        self.column = column
+        self.state = self.State.begin
+        self.stats = self.Stats(0, [])
+        self.interval = self.Interval(0, 0)
 
-    def add_value_to_stats(self, value, n_points, stats_dump):
-        n_points += 1
+    def handle(self, event, cells, prev_cells):
+        logger.debug("column %s: state: %s", self.column, self.state.value)
+        logger.debug("column %s: stats: %s", self.column, self.stats)
+        logger.debug("column %s: interval: %s", self.column, self.interval)
+
+        if self.state == self.State.begin:
+            return self.handle_begin(event, cells)
+        elif self.state == self.State.waiting_response:
+            return self.handle_waiting_response(event, cells)
+        elif self.state == self.State.ready:
+            return self.handle_ready(event, cells, prev_cells)
+        else:
+            raise AssertionError("impossible state")
+
+    def handle_begin(self, event, cells):
+        for cell in cells:
+            if cell.value:
+                self.add_value_to_stats(cell.value)
+            self.update_interval(int(cell.row))
+        self.state = self.State.waiting_response
+        return [self.make_action_request(event)]
+
+    def handle_waiting_response(self, event, cells):
+        request_next_range = False
+        non_empty_range_end = len(cells)
+        answer = []
+
+        try:
+            non_empty_range_end = \
+                len(cells) - [x.value for x in reversed(cells)].index("")
+        except ValueError:
+            request_next_range = True
+
+        if event.type != Event.Type.RangeResponse:
+            request_next_range = True
+
+        for cell in cells[:non_empty_range_end]:
+            if cell.value:
+                self.add_value_to_stats(cell.value)
+            self.update_interval(int(cell.row))
+
+        if request_next_range:
+            answer = [self.make_action_request(event)]
+        else:
+            self.state = self.State.ready
+
+        if self.stats >= self.MIN_POINTS_READY:
+            self.state = self.State.ready
+
+        return answer
+
+    def handle_ready(self, event, *args):
+        if event.type == Event.Type.SheetChange:
+            return self.handle_ready_change(event, *args)
+        elif event.type == Event.Type.RangeResponse:
+            return self.handle_ready_response(event, *args)
+        else:
+            raise AssertionError(
+                "unexpected event type: %s" % event.type.value)
+
+    def handle_ready_change(self, event, cells, prev_cells):
+        answer_cells = []
+        for cell, prev_cell in zip(cells, prev_cells):
+            value = cell.value
+            prev_value = prev_cell.value if prev_cell else ""
+
+            if value and prev_value and \
+                    (interval.begin <= int(cell.row) <= interval.end):
+                self.record_corrected(value, prev_value)
+            elif value:
+                self.add_value_to_stats(value)
+                if self.check(value) == 0:
+                    answer_cells.append(self.make_format_incorrect(cell))
+
+            self.update_interval(int(cell.row))
+
+        if answer_cells:
+            return [self.make_action_change(event, answer_cells)]
+        else:
+            return []
+
+    def handle_ready_response(self, event, cells, prev_cells):
+        for cell in cells:
+            if cell.value and not self.interval.end < int(cell.row):
+                self.add_value_to_stats(cell.value)
+            self.update_interval(int(cell.row))
+        return []
+
+    def update_interval(self, row):
+        if self.interval.begin <= row <= self.interval.end:
+            return  # nothing to do
+        if self.interval.begin == 0:  # it is sentinel, min value is 1
+            self.interval = self.Interval(row, max(self.interval.end, row))
+        self.interval = self.Interval(min(self.interval.begin, row),
+                                      max(self.interval.end, row))
+
+    def add_value_to_stats(self, value):
+        new_stats = self.Stats(self.stats.points + 1, [])
         stats = []
-        for level in range(self.N_LAYERS):
-            ca = column_analyzer([value], level=level)
-            temp = stats_dump[level] if len(stats_dump) > level else {}
-            for (pattern, occurances) in ca.patterns_dict.items():
+        for level in range(ColumnAnalyzer.N_LEVELS):
+            ca = ColumnAnalyzer([value], level=level)
+
+            if len(self.stats.stats) > level:
+                temp = self.stats.stats[level]
+            else:
+                temp = {}
+
+            for pattern, occurances in ca.patterns_dict.items():
                 if pattern in temp:
                     temp[pattern][0] += occurances
                 else:
                     # occurances, correct, incorrect
                     temp[pattern] = [occurances, 0, 0]
-            stats.append(temp)
-        return n_points, stats
+            new_stats.stats.append(temp)
+        self.stats = new_stats
 
-    def record_unmarked(self, value, n_points, stats):
-        for level in range(self.N_LAYERS):
-            ca = column_analyzer([], level)
+    def record_unmarked(self, value):
+        for level in range(ColumnAnalyzer.N_LEVELS):
+            ca = ColumnAnalyzer([], level)
             pattern = ca.get_pattern(value, level)
-            stats[level][pattern][1] += 1  # correct
-        return n_points, stats
+            self.stats.stats[level][pattern][1] += 1  # correct
 
-    def record_corrected(self, value, prev_value, n_points, stats):
-        for level in range(self.N_LAYERS):
-            ca = column_analyzer([], level)
+    def record_corrected(self, value, prev_value):
+        for level in range(ColumnAnalyzer.N_LEVELS):
+            ca = ColumnAnalyzer([], level)
             pattern_was = ca.get_pattern(prev_value, level)
-            stats[level][pattern_was][2] += 1  # incorrect
+            self.stats.stats[level][pattern_was][2] += 1  # incorrect
             pattern_now = ca.get_pattern(value, level)
-            if pattern_now in stats[level]:
-                stats[level][pattern_now][1] += 1  # correct
+            if pattern_now in self.stats.stats[level]:
+                self.stats.stats[level][pattern_now][1] += 1  # correct
             else:  # yet unseen pattern
-                stats[level][pattern_now] = [1, 1, 0]  # correct
-        return n_points, stats
+                self.stats.stats[level][pattern_now] = [1, 1, 0]  # correct
 
-    def check(self, value, n_points, stats):
+    def check(self, value):
         decision = -1  # by default we do not know
         # within each layer we observe categorical distribution
         # usually one needs the number of data points n >= 10*k,
         # where k is the number of bins (patterns per layer)
         # however, we will always use layers 0 and 1
-        for level in range(self.N_LAYERS):
-            if level < 2 or n_points >= 10 * len(stats[level]):
-                ca = column_analyzer([], level)
+        for level in range(ColumnAnalyzer.N_LEVELS):
+            if level < 2 or \
+                    self.stats.points >= 10 * len(self.stats.stats[level]):
+                ca = ColumnAnalyzer([], level)
                 pattern = ca.get_pattern(value, level)
-                if pattern not in stats[level]:  # new pattern
+                if pattern not in self.stats.stats[level]:  # new pattern
                     # TODO should not ever happen:
                     #      check_old was called for a new value
                     decision = 0
                     continue
-                np = stats[level][pattern][0]  # occurances of the pattern
-                rp = stats[level][pattern][1]  # correct occurances
-                wp = stats[level][pattern][2]  # incorrect occurances
+                # occurances of the pattern
+                np = self.stats.stats[level][pattern][0]
+                # correct occurances
+                rp = self.stats.stats[level][pattern][1]
+                # incorrect occurances
+                wp = self.stats.stats[level][pattern][2]
                 if rp > 0 and wp > 0:
                     # can say nothing on this level, need to go further
                     decision = -1
@@ -138,60 +220,29 @@ class OnlineQuery(EventHandler):
                     # TODO if it crosses zero -
                     #      cannot reject H_0, => maybe wrong
                     # TODO tried Wilson confint, but it did not work
-                    if float(np)/n_points < self.BINOM_THRESHOLD:
+                    confidence = float(np)/self.stats.points
+                    if confidence < self.BINOM_THRESHOLD:
                         decision = 0
-                    elif float(np)/n_points > 1.0 - self.BINOM_THRESHOLD:
+                    elif confidence > 1.0 - self.BINOM_THRESHOLD:
                         decision = 1
                     else:
                         decision = -1
         return decision
 
-    def make_answer(self, event, cells):
-        rows = {}
-        if not cells:
-            return
-        for cell in cells:
-            if cell.row in rows:
-                rows[cell.row].append(cell)
-            else:
-                rows[cell.row] = [cell]
-        return [Action.change_from_event(event, list(rows.values()))]
+    def make_action_request(self, event):
+        max_rows_count = 100
+        range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
+        if self.interval.begin == 1:
+            begin = self.interval.end
+        else:
+            begin = 1
+        end = begin + max_rows_count
+        return Action.request_from_event(event, range_name % (begin, end))
 
-    def handle(self, event, context):
-        answer_cells = []
+    def make_action_change(self, event, cells):
+        return Action.change_from_event(event, [cells])
 
-        for column in event.columns:
-            n_points, stats_dump = self.get_stats(column)
-            data = self.get_data(event, column)
-
-            for key, value, prev_value in data:
-                action = self.get_action(event.type, value, prev_value,
-                                         stats_dump, n_points)
-                logger.debug("action: %s",  action.value)
-
-                if action == OnlineQuery.Action.CheckNew:
-                    n_points, stats = self.add_value_to_stats(
-                        value, n_points, stats_dump)
-
-                else:
-                    stats = stats_dump
-
-                if action == OnlineQuery.Action.CellUnmarked:
-                    n_points, stats = self.record_unmarked(
-                        value, n_points, stats)
-
-                if action == OnlineQuery.Action.CellCorrected:
-                    n_points, stats = self.record_corrected(
-                        value, prev_value, n_points, stats)
-
-                if action != OnlineQuery.Action.CheckOld:  # save dump
-                    self.save_stats(column, n_points, stats)
-
-                if action in (OnlineQuery.Action.CheckOld,
-                              OnlineQuery.Action.CheckNew):
-                    decision = self.check(value, n_points, stats)
-                    if decision == 0:
-                        answer_cells.append(
-                            Cell(key, value, color=self.WRONG_COLOR))
-
-        return self.make_answer(event, answer_cells)
+    def make_format_incorrect(self, cell):
+        result = copy.deepcopy(cell)
+        result.color = 3
+        return result
