@@ -12,7 +12,7 @@ from ..fixtures.excel import workbook, sheetname
 from ..fixtures.strings import random_word, random_first_last_name
 from ..fixtures.strings import random_address, random_number
 from comnsense_agent.data import Event, Cell, Action
-from comnsense_agent.algorithm.laptev import OnlineQuery
+from comnsense_agent.algorithm.online_query import OnlineQuery
 
 
 FIXTURES = [([next(random_word()) for _ in range(10)], next(random_number())),
