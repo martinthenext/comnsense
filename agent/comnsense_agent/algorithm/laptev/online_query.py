@@ -4,7 +4,7 @@ import copy
 from collections import namedtuple
 
 from ..event_handler import EventHandler
-from .feature_extractor import ColumnAnalyzer
+from .column_analyzer import ColumnAnalyzer
 from comnsense_agent.data import Event, Action
 
 logger = logging.getLogger(__name__)
