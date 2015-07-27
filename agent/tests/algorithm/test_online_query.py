@@ -56,6 +56,16 @@ def test_online_query_without_response(workbook, sheetname, values, wrong):
             event = get_event(num, value)
             actions = algorithm.handle(event, context)
             attach_stats(algorithm, column)
+            if num < algorithm.columns[column].MIN_POINTS_READY:
+                assert_that(actions, has_length(1))
+                action = actions[0]
+                assert_that(action, instance_of(Action))
+                allure.attach("action", action.serialize(),
+                              allure.attach_type.JSON)
+                assert_that(
+                    action.range_name,
+                    equal_to("$%s$%d:$%s$%d" %
+                             (column, num, column, num + 99)))
 
     with allure.step("send wrong event: %s" % wrong):
         event = get_event(event_count + 1, wrong)
@@ -131,3 +141,10 @@ def test_online_query_with_response(workbook, sheetname, values, wrong):
         allure.attach("action", action.serialize(),
                       allure.attach_type.JSON)
         assert_that(action.cells[0][0].color, equal_to(3))
+
+
+@allure.feature("Online Query")
+@allure.story("Change Value In Column With Data")
+@pytest.mark.parametrize("values,wrong", FIXTURES)
+def test_online_query_change_value(workbook, sheetname, values, wrong):
+    pass

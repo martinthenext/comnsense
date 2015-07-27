@@ -48,11 +48,16 @@ class OnlineQueryColumn(object):
         self.state = self.State.begin
         self.stats = self.Stats(0, [])
         self.interval = self.Interval(0, 0)
+        self.incorrect_format = {"color": 3}
+        self.correct_format = {"color": 0}
 
     def handle(self, event, cells, prev_cells):
-        logger.debug("column %s: state: %s", self.column, self.state.value)
-        logger.debug("column %s: stats: %s", self.column, self.stats)
-        logger.debug("column %s: interval: %s", self.column, self.interval)
+        logger.debug("column %s: state: %s",
+                     self.column, self.state.value)
+        logger.debug("column %s: stats: %s",
+                     self.column, repr(self.stats))
+        logger.debug("column %s: interval: %s",
+                     self.column, repr(self.interval))
 
         if self.state == self.State.begin:
             return self.handle_begin(event, cells)
@@ -95,7 +100,7 @@ class OnlineQueryColumn(object):
         else:
             self.state = self.State.ready
 
-        if self.stats >= self.MIN_POINTS_READY:
+        if self.stats.points >= self.MIN_POINTS_READY:
             self.state = self.State.ready
 
         return answer
@@ -118,10 +123,13 @@ class OnlineQueryColumn(object):
             if value and prev_value and \
                     (interval.begin <= int(cell.row) <= interval.end):
                 self.record_corrected(value, prev_value)
+                answer_cells.append(
+                    self.apply_format(cell, **self.correct_format))
             elif value:
                 self.add_value_to_stats(value)
                 if self.check(value) == 0:
-                    answer_cells.append(self.make_format_incorrect(cell))
+                    answer_cells.append(
+                        self.apply_format(cell, **self.incorrect_format))
 
             self.update_interval(int(cell.row))
 
@@ -242,7 +250,14 @@ class OnlineQueryColumn(object):
     def make_action_change(self, event, cells):
         return Action.change_from_event(event, [cells])
 
-    def make_format_incorrect(self, cell):
+    def apply_format(self, cell, **format):
         result = copy.deepcopy(cell)
-        result.color = 3
+        for key, value in format.iteritems():
+            setattr(result, key, value)
         return result
+
+    def match_format(self, cell, **format):
+        for key, value in format.iteritems():
+            if getattr(cell, key) != value:
+                return False
+        return True
