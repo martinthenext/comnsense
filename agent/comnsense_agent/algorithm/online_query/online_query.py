@@ -238,13 +238,12 @@ class OnlineQueryColumn(object):
         return decision
 
     def make_action_request(self, event):
-        max_rows_count = 100
         range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
         if self.interval.begin == 1:
             begin = self.interval.end
         else:
             begin = 1
-        end = begin + max_rows_count - 1
+        end = begin + self.MIN_POINTS_READY - 1
         return Action.request_from_event(event, range_name % (begin, end))
 
     def make_action_change(self, event, cells):

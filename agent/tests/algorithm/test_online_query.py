@@ -65,7 +65,7 @@ def test_online_query_without_response(workbook, sheetname, values, wrong):
                 assert_that(
                     action.range_name,
                     equal_to("$%s$%d:$%s$%d" %
-                             (column, num, column, num + 99)))
+                             (column, num, column, num + 9)))
 
     with allure.step("send wrong event: %s" % wrong):
         event = get_event(event_count + 1, wrong)
@@ -123,7 +123,7 @@ def test_online_query_with_response(workbook, sheetname, values, wrong):
         allure.attach("action", action.serialize(),
                       allure.attach_type.JSON)
         assert_that(action.range_name,
-                    equal_to("$%s$1:$%s$100" % (column, column)))
+                    equal_to("$%s$1:$%s$10" % (column, column)))
 
     with allure.step("response"):
         event = get_response(1, values, 100)

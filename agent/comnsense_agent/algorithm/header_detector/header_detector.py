@@ -14,6 +14,8 @@ class HeaderDetector(EventHandler):
         inprogress = "in progress"
         found = "found"
 
+    RANGE_STEP = 5
+
     def __init__(self):
         self._state = HeaderDetector.State.begin
         self._header = []
@@ -74,9 +76,11 @@ class HeaderDetector(EventHandler):
             if new.column == self.get_next_column(self._header[-1].column):
                 self._header.append(new)
 
-    def get_next_range(self, shift=len(string.ascii_uppercase)):
+    def get_next_range(self, shift=None):
+        if shift is None:
+            shift = self.RANGE_STEP
         if self._state == HeaderDetector.State.begin:
-            return "$A$1:$AZ$1"
+            return "$A$1:$E$1"
         else:
             last = self.get_index_from_column(self._header[-1].column)
             start = self.get_column_from_index(last + 1)
