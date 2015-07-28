@@ -1,10 +1,10 @@
 # encoding=utf-8
-import pytest
-import mock
-import random
-import string
 import allure
 import json
+import mock
+import pytest
+import random
+import string
 from hamcrest import *
 
 
@@ -13,7 +13,7 @@ from ..fixtures.excel import random_sheet_change, random_range_response
 from ..fixtures.strings import random_word, random_first_last_name
 from ..fixtures.strings import random_address, random_number
 from comnsense_agent.data import Event, Cell, Action
-from comnsense_agent.algorithm.online_query import OnlineQuery
+from comnsense_agent.algorithm.error_detector import ErrorDetector
 
 
 def attach_stats(algorithm, column):
@@ -67,7 +67,7 @@ def get_context_with_header(column):
                           get_context_empty_header],
                          ids=["HeaderNotYetFound", "EmptyHeader"])
 def test_online_query_without_header(workbook, sheetname, event, context):
-    algorithm = OnlineQuery()
+    algorithm = ErrorDetector()
     context = context()
     event = next(event(workbook, sheetname))
     allure.attach("event", event.serialize(), type=allure.attach_type.JSON)
@@ -88,7 +88,7 @@ FIXTURES = [([next(random_word()) for _ in range(10)], next(random_number())),
 @allure.story("Append Values To Blank Column")
 @pytest.mark.parametrize("values,wrong", FIXTURES)
 def test_online_query_without_response(workbook, sheetname, values, wrong):
-    algorithm = OnlineQuery()
+    algorithm = ErrorDetector()
     column = "A"
     context = get_context_with_header(column)
     event_count = len(values)
@@ -134,7 +134,7 @@ def test_online_query_without_response(workbook, sheetname, values, wrong):
 @allure.story("Append Value To Column With Data")
 @pytest.mark.parametrize("values,wrong", FIXTURES)
 def test_online_query_with_response(workbook, sheetname, values, wrong):
-    algorithm = OnlineQuery()
+    algorithm = ErrorDetector()
 
     column = "A"
     context = get_context_with_header(column)

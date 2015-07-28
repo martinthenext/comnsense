@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 
-from comnsense_agent.algorithm.online_query import OnlineQuery
+from comnsense_agent.algorithm.error_detector import ErrorDetector
 from comnsense_agent.algorithm.header_detector import HeaderDetector
 from comnsense_agent.algorithm.string_formatter import StringFormatter
 
