@@ -2,7 +2,7 @@ import logging
 import string
 import enum
 
-from ..event_handler import EventHandler
+from ..event_handler import EventHandler, publicmethod
 from comnsense_agent.data import Event, Action
 
 logger = logging.getLogger(__name__)
@@ -35,9 +35,20 @@ class HeaderDetector(EventHandler):
         else:
             return []
 
+    @publicmethod
     def get_header(self):
         if self._state == HeaderDetector.State.found:
             return self._header
+
+    @publicmethod
+    def get_header_columns(self):
+        if self._state == HeaderDetector.State.found:
+            return {x.column for x in self._header}
+
+    @publicmethod
+    def get_header_rows(self):
+        if self._state == HeaderDetector.State.found:
+            return {x.row for x in self._header}
 
     def handle_begin(self, event):
         action = Action.request_from_event(event, self.get_next_range())

@@ -1,6 +1,7 @@
 import enum
 import logging
 import copy
+import operator
 from collections import namedtuple
 
 from ..event_handler import EventHandler
@@ -15,19 +16,56 @@ class OnlineQuery(EventHandler):
         self.columns = {}
 
     def handle(self, event, context):
-        answer = []
+        # waiting header, nothing to do
+        if context.lookup(event.sheet).get_header() is None:
+            return []
+
+        answer = {}
+
+        # initialize algorithm for all columns in header
+        for column in context.lookup(event.sheet).get_header_columns():
+            if column not in self.columns:
+                logger.debug("initialize column: %s", column)
+                self.columns[column] = OnlineQueryColumn(column)
+                answer[column] = []
+                answer[column] += self.columns[column].handle(event, context)
 
         for column in event.columns:
-            logger.debug("column: %s", column)
-            cells = event.columns.get(column, [])
-            prev_cells = event.prev_columns.get(column, [None] * len(cells))
-
             if column not in self.columns:
-                self.columns[column] = OnlineQueryColumn(column)
+                logger.warn("column %s is not in header, skip ...", column)
+                continue
 
-            answer += self.columns[column].handle(event, cells, prev_cells)
+            # initilizing actions already in answer
+            if column in answer:
+                continue
 
-        return answer
+            logger.debug("column: %s", column)
+            answer[column] = []
+            answer[column] += self.columns[column].handle(
+                    self.normalize_event(event, context, column), context)
+
+        return reduce(operator.add, answer.values(), [])
+
+    @staticmethod
+    def normalize_event(event, context, column):
+        cells = []
+        prev_cells = []
+
+        for cell in event.columns.get(column, []):
+            # skip cells from header
+            if cell.row in context.lookup(event.sheet).get_header_rows():
+                continue
+
+            cells.append([cell])
+
+        if event.prev_columns.get(column):
+            for cell in cells:
+                prev = [c for c in event.prev_columns.get(column)
+                        if c.key == cell[0].key] or [None]
+                prev_cells.append(prev)
+
+        return Event(event.type, event.workbook,
+                     event.sheet, cells, prev_cells)
 
 
 class OnlineQueryColumn(object):
@@ -51,7 +89,7 @@ class OnlineQueryColumn(object):
         self.incorrect_format = {"color": 3}
         self.correct_format = {"color": 0}
 
-    def handle(self, event, cells, prev_cells):
+    def handle(self, event, context):
         logger.debug("column %s: state: %s",
                      self.column, self.state.value)
         logger.debug("column %s: stats: %s",
@@ -60,30 +98,33 @@ class OnlineQueryColumn(object):
                      self.column, repr(self.interval))
 
         if self.state == self.State.begin:
-            return self.handle_begin(event, cells)
+            return self.handle_begin(event, context)
         elif self.state == self.State.waiting_response:
-            return self.handle_waiting_response(event, cells)
+            return self.handle_waiting_response(event, context)
         elif self.state == self.State.ready:
-            return self.handle_ready(event, cells, prev_cells)
+            return self.handle_ready(event, context)
         else:
             raise AssertionError("impossible state")
 
-    def handle_begin(self, event, cells):
+    def handle_begin(self, event, context):
+        cells = event.columns.get(self.column, [])
         for cell in cells:
             if cell.value:
                 self.add_value_to_stats(cell.value)
             self.update_interval(int(cell.row))
         self.state = self.State.waiting_response
-        return [self.make_action_request(event)]
+        return [self.make_action_request(event, context)]
 
-    def handle_waiting_response(self, event, cells):
+    def handle_waiting_response(self, event, context):
+        cells = event.columns.get(self.column, [])
         request_next_range = False
         non_empty_range_end = len(cells)
         answer = []
 
         try:
             non_empty_range_end = \
-                len(cells) - [x.value for x in reversed(cells)].index("")
+                len(cells) - \
+                [x.value for x in reversed(cells)].index("")
         except ValueError:
             request_next_range = True
 
@@ -96,7 +137,7 @@ class OnlineQueryColumn(object):
             self.update_interval(int(cell.row))
 
         if request_next_range:
-            answer = [self.make_action_request(event)]
+            answer = [self.make_action_request(event, context)]
         else:
             self.state = self.State.ready
 
@@ -105,29 +146,37 @@ class OnlineQueryColumn(object):
 
         return answer
 
-    def handle_ready(self, event, *args):
+    def handle_ready(self, event, context):
         if event.type == Event.Type.SheetChange:
-            return self.handle_ready_change(event, *args)
+            return self.handle_ready_change(event, context)
         elif event.type == Event.Type.RangeResponse:
-            return self.handle_ready_response(event, *args)
+            return self.handle_ready_response(event, context)
         else:
             raise AssertionError(
                 "unexpected event type: %s" % event.type.value)
 
-    def handle_ready_change(self, event, cells, prev_cells):
+    def handle_ready_change(self, event, context):
         answer_cells = []
+
+        cells = event.columns.get(self.column, [])
+        prev_cells = event.prev_columns.get(self.column, [])
+        if not prev_cells:
+            prev_cells = [None] * len(cells)
+
         for cell, prev_cell in zip(cells, prev_cells):
-            value = cell.value
             prev_value = prev_cell.value if prev_cell else ""
 
-            if value and prev_value and \
-                    (interval.begin <= int(cell.row) <= interval.end):
+            if cell.value and prev_value and \
+                    (interval.begin <= int(cell.row) <= interval.end) and \
+                    self.match_format(prev_cell, **self.incorrect_format):
+
                 self.record_corrected(value, prev_value)
                 answer_cells.append(
                     self.apply_format(cell, **self.correct_format))
-            elif value:
-                self.add_value_to_stats(value)
-                if self.check(value) == 0:
+
+            elif cell.value:
+                self.add_value_to_stats(cell.value)
+                if self.check(cell.value) == 0:
                     answer_cells.append(
                         self.apply_format(cell, **self.incorrect_format))
 
@@ -138,7 +187,8 @@ class OnlineQueryColumn(object):
         else:
             return []
 
-    def handle_ready_response(self, event, cells, prev_cells):
+    def handle_ready_response(self, event, context):
+        cells = event.columns.get(self.column, [])
         for cell in cells:
             if cell.value and not self.interval.end < int(cell.row):
                 self.add_value_to_stats(cell.value)
@@ -237,25 +287,28 @@ class OnlineQueryColumn(object):
                         decision = -1
         return decision
 
-    def make_action_request(self, event):
+    def make_action_request(self, event, context):
         range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
-        if self.interval.begin == 1:
+        min_row = int(min(context.lookup(event.sheet).get_header_rows())) + 1
+        if self.interval.begin == min_row:
             begin = self.interval.end
         else:
-            begin = 1
-        end = begin + self.MIN_POINTS_READY - 1
+            begin = min_row
+        end = begin + self.MIN_POINTS_READY
         return Action.request_from_event(event, range_name % (begin, end))
 
     def make_action_change(self, event, cells):
         return Action.change_from_event(event, [cells])
 
-    def apply_format(self, cell, **format):
+    @staticmethod
+    def apply_format(cell, **format):
         result = copy.deepcopy(cell)
         for key, value in format.iteritems():
             setattr(result, key, value)
         return result
 
-    def match_format(self, cell, **format):
+    @staticmethod
+    def match_format(cell, **format):
         for key, value in format.iteritems():
             if getattr(cell, key) != value:
                 return False

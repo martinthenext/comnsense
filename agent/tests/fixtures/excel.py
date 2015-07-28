@@ -55,6 +55,13 @@ def range_response(workbook, sheetname, key, value):
 
 
 @pytest.yield_fixture
+def random_range_response(workbook, sheetname):
+    key = "$%s$%s" % (next(random_column()), next(random_row()))
+    value = get_random_string()
+    yield next(range_response(workbook, sheetname, key, value))
+
+
+@pytest.yield_fixture
 def random_sheet_change(workbook, sheetname):
     key = "$%s$%s" % (next(random_column()), next(random_row()))
     event = Event(Event.Type.SheetChange,

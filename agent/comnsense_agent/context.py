@@ -2,6 +2,7 @@ import logging
 
 from comnsense_agent.data import Action
 from comnsense_agent.message import Message
+from comnsense_agent.algorithm.event_handler import PublicMethodLookup
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,13 @@ class Context(object):
     @workbook.setter
     def workbook(self, workbook):
         self._workbook = workbook
+
+    @property
+    def sheets(self):
+        return list(self.sheets_event_handlers.iterkeys())
+
+    def lookup(self, sheet):
+        return PublicMethodLookup(self.sheets_event_handlers[sheet].values())
 
     def dumps(self):
         """
