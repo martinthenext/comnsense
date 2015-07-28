@@ -21,7 +21,7 @@ class Ready:
         context.sheets_event_handlers[sheet] = OrderedDict([
             (HeaderDetector.__name__, HeaderDetector()),
             (StringFormatter.__name__, StringFormatter()),
-            (OnlineQuery.__name__, OnlineQuery()),
+            (ErrorDetector.__name__, ErrorDetector()),
         ])
 
     def next(self, context, msg):
