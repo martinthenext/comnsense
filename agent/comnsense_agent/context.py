@@ -1,9 +1,6 @@
 import logging
 from collections import OrderedDict
 
-from comnsense_agent.data import Action
-from comnsense_agent.message import Message
-
 from comnsense_agent.algorithm.event_handler import PublicMethodLookup
 from comnsense_agent.algorithm.error_detector import ErrorDetector
 from comnsense_agent.algorithm.header_detector import HeaderDetector
@@ -25,20 +22,26 @@ class Context(object):
 
     @workbook.setter
     def workbook(self, workbook):
-        self._workbook = workbook
+        if self._workbook is None:
+            self._workbook = workbook
+        else:
+            raise AttributeError("do not overwrite workbook id")
 
     @property
     def sheets(self):
         return list(self._sheets_event_handlers.iterkeys())
 
     def lookup(self, sheet):
-        return PublicMethodLookup(self._sheets_event_handlers[sheet])
+        return PublicMethodLookup(self.handlers(sheet))
 
     def handlers(self, sheet):
         if sheet not in self._sheets_event_handlers:
-            self._sheets_event_handlers[sheet] = [
-                HeaderDetector(), StringFormatter(), ErrorDetector()]
-        return self._sheets_event_handlers[sheet]
+            # class names are needed for deserealization
+            self._sheets_event_handlers[sheet] = OrderedDict(
+                [(HeaderDetector.__name__, HeaderDetector()),
+                 (StringFormatter.__name__, StringFormatter()),
+                 (ErrorDetector.__name__, ErrorDetector())])
+        return self._sheets_event_handlers[sheet].values()
 
     def dumps(self):
         """
