@@ -25,9 +25,9 @@ class ErrorDetector(EventHandler):
                 logger.debug("initialize column: %s", column)
                 self.columns[column] = ColumnErrorDetector(column)
                 answer[column] = []
-                answer[column] +=
-                self.columns[column].handle(
-                    self.normalize_event(event, context, column), context)
+                answer[column] += \
+                    self.columns[column].handle(
+                        self.normalize_event(event, context, column), context)
 
         for column in event.columns:
             if column not in self.columns:
