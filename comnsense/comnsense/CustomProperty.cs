@@ -24,8 +24,8 @@ namespace comnsense
             if (cached != null)
                 return cached;
 
-            dynamic properties = wb.CustomDocumentProperties;
-            foreach (dynamic prop in properties)
+            var properties = (DocumentProperties)wb.CustomDocumentProperties;
+            foreach (DocumentProperty prop in properties)
             {
                 if (prop.Name != key)
                     continue;
