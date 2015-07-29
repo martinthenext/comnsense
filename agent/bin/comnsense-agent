@@ -31,7 +31,7 @@ def parse_args(args=None):
     parser.add_argument("--log-level", type=str,
                         default="DEBUG", help="logging level")
     parser.add_argument("--log-filename", type=str,
-                        help="log filename", default="comnsense-agent.log")
+                        help="log filename")
     return parser.parse_args(args)
 
 
