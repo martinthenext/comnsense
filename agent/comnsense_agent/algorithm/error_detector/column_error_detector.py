@@ -233,7 +233,7 @@ class ColumnErrorDetector(object):
     def make_action_request(self, event, context):
         range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
         min_row = int(min(context.lookup(event.sheet).get_header_rows())) + 1
-        if self.interval.begin == min_row:
+        if self.interval.begin <= min_row:
             begin = self.interval.end + 1
         else:
             begin = min_row
