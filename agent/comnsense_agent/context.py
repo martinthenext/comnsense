@@ -1,8 +1,13 @@
 import logging
+from collections import OrderedDict
 
 from comnsense_agent.data import Action
 from comnsense_agent.message import Message
+
 from comnsense_agent.algorithm.event_handler import PublicMethodLookup
+from comnsense_agent.algorithm.error_detector import ErrorDetector
+from comnsense_agent.algorithm.header_detector import HeaderDetector
+from comnsense_agent.algorithm.string_formatter import StringFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +17,7 @@ class Context(object):
         self._copy = None
         self._workbook = None
         self._ready = False
-        self.sheets_event_handlers = {}
+        self._sheets_event_handlers = {}
 
     @property
     def workbook(self):
@@ -24,10 +29,16 @@ class Context(object):
 
     @property
     def sheets(self):
-        return list(self.sheets_event_handlers.iterkeys())
+        return list(self._sheets_event_handlers.iterkeys())
 
     def lookup(self, sheet):
-        return PublicMethodLookup(self.sheets_event_handlers[sheet].values())
+        return PublicMethodLookup(self._sheets_event_handlers[sheet].values())
+
+    def handlers(self, sheet):
+        if sheet not in self._sheets_event_handlers:
+            self._sheets_event_handlers[sheet] = [
+                HeaderDetector(), StringFormatter(), ErrorDetector()]
+        return self._sheets_event_handlers[sheet]
 
     def dumps(self):
         """

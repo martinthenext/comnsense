@@ -78,3 +78,15 @@ def sheet_change(workbook, sheetname, key, value, prev_value=""):
                   [[Cell(key, value)]],
                   [[Cell(key, prev_value)]])
     yield event
+
+
+@pytest.yield_fixture
+def before_close(workbook):
+    event = Event(Event.Type.WorkbookBeforeClose, workbook)
+    yield event
+
+
+@pytest.yield_fixture
+def workbook_open(workbook):
+    event = Event(Event.Type.WorkbookOpen, workbook)
+    yield event
