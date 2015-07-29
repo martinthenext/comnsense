@@ -32,7 +32,7 @@ class Context(object):
         return list(self._sheets_event_handlers.iterkeys())
 
     def lookup(self, sheet):
-        return PublicMethodLookup(self._sheets_event_handlers[sheet].values())
+        return PublicMethodLookup(self._sheets_event_handlers[sheet])
 
     def handlers(self, sheet):
         if sheet not in self._sheets_event_handlers:
