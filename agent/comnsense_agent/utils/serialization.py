@@ -45,28 +45,37 @@ def restore_content(obj, content):
     return obj
 
 
-def Serializable(provider):
-    PROVIDERS = {
-        "json":    (json.dumps,
-                    json.loads),
-        "msgpack": (functools.partial(msgpack.packb, use_bin_type=True),
-                    functools.partial(msgpack.unpackb, encoding='utf-8'))
-    }
+PROVIDERS = {
+    "json":    (json.dumps,
+                json.loads),
+    "msgpack": (functools.partial(msgpack.packb, use_bin_type=True),
+                functools.partial(msgpack.unpackb, encoding='utf-8'))
+}
 
+
+def serialize(provider, content):
+    return PROVIDERS[provider][0](content)
+
+
+def deserialize(provider, data):
+    return PROVIDERS[provider][1](data)
+
+
+def Serializable(provider):
     assert provider in PROVIDERS
 
-    def serialize(self):
+    def serialize_(self):
         content = get_content(self)
-        return PROVIDERS[provider][0](content)
+        return serialize(provider, content)
 
     @classmethod
-    def deserialize(cls, data):
+    def deserialize_(cls, data):
+        content = deserialize(provider, data)
         obj = cls.__new__(cls)
-        content = PROVIDERS[provider][1](data)
         return restore_content(obj, content)
 
     return type(provider.title() + "Serializable", (object,),
-                {"serialize": serialize, "deserialize": deserialize})
+                {"serialize": serialize_, "deserialize": deserialize_})
 
 
 JsonSerializable = Serializable("json")
