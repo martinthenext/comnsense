@@ -109,10 +109,11 @@ class ColumnErrorDetector(object):
             prev_value = prev_cell.value if prev_cell else ""
 
             if cell.value and prev_value and \
-                    (interval.begin <= int(cell.row) <= interval.end) and \
+                    self.interval.begin <= int(cell.row) and \
+                    int(cell.row) <= self.interval.end and \
                     self.match_format(prev_cell, **self.incorrect_format):
 
-                self.record_corrected(value, prev_value)
+                self.record_corrected(cell.value, prev_value)
                 answer_cells.append(
                     self.apply_format(cell, **self.correct_format))
 
@@ -132,7 +133,7 @@ class ColumnErrorDetector(object):
     def handle_ready_response(self, event, context):
         cells = event.columns.get(self.column, [])
         for cell in cells:
-            if cell.value and not self.interval.end < int(cell.row):
+            if cell.value and self.interval.end < int(cell.row):
                 self.add_value_to_stats(cell.value)
             self.update_interval(int(cell.row))
         return []
@@ -233,10 +234,10 @@ class ColumnErrorDetector(object):
         range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
         min_row = int(min(context.lookup(event.sheet).get_header_rows())) + 1
         if self.interval.begin == min_row:
-            begin = self.interval.end
+            begin = self.interval.end + 1
         else:
             begin = min_row
-        end = begin + self.MIN_POINTS_READY
+        end = begin + self.MIN_POINTS_READY - 1
         return Action.request_from_event(event, range_name % (begin, end))
 
     def make_action_change(self, event, cells):
