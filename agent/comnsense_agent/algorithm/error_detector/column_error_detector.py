@@ -3,9 +3,10 @@ import enum
 import logging
 from collections import namedtuple
 
+from comnsense_agent.data import Event, Action
+
 from .column_analyzer import ColumnAnalyzer
 
-from comnsense_agent.data import Event, Action
 
 logger = logging.getLogger(__name__)
 

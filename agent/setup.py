@@ -8,7 +8,8 @@ requirements = [
     'pyzmq>=14.6.0',
     'tornado',
     'msgpack-python',
-    "numpy==1.9.2"
+    'numpy==1.9.2',
+    'bitarray==0.8.1'
 ]
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 4:

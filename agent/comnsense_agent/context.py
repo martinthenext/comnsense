@@ -6,6 +6,9 @@ from comnsense_agent.algorithm.error_detector import ErrorDetector
 from comnsense_agent.algorithm.header_detector import HeaderDetector
 from comnsense_agent.algorithm.string_formatter import StringFormatter
 
+from comnsense_agent.utils.serialization import get_content
+from comnsense_agent.utils.serialization import serialize
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +54,13 @@ class Context(object):
 
         :return: byte string
         """
-        return b""
+        content = {}
+        for sheet in self.sheets():
+            content[sheet] = []
+            for name, handler in self.handlers(sheet):
+                content[sheet].append(
+                    {"class": name, "content": get_content(handler)})
+        return serialize("json", content)
 
     def loads(self, data):
         """
