@@ -117,7 +117,8 @@ class ColumnErrorDetector(object):
                 answer_cells.append(
                     self.apply_format(cell, **self.correct_format))
 
-            elif cell.value:
+            # let's check just new values
+            elif cell.value and not prev_value:
                 self.add_value_to_stats(cell.value)
                 if self.check(cell.value) == 0:
                     answer_cells.append(
