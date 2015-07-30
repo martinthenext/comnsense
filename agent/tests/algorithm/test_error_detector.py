@@ -235,8 +235,6 @@ def test_online_query_change_value(workbook, sheetname, values, wrong):
     def get_event(num, value, prev_value=""):
         key = "$%s$%d" % (column, num)
         event = next(sheet_change(workbook, sheetname, key, value, prev_value))
-        if prev_value:
-            event.prev_cells[0][0].color = 3
         allure.attach("event", event.serialize(),
                       type=allure.attach_type.JSON)
         return event
