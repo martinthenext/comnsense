@@ -4,6 +4,7 @@ import logging
 from collections import namedtuple
 
 from comnsense_agent.data import Event, Action
+from comnsense_agent.utils.bit_array import BitArray
 
 from .column_analyzer import ColumnAnalyzer
 
@@ -29,6 +30,7 @@ class ColumnErrorDetector(object):
         self.state = self.State.begin
         self.stats = self.Stats(0, [])
         self.interval = self.Interval(0, 0)
+        self.incorrect_cells = BitArray()
         self.incorrect_format = {"color": 3}
         self.correct_format = {"color": 0}
 
@@ -110,18 +112,18 @@ class ColumnErrorDetector(object):
             prev_value = prev_cell.value if prev_cell else ""
 
             if cell.value and prev_value and \
-                    self.interval.begin <= int(cell.row) and \
-                    int(cell.row) <= self.interval.end and \
-                    self.match_format(prev_cell, **self.incorrect_format):
+                    self.incorrect_cells[int(cell.row)]:
 
                 self.record_corrected(cell.value, prev_value)
                 answer_cells.append(
                     self.apply_format(cell, **self.correct_format))
+                self.incorrect_cells[int(cell.row)] = False
 
             # let's check just new values
             elif cell.value and not prev_value:
                 self.add_value_to_stats(cell.value)
                 if self.check(cell.value) == 0:
+                    self.incorrect_cells[int(cell.row)] = True
                     answer_cells.append(
                         self.apply_format(cell, **self.incorrect_format))
 
@@ -251,10 +253,3 @@ class ColumnErrorDetector(object):
         for key, value in format.iteritems():
             setattr(result, key, value)
         return result
-
-    @staticmethod
-    def match_format(cell, **format):
-        for key, value in format.iteritems():
-            if getattr(cell, key) != value:
-                return False
-        return True
