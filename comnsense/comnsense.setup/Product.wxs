@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="285b384b-aaa1-4cdd-b16b-fc6d83835ae6"
+           Name="Comnsense"
+           Language="1033"
+           Version="1.0.0.0"
+           Manufacturer="comnsense"
+           UpgradeCode="be284eb6-3d1f-45ff-bfce-9db9e17febb1">
+
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <Property Id="VSTORUNTIMEREDIST">
+      <RegistrySearch Id="VSTORuntimeedist"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4R"
+                      Name="Version"
+                      Type="raw" />
+    </Property>
+    <Condition Message="The Visual Studio 2010 Tools for Office Runtime is not installed. Please download and install from http://www.microsoft.com/en-us/download/details.aspx?id=20479.">
+      <![CDATA[Installed OR VSTORUNTIMEREDIST>="10.0.30319"]]>
+    </Condition>
+
+    <PropertyRef Id="NETFRAMEWORK40FULL" />
+    <Condition Message="This application requires .NET Framework 4.0.">
+      <![CDATA[Installed OR NETFRAMEWORK40FULL]]>
+    </Condition>
+
+    <Media Id="1" Cabinet="comnsense.cab" EmbedCab="yes" />
+
+    <CustomActionRef Id="LaunchAgentTray" />
+    <InstallExecuteSequence>
+      <Custom Action="LaunchAgentTray" After="InstallFinalize" />
+    </InstallExecuteSequence>
+
+    <Feature Id="ProductFeature" Title="Comnsense" Level="1">
+      <ComponentGroupRef Id="ExcelAddinFiles" />
+      <ComponentRef Id="Registry_AgentAutoRun" />
+      <ComponentGroupRef Id="AgentFiles" />
+      <ComponentRef Id="Registry_ExcelAddinFriendlyName" />
+      <ComponentRef Id="Registry_ExcelAddinDescription" />
+      <ComponentRef Id="Registry_ExcelAddinManifest" />
+      <ComponentRef Id="Registry_ExcelAddinLoadBehavior" />
+    </Feature>
+  
+    <UIRef Id="WixUI_Minimal" />
+  </Product>
+
+  <Fragment>
+    <Property Id="ALLUSERS" Secure="yes" Value="2" />
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="Comnsense">
+          <Directory Id="AGENTDIR" Name="Agent">
+            <Component Id="Registry_AgentAutoRun">
+              <RegistryValue Id="RegKey_AgentAutoRun"
+                             Root="HKCU"
+                             Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                             Name="comnsense agent"
+                             Value="&quot;[AGENTDIR]comnsense-tray.exe&quot;"
+                             Type="string"
+                             KeyPath="yes" />
+            </Component>
+          </Directory>
+          <Directory Id="EXCELADDINDIR" Name="ExcelAddin" />
+        </Directory>
+        <Component Id="Registry_ExcelAddinFriendlyName">
+          <RegistryValue Id="RegKey_ExcelAddinFriendlyName" 
+                         Root="HKCU"
+                         Key="Software\Microsoft\Office\Excel\AddIns\comnsense"
+                         Name="FriendlyName"
+                         Value="comnsense"
+                         Type="string"
+                         KeyPath="yes" />
+        </Component>
+        <Component Id="Registry_ExcelAddinDescription">
+          <RegistryValue Id="RegKey_ExcelAddinDescription"
+                         Root="HKCU"
+                         Key="Software\Microsoft\Office\Excel\AddIns\comnsense"
+                         Name="Description"
+                         Value="Tool that runs in the background of Excel and recognizes patterns in user's actions and data"
+                         Type="string" 
+                         KeyPath="yes" />
+        </Component>
+        <Component Id="Registry_ExcelAddinManifest">
+          <RegistryValue Id="RegKey_ExcelAddinManifest" 
+                         Root="HKCU"
+                         Key="Software\Microsoft\Office\Excel\AddIns\comnsense"
+                         Name="Manifest" 
+                         Value="[EXCELADDINDIR]comnsense.vsto|vstolocal"
+                         Type="string" 
+                         KeyPath="yes" />
+        </Component>
+        <Component Id="Registry_ExcelAddinLoadBehavior">
+          <RegistryValue Id="RegKey_ExcelAddinLoadBehavior"
+                         Root="HKCU"
+                         Key="Software\Microsoft\Office\Excel\AddIns\comnsense"
+                         Name="LoadBehavior"
+                         Value="3"
+                         Type="integer"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </Directory>
+
+    <CustomAction Id="LaunchAgentTray"
+                  Directory="AGENTDIR"
+                  ExeCommand="[AGENTDIR]comnsense-tray.exe"
+                  Return="asyncNoWait"
+                  Impersonate="yes" />
+  </Fragment>
+</Wix>

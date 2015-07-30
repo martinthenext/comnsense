@@ -223,3 +223,7 @@ $RECYCLE.BIN/
 comnsense/comnsense/amd64/
 comnsense/comnsense/i386/
 *.egg-info
+
+# Wix Installer auto-generated files
+comnsense/comnsense.setup/Agent.wxs
+comnsense/comnsense.setup/ExcelAddin.wxs
