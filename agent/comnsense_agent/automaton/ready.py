@@ -2,6 +2,7 @@ import logging
 
 from comnsense_agent.data import Event
 from comnsense_agent.message import Message
+from comnsense_agent.multiplexer.first_answer import FirstAnswer
 
 logger = logging.getLogger(__name__)
 
@@ -22,16 +23,14 @@ class Ready:
 
         if event.type in (Event.Type.SheetChange,
                           Event.Type.RangeResponse):
-            answer = None
+
+            actions = []
             for handler in context.handlers(event.sheet):
                 logger.debug("call %s handler", handler.__class__.__name__)
-                actions = handler.handle(event, context)
-                if actions:
-                    # all handlers should retrieve event
-                    # but just first action will be send
-                    if answer is None:
-                        answer = tuple(map(Message.action, actions))
-            return answer, self
+                actions.append(handler.handle(event, context))
+
+            answer = FirstAnswer().merge(event, actions)
+            return tuple(map(Message.action, answer)), self
         else:
             logger.warn("unexpected event: %s", str(event))
             return None, self
