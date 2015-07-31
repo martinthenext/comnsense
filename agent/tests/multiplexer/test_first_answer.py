@@ -61,7 +61,7 @@ def event(workbook, sheetname, request):
 
 @allure.feature("Multiplexer")
 @pytest.mark.parametrize("answers, expected", FIXTURES, indirect=True)
-def test_first_answer_test(event, answers, expected):
+def test_first_answer(event, answers, expected):
     mux = FirstAnswer()
     result = mux.merge(event, answers)
     assert_that(result, contains(*expected))
