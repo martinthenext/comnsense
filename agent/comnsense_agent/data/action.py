@@ -203,3 +203,6 @@ class Action(object):
 
     def __ne__(self, another):
         return not self.__eq__(another)
+
+    def __repr__(self):
+        return "Action %s" % self.serialize()

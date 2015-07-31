@@ -18,12 +18,12 @@ def random_row():
     yield random.randint(1, 100)
 
 
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def workbook():
     yield get_random_workbook_id()
 
 
-@pytest.yield_fixture
+@pytest.yield_fixture(scope="module")
 def sheetname():
     yield get_random_sheet_name()
 
