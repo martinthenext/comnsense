@@ -5,11 +5,11 @@ import sys
 import os
 
 requirements = [
-    'pyzmq>=14.6.0',
-    'tornado',
+    'bitarray==0.8.1'
     'msgpack-python',
     'numpy==1.9.2',
-    'bitarray==0.8.1'
+    'pyzmq>=14.6.0',
+    'tornado',
 ]
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 4:
@@ -39,12 +39,12 @@ if platform.system().lower() == "windows":
     ]
 
 test_requirements = [
+    'PyHamcrest',
+    'mock',
+    'pep8',
     'pytest',
     'pytest-allure-adaptor',
     'pytest-cov',
-    'mock',
-    'pep8',
-    'PyHamcrest',
 ]
 
 setup(name='comnsense-agent',
@@ -59,8 +59,8 @@ setup(name='comnsense-agent',
                 "comnsense_agent.algorithm.string_formatter",
                 "comnsense_agent.automaton",
                 "comnsense_agent.data",
-                "comnsense_agent.utils",
                 "comnsense_agent.multiplexer",
+                "comnsense_agent.utils",
                 ],
       install_requires=requirements,
       test_suite='tests',
