@@ -140,6 +140,7 @@ class Workbook(object):
             for cell in row:
                 if cell.key == key:
                     return copy.deepcopy(cell)
+        return Cell(key, "")
 
     def put(self, sheetname, cell):
         cells = self._sheets[sheetname]

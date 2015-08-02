@@ -1,11 +1,13 @@
 # coding=utf-8
 import allure
 import pytest
+import itertools
 from hamcrest import *
 
 from ..fixtures.excel import workbook as workbook_id
 from .workbook import Workbook
-from comnsense_agent.data import Cell
+from .scenario import Scenario
+from comnsense_agent.data import Cell, Event, Action
 
 SHEET = """
   A  |        B     |    C
@@ -60,3 +62,81 @@ def test_workbook_put(workbook_id):
                 equal_to(cell))
     serialized = wb.serialize("Contacts")
     allure.attach("serialized", serialized)
+
+
+@allure.feature("Testing")
+def test_scenario_simple(workbook_id):
+    types = [Event.Type.WorkbookOpen,
+             Event.Type.SheetChange,
+             Event.Type.SheetChange,
+             Event.Type.WorkbookBeforeClose]
+    wb = Workbook(workbook_id, SHEET)
+    sc = Scenario(wb)
+
+    expected = Workbook(workbook_id, u"""
+      A     |        B     |    C
+    ---------------------------------
+    Name    | City         |  Phone
+    Василий | Москва       | 1234567
+    Mike    | LA:color::3  | 2345678
+    Jim     | Boston       | 3456789
+    =================================
+    Contacts
+    """)
+
+    sc.open(comment="open workbook")
+    sc.change("Contacts", "$A$2", u"Василий", comment="change name")
+    sc.change("Contacts", "$B$2", u"Москва", comment="change city")
+    sc.close(comment="close workbook")
+    for event, type in itertools.izip(sc, types):
+        assert_that(event.type, equal_to(type))
+
+    assert_that(sc.workbook, equal_to(expected))
+
+
+@allure.feature("Testing")
+def test_scenario_change_cell_action(workbook_id):
+    wb = Workbook(workbook_id, SHEET)
+    sc = Scenario(wb)
+
+    expected = Workbook(workbook_id, u"""
+      A     |        B     |    C
+    ---------------------------------
+    Name    | City         |  Phone
+    Василий | Москва       | 1234567
+    Mike    | LA:color::3  | 2345678
+    Jim     | Boston       | 3456789
+    =================================
+    Contacts
+    """)
+
+    sc.open(comment="open workbook")
+    sc.change("Contacts", "$A$2", u"Василий", comment="change name")
+    sc.close(comment="close workbook")
+
+    for event in sc:
+        if event.type == Event.Type.SheetChange:
+            action = Action.change_from_event(
+                event, [[Cell("$B$2", u"Москва")]])
+            sc.apply(action)
+
+    assert_that(sc.workbook, equal_to(expected))
+
+
+@allure.feature("Testing")
+def test_scenario_range_request_action(workbook_id):
+    wb = Workbook(workbook_id, SHEET)
+    sc = Scenario(wb)
+
+    sc.open(comment="open workbook")
+    sc.change("Contacts", "$A$2", u"Василий", comment="change name")
+    sc.close(comment="close workbook")
+
+    for event in sc:
+        if event.type == Event.Type.SheetChange:
+            action = Action.request_from_event(
+                event, "$C$2:$C$4")
+            answer = sc.apply(action)
+            assert_that(answer.cells, equal_to([[Cell("$C$2", "1234567")],
+                                                [Cell("$C$3", "2345678")],
+                                                [Cell("$C$4", "3456789")]]))
