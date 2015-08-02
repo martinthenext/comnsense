@@ -20,11 +20,11 @@ class Signal(MsgpackSerializable, Data):
         """
         Signal code enumeration
 
-        .. py:attribute:: Stop
+        .. attribute:: Stop
 
            Stop signal code
 
-        .. py:attribute:: Ready
+        .. attribute:: Ready
 
            Ready signal code
         """
@@ -40,10 +40,16 @@ class Signal(MsgpackSerializable, Data):
 
     @property
     def code(self):
+        """
+        Signal `code <Signal.Code>`
+        """
         return self._code
 
     @property
     def data(self):
+        """
+        Signal data
+        """
         return self._data
 
     def validate(self):
@@ -57,23 +63,23 @@ class Signal(MsgpackSerializable, Data):
     @staticmethod
     def ready(identity=None):
         """
-        Signal `Signal.Code.Ready`.
+        Static constructor for `Signal.Code.Ready`.
         It should be used to notify agent about readiness of service.
 
-        :param identity:  optional service identity.
+        :param identity: optional service identity.
         :type identity: str or None
 
-        :return: :py:class:`Signal`
+        :return: `Signal`
         """
         return Signal(Signal.Code.Ready, identity)
 
     @staticmethod
     def stop():
         """
-        Signal `Signal.Code.Stop`.
+        Static constructor for `Signal.Code.Stop`.
         Agent should send this signal to service to stop it.
 
-        :return: :py:class:`Signal`
+        :return: `Signal`
         """
         return Signal(Signal.Code.Stop)
 

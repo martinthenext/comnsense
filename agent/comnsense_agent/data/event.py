@@ -2,20 +2,17 @@ import enum
 import json
 import logging
 
+from .data import Data
 from comnsense_agent.data.cell import Cell
+from comnsense_agent.utils.serialization import JsonSerializable
 
 
 logger = logging.getLogger(__name__)
 
 
-class EventError(RuntimeError):
-    pass
-
-
-class Event(object):
+class Event(JsonSerializable, Data):
     """
-    Events should be used for transferring data between from the Excel
-    to the `Agent`
+    Events should be used for transferring data from the Excel to the `Agent`
     """
 
     @enum.unique
@@ -25,20 +22,20 @@ class Event(object):
 
         .. py:attribute:: WorkbookOpen
 
-           first event from workbook, contains only workbook id
+           First event from workbook, contains only workbook id
 
         .. py:attribute:: WorkbookBeforeClose
 
-           last event from workbook, contains only workbook id
+           Last event from workbook, contains only workbook id
 
         .. py:attribute:: SheetChange
 
-           one or more cells was changed, contains workbook id,
+           One or more cells was changed, contains workbook id,
            changed sheet id and list of changed cell with new data
 
         .. py:attribute:: RangeResponse
 
-           response for `Action.Type.RangeRequest`
+           Response for `Action.Type.RangeRequest`
 
         """
 
@@ -47,68 +44,100 @@ class Event(object):
         SheetChange = 2
         RangeResponse = 3
 
-    __slots__ = ("type", "workbook", "sheet", "cells", "prev_cells")
+    __slots__ = ("_type", "_workbook", "_sheet", "_cells", "_prev_cells")
 
-    def __init__(self, *args):
-        for name, value in zip(self.__slots__[:len(args)], args):
+    def __init__(self, type, workbook, *args):
+        self._type = type
+        self._workbook = workbook
+        for name, value in zip(self.__slots__[2:len(args) + 2], args):
             setattr(self, name, value)
-        if not isinstance(self.type, Event.Type):
-            raise EventError("type should be member of Event.Type")
-        if not self.workbook:
-            raise EventError("workbook should not be empty")
-        if not hasattr(self, "sheet"):
-            self.sheet = None
-        if not hasattr(self, "cells") or self.cells is None:
-            self.cells = []
-        if not hasattr(self, "prev_cells") or self.prev_cells is None:
-            self.prev_cells = []
+        self.validate()
 
-    def serialize(self):
+    @property
+    def type(self):
         """
-        Make byte string representation of event
-
-        :return: byte string
+        Event `type <Event.Type>`
         """
+        return self._type
 
-        data = {}
-        data["type"] = self.type.value
-        data["workbook"] = self.workbook
-        if self.sheet:
-            data["sheet"] = self.sheet
-        if self.cells:
-            data["cells"] = Cell.table_to_primitive(self.cells)
-        if self.prev_cells:
-            data["prev_cells"] = Cell.table_to_primitive(self.prev_cells)
-        return json.dumps(data)
-
-    @staticmethod
-    def deserialize(payload):
+    @property
+    def workbook(self):
         """
-        Creates :py:class:`Event` from byte string representation
-
-        :param str data: Byte string representation
-        :return: :py:class:`Event` object
+        The id of the workbook that sent this event
         """
+        return self._workbook
 
-        def hook(dct):
-            for key in ["cells", "prev_cells"]:
-                if key in dct:
-                    logger.debug("key in deserialize method: %s", repr(key))
-                    dct[key] = Cell.table_from_primitive(dct[key])
-            return dct
+    @property
+    def sheet(self):
+        """
+        The name of the sheet on which the event occurred
+        """
+        if self._type in (Event.Type.SheetChange, Event.Type.RangeResponse):
+            return self._sheet
 
-        data = None
-        try:
-            data = json.loads(payload, object_hook=hook)
-        except ValueError, e:
-            raise EventError(e)
-        type = Event.Type(data.get("type"))
-        workbook = data.get("workbook")
-        sheet = data.get("sheet")
-        cells = data.get("cells")
-        logger.debug("cells in deserialize method: %s", repr(cells))
-        prev_cells = data.get("prev_cells")
-        return Event(type, workbook, sheet, cells, prev_cells)
+    @property
+    def cells(self):
+        """
+        The sequence of `cells <Cell>`
+        """
+        if self._type in (Event.Type.SheetChange, Event.Type.RangeResponse):
+            return self._cells
+
+    @property
+    def prev_cells(self):
+        """
+        The sequence of previous `cells <Cell>`
+
+        .. note::
+           Available only if type is SheetChange
+        """
+        if self._type == Event.Type.SheetChange:
+            return self._prev_cells
+
+    def validate(self):
+        if not isinstance(self._type, Event.Type):
+            raise Data.ValidationError("type should be member of Event.Type")
+        if not self._workbook:
+            raise Data.ValidationError("workbook should not be empty")
+        if not hasattr(self, "_sheet"):
+            self._sheet = None
+        if not hasattr(self, "_cells") or self._cells is None:
+            self._cells = []
+        if not hasattr(self, "_prev_cells") or self._prev_cells is None:
+            self._prev_cells = []
+        if self._type in (Event.Type.SheetChange, Event.Type.RangeResponse):
+            if self._sheet is None:
+                raise Data.ValidationError(
+                    "sheet should not be empty")
+            if self._cells == []:
+                raise Data.ValidationError(
+                    "cells should contain at least one cell")
+        else:
+            self._sheet = None
+            self._cells = []
+            self._prev_cells = []
+
+    def __getstate__(self):
+        state = {}
+        state["type"] = self._type.value
+        state["workbook"] = self._workbook
+        if self._sheet is not None:
+            state["sheet"] = self._sheet
+        if self._cells:
+            state["cells"] = Cell.table_to_primitive(self._cells)
+        if self._prev_cells:
+            state["prev_cells"] = Cell.table_to_primitive(self._prev_cells)
+        return state
+
+    def __setstate__(self, state):
+        self._type = Event.Type(state.get("type"))
+        self._workbook = state.get("workbook")
+        self._sheet = state.get("sheet")
+        self._cells = Cell.table_from_primitive(
+            state.get("cells", []))
+        self._prev_cells = Cell.table_from_primitive(
+            state.get("prev_cells", []))
+        self.validate()
 
     def _get_rows(self, cells):
         rows = {}
@@ -126,36 +155,30 @@ class Event(object):
 
     @property
     def rows(self):
+        if not self.cells:
+            return {}
         return self._get_rows(self.cells)
 
     @property
     def prev_rows(self):
+        if not self.prev_cells:
+            return {}
         return self._get_rows(self.prev_cells)
 
     @property
     def columns(self):
+        if not self.cells:
+            return {}
         return self._get_columns(self.cells)
 
     @property
     def prev_columns(self):
-        logger.debug("prev_cells: %s", repr(self.prev_cells))
+        if not self.prev_cells:
+            return {}
         return self._get_columns(self.prev_cells)
 
-    @property
-    def previous(self, cell):
-        row = self.prev_rows.get(cell.row)
-        if row is None:
-            return None
-        row = [x for x in row if x.key == cell.key]
-        if not row:
-            return None
-        return row[0]
+    def __repr__(self):
+        return self.serialize()
 
-    def __eq__(self, another):
-        for attr in Event.__slots__:
-            if getattr(self, attr) != getattr(another, attr):
-                return False
-        return True
-
-    def __ne__(self, another):
-        return not self.__eq__(another)
+    def __str__(self):
+        return repr(self)

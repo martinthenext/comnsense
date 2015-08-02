@@ -46,7 +46,7 @@ def restore_content(obj, content):
 
 
 PROVIDERS = {
-    "json":    (json.dumps,
+    "json":    (functools.partial(json.dumps, sort_keys=True),
                 json.loads),
     "msgpack": (functools.partial(msgpack.packb, use_bin_type=True),
                 functools.partial(msgpack.unpackb, encoding='utf-8'))

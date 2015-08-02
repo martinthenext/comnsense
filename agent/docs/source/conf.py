@@ -27,7 +27,7 @@ copyright = u'2015, Comnsense Team'
 author = u'Comnsense Team'
 
 primary_domain = 'py'
-default_role = 'py:obj'
+default_role = 'any'
 
 autodoc_member_order = "bysource"
 autoclass_content = "both"
