@@ -97,7 +97,7 @@ def scenario(workbook):
 @pytest.mark.parametrize("interval", [pytest.mark.xfail(300),
                                       pytest.mark.xfail(500),
                                       1000])
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(60)
 def test_system_first_demo_day(agent, addin, interval, expected):
     loop = ioloop.IOLoop()
     addin.run(loop, interval)
