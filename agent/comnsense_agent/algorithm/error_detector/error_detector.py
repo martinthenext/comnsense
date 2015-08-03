@@ -63,5 +63,8 @@ class ErrorDetector(EventHandler):
                         if c.key == cell[0].key] or [None]
                 prev_cells.append(prev)
 
+        if not cells:
+            cells.append([])
+
         return Event(event.type, event.workbook,
                      event.sheet, cells, prev_cells)

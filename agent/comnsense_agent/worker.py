@@ -67,11 +67,12 @@ def worker_main(ident, connection, loop=None, ctx=None):
             socket_stream.send_multipart(list(msg))
         elif msg.is_event() or msg.is_response():
             answer = runtime.run(msg)
-            if isinstance(answer, tuple):
-                for a in answer:
-                    socket_stream.send_multipart(list(a))
-            elif answer is not None:
-                socket_stream.send_multipart(list(answer))
+            logger.debug("runtime answer: %s", repr(answer))
+            if answer == Runtime.SpecialAnswer.finished:
+                loop.stop()
+            else:
+                for msg in answer:
+                    socket_stream.send_multipart(list(msg))
         else:
             logger.warn("unexpected message kind: %s", msg.kind)
 

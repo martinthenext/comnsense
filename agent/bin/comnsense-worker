@@ -29,7 +29,8 @@ def main(args):
     loop = ioloop.IOLoop.instance()
     context = zmq.Context()
     try:
-        comnsense_agent.worker.worker_main(args.ident, args.connection)
+        comnsense_agent.worker.worker_main(
+            args.ident, args.connection, loop, context)
     except (SystemExit, KeyboardInterrupt):
         pass
 

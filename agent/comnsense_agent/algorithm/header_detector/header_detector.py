@@ -68,10 +68,12 @@ class HeaderDetector(EventHandler):
             self._header += header
             return Action.request_from_event(event, self.get_next_range())
         elif empty == 0:
+            logger.debug("header found: %s", repr(self._header))
             self._state = HeaderDetector.State.found
             return
         else:
             self._header += header[:empty]
+            logger.debug("header found: %s", repr(self._header))
             self._state = HeaderDetector.State.found
             return
 
