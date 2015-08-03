@@ -36,9 +36,9 @@ def agent(agent_host, agent_port, tmpdir, request):
     yield proc
     if proc.poll() is None:
         proc.terminate()
-    out, err = proc.communicate()
-    allure.attach("out", out)
-    allure.attach("err", err)
+        out, err = proc.communicate()
+        allure.attach("out", out)
+        allure.attach("err", err)
     if os.path.exists(log):
         with open(log) as h:
             allure.attach("log", h.read())

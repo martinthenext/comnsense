@@ -45,6 +45,7 @@ test_requirements = [
     'pytest',
     'pytest-allure-adaptor',
     'pytest-cov',
+    'pytest-timeout',
 ]
 
 setup(name='comnsense-agent',
