@@ -23,9 +23,8 @@ def agent(agent_host, agent_port, tmpdir, request):
     cmd = ["python", path, "-b", connection,
            "--log-level", level, "--log-filename", log]
     allure.attach("command", " ".join(cmd))
-    proc = subprocess.Popen(cmd, close_fds=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     yield proc
     proc.terminate()
     out, err = proc.communicate()
