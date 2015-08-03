@@ -17,6 +17,54 @@ class IdentFilter(logging.Filter):
         return True
 
 
+def append_syslog_handler(config):
+    if platform.system().lower() == "windows":
+        appdata = os.getenv('APPDATA')
+        if appdata and os.path.isdir(appdata):
+            if not os.path.isdir(os.path.join(appdata, "Comnsense")):
+                os.makedirs(os.path.join(appdata, "Comnsense"))
+            filename = os.path.join(appdata, "Comnsense", "Agent.log")
+            config["handlers"]["syslog"] = {
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "file",
+                "filename": filename,
+                "maxBytes": 1000000,
+                "backupCount": 50,
+                "filters": ["ident"],
+            }
+            config["root"]["handlers"].append("syslog")
+    elif platform.system().lower() == "darwin":
+        config["handlers"]["syslog"] = {
+            "class": "logging.handlers.SysLogHandler",
+            "formatter": "syslog",
+            "facility": "daemon",
+            "address": "/var/run/syslog",
+            "filters": ["ident"],
+        }
+        config["root"]["handlers"].append("syslog")
+    else:
+        config["handlers"]["syslog"] = {
+            "class": "logging.handlers.SysLogHandler",
+            "formatter": "syslog",
+            "facility": "daemon",
+            "address": "/dev/log",
+            "filters": ["ident"],
+        }
+        config["root"]["handlers"].append("syslog")
+
+
+def append_file_handler(filename, config):
+    config["handlers"]["file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "formatter": "file",
+        "filename": filename,
+        "maxBytes": 1000000,
+        "backupCount": 5,
+        "filters": ["ident"],
+    }
+    config["root"]["handlers"].append("file")
+
+
 def setup(level, filename=None):
     config = {
         "version": 1,
@@ -38,7 +86,7 @@ def setup(level, filename=None):
             },
         },
         "root": {
-            "handlers": ["syslog"],
+            "handlers": [],
             "level": level,
         },
         "loggers": {
@@ -47,49 +95,13 @@ def setup(level, filename=None):
         }
     }
     if filename is not None:
-        config["handlers"]["file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "file",
-            "filename": filename,
-            "maxBytes": 1000000,
-            "backupCount": 5,
-            "filters": ["ident"],
-        }
-        config["root"]["handlers"].append("file")
-    if platform.system().lower() == "windows":
-        appdata = os.getenv('APPDATA')
-        if appdata and os.path.isdir(appdata):
-            if not os.path.isdir(os.path.join(appdata, "Comnsense")):
-                os.makedirs(os.path.join(appdata, "Comnsense"))
-            filename = os.path.join(appdata, "Comnsense", "Agent.log")
-            config["handlers"]["syslog"] = {
-                "class": "logging.handlers.RotatingFileHandler",
-                "formatter": "file",
-                "filename": filename,
-                "maxBytes": 1000000,
-                "backupCount": 50,
-                "filters": ["ident"],
-            }
-    elif platform.system().lower() == "darwin":
-        config["handlers"]["syslog"] = {
-            "class": "logging.handlers.SysLogHandler",
-            "formatter": "syslog",
-            "facility": "daemon",
-            "address": "/var/run/syslog",
-            "filters": ["ident"],
-        }
+        append_file_handler(filename, config)
     else:
-        config["handlers"]["syslog"] = {
-            "class": "logging.handlers.SysLogHandler",
-            "formatter": "syslog",
-            "facility": "daemon",
-            "address": "/dev/log",
-            "filters": ["ident"],
-        }
+        append_syslog_handler(config)
     logging.config.dictConfig(config)
 
 
-def worker_setup(socket, ident, level=None):
+def worker_setup(socket, ident, level=None, logdir=None):
     if level is None:
         level = "DEBUG"
     config = {
@@ -121,6 +133,9 @@ def worker_setup(socket, ident, level=None):
     }
     if level == "DEBUG":
         config["root"]["handlers"].append("stream")
+    if logdir is not None:
+        filename = os.path.join(logdir, "comnsense-worker.%s.log" % ident)
+        append_file_handler(filename, config)
     logging.config.dictConfig(config)
 
 

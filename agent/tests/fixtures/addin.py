@@ -55,7 +55,7 @@ def addin(scenario, agent_host, agent_port):
             callback.start()
 
             loop.start()
-            stream.close()
+            stream.close(1)
             ctx.destroy()
             ctx.term()
 

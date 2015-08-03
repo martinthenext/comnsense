@@ -70,19 +70,24 @@ def worker_main(ident, connection, loop=None, ctx=None):
             logger.debug("runtime answer: %s", repr(answer))
             if answer == Runtime.SpecialAnswer.finished:
                 loop.stop()
-            else:
+            elif answer != Runtime.SpecialAnswer.noanswer:
                 for msg in answer:
                     socket_stream.send_multipart(list(msg))
         else:
             logger.warn("unexpected message kind: %s", msg.kind)
 
+    def on_close(*args):
+        logger.warn("socket is closed: %s" % repr(args))
+
     socket_stream.on_recv(Message.call(on_recv))
+    socket_stream.set_close_callback(on_close)
 
     # TODO fix it, strange
     socket_stream.send_multipart(
         list(Message.signal(Signal.ready())))
 
     loop.start()
+    socket_stream.close(1)
 
 
 def get_worker_script(searchpath=None):

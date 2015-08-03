@@ -94,10 +94,8 @@ def scenario(workbook):
 
 @allure.feature("Blackbox")
 @allure.story("First Demo Day")
-@pytest.mark.parametrize("interval", [pytest.mark.xfail(300),
-                                      pytest.mark.xfail(500),
-                                      1000])
-@pytest.mark.timeout(60)
+@pytest.mark.parametrize("interval", [pytest.mark.xfail(300), 500, 1000])
+@pytest.mark.timeout(20)
 def test_system_first_demo_day(agent, addin, interval, expected):
     loop = ioloop.IOLoop()
     addin.run(loop, interval)
