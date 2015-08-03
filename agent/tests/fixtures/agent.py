@@ -26,7 +26,8 @@ def agent(agent_host, agent_port, tmpdir, request):
     proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     yield proc
-    proc.terminate()
+    if proc.poll() is None:
+        proc.terminate()
     out, err = proc.communicate()
     allure.attach("out", out)
     allure.attach("err", err)
