@@ -94,10 +94,17 @@ def scenario(workbook):
 
 @allure.feature("Blackbox")
 @allure.story("First Demo Day")
-def test_system_first_demo_day(agent, addin, expected):
-    with allure.step("start"):
-        loop = ioloop.IOLoop()
-
-    addin.run(loop)
-
-    assert_that(addin.scenario.workbook, equal_to(expected))
+@pytest.mark.parametrize("interval", [pytest.mark.xfail(300),
+                                      pytest.mark.xfail(500),
+                                      1000])
+def test_system_first_demo_day(agent, addin, interval, expected):
+    loop = ioloop.IOLoop()
+    addin.run(loop, interval)
+    with allure.step("compare with expected"):
+        for sheet in expected.sheets():
+            allure.attach("expected.%s" % sheet,
+                          expected.serialize(sheet))
+        for sheet in addin.scenario.workbook.sheets():
+            allure.attach("actual.%s" % sheet,
+                          addin.scenario.workbook.serialize(sheet))
+        assert_that(addin.scenario.workbook, equal_to(expected))

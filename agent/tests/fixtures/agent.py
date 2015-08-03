@@ -2,6 +2,8 @@ import allure
 import pytest
 import subprocess
 import os
+import random
+import time
 
 
 @pytest.yield_fixture(scope="session")
@@ -11,7 +13,7 @@ def agent_host():
 
 @pytest.yield_fixture(scope="session")
 def agent_port():
-    yield 55555
+    yield random.choice(range(50000, 51000))
 
 
 @pytest.yield_fixture()
@@ -22,9 +24,15 @@ def agent(agent_host, agent_port, tmpdir, request):
     path = request.config.rootdir.join("bin").join("comnsense-agent").strpath
     cmd = ["python", path, "-b", connection,
            "--log-level", level, "--log-filename", log]
-    allure.attach("command", " ".join(cmd))
-    proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    with allure.step("start agent: %s" % connection):
+        allure.attach("command", " ".join(cmd))
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        allure.attach("pid", str(proc.pid))
+
+    time.sleep(1)  # wait for python
+
     yield proc
     if proc.poll() is None:
         proc.terminate()

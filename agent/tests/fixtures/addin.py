@@ -14,15 +14,15 @@ def addin(scenario, agent_host, agent_port):
             self.connection = "tcp://%s:%d" % (host, port)
             self.scenario = scenario
 
-        def setup_socket(self, loop):
-            ctx = zmq.Context()
+        def setup_socket(self, loop, ctx):
             socket = ctx.socket(zmq.DEALER)
             socket.setsockopt(zmq.IDENTITY, self.scenario.workbook.identity)
             socket.connect(self.connection)
             return zmqstream.ZMQStream(socket, loop)
 
-        def run(self, loop, interval=500):
-            stream = self.setup_socket(loop)
+        def run(self, loop, interval=500, initial_interval=3000):
+            ctx = zmq.Context()
+            stream = self.setup_socket(loop, ctx)
             iterator = self.scenario.__iter__()
 
             def on_recv(msg):
@@ -45,14 +45,23 @@ def addin(scenario, agent_host, agent_port):
 
             for i in xrange(len(self.scenario.steps)):
                 callback = ioloop.DelayedCallback(
-                    send, i if i == 0 else 3000 + interval * i,
+                    send, i if i == 0 else initial_interval + interval * i,
                     io_loop=loop)
                 callback.start()
 
             callback = ioloop.DelayedCallback(
-                stop, 3000 + interval * len(self.scenario.steps), io_loop=loop)
+                stop, initial_interval + interval * len(self.scenario.steps),
+                io_loop=loop)
             callback.start()
 
             loop.start()
+            stream.close()
+            ctx.destroy()
+            ctx.term()
 
-    yield AddIn(agent_host, agent_port, scenario)
+    addin = AddIn(agent_host, agent_port, scenario)
+    with allure.step("start addin: %s" % addin.connection):
+        for sheet in addin.scenario.workbook.sheets():
+            allure.attach("workbook.%s" % sheet,
+                          addin.scenario.workbook.serialize(sheet))
+    yield addin
