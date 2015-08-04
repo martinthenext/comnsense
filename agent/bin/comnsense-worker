@@ -33,6 +33,9 @@ def main(args):
             args.ident, args.connection, loop, context)
     except (SystemExit, KeyboardInterrupt):
         pass
+    finally:
+        context.destroy()
+        context.term()
 
 
 if __name__ == '__main__':

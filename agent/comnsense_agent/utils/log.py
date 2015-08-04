@@ -106,9 +106,19 @@ def worker_setup(socket, ident, level=None, logdir=None):
         level = "DEBUG"
     config = {
         "version": 1,
+        "formatters": {
+            "file": {
+                "format": ("%(asctime)s: %(levelname)s: "
+                           "%(ident)s: %(name)s: %(message)s"),
+            },
+            "stream": {
+                "format": "%(asctime)s: %(name)s: %(message)s",
+            },
+        },
         "handlers": {
             "stream": {
                 "class": "logging.StreamHandler",
+                "formatter": "stream",
             },
             "zmq": {
                 "class": "comnsense_agent.utils.log.ZLogHandler",

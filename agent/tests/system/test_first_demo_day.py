@@ -107,3 +107,8 @@ def test_system_first_demo_day(agent, addin, interval, expected):
             allure.attach("actual.%s" % sheet,
                           addin.scenario.workbook.serialize(sheet))
         assert_that(addin.scenario.workbook, equal_to(expected))
+
+
+if __name__ == '__main__':
+    from ..fixtures.addin import run_addin_standalone
+    run_addin_standalone(workbook, scenario, expected)

@@ -65,9 +65,9 @@ class Scenario(object):
             allure.attach("action", action.serialize())
             allure.attach("workbook.%s" % action.sheet,
                           self.workbook.serialize(action.sheet))
-            if event:
-                allure.attach("answer", event.serialize())
-                return event
+        if event:
+            allure.attach("answer", event.serialize())
+            return event
 
     def _parse_range_name(self, range_name):
         if ":" in range_name:

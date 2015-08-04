@@ -87,7 +87,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
         list(Message.signal(Signal.ready())))
 
     loop.start()
-    socket_stream.close(1)
+    socket_stream.close(1000)
 
 
 def get_worker_script(searchpath=None):
@@ -117,6 +117,7 @@ def create_new_worker(ident, connection):
     logger = logging.getLogger(__name__)
     script = get_worker_script()
     cmd, env = get_worker_command(script, ident, connection)
+    logger.debug("worker env: %s", repr(env))
     logger.debug("worker cmd: %s", cmd)
     proc = subprocess.Popen(cmd, close_fds=True, env=env)
     logger.info("worker for ident %s was started: %s", ident, proc.pid)

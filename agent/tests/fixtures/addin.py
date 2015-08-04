@@ -55,7 +55,7 @@ def addin(scenario, agent_host, agent_port):
             callback.start()
 
             loop.start()
-            stream.close(1)
+            stream.close(1000)
             ctx.destroy()
             ctx.term()
 
@@ -65,3 +65,41 @@ def addin(scenario, agent_host, agent_port):
             allure.attach("workbook.%s" % sheet,
                           addin.scenario.workbook.serialize(sheet))
     yield addin
+
+
+def run_addin_standalone(workbook, scenario, expected):
+    import argparse
+
+    def parse_args():
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-w", "--workbook-id", required=True)
+        parser.add_argument("-p", "--agent-port", required=True,
+                            default=8080, type=int)
+        parser.add_argument("-i", "--interval", required=True,
+                            default=500, type=int)
+        return parser.parse_args()
+
+    args = parse_args()
+
+    wb = next(workbook(args.workbook_id))
+    sc = next(scenario(wb))
+    app = next(addin(sc, '127.0.0.1', args.agent_port))
+
+    print "initial"
+    print sc.workbook.serialize(wb.sheets()[0])
+    print
+
+    loop = ioloop.IOLoop()
+    app.run(loop, args.interval)
+
+    print "result"
+    print sc.workbook.serialize(wb.sheets()[0])
+    print
+
+    wb_ex = next(expected(args.workbook_id))
+    if wb == wb_ex:
+        print "OK"
+        exit(0)
+    else:
+        print "FAIL"
+        exit(1)
