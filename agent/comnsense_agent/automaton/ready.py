@@ -30,7 +30,7 @@ class Ready:
                 actions.append(handler.handle(event, context))
 
             answer = FirstAnswer().merge(event, actions)
-            return tuple(map(Message.action, answer)), self
+            return list(map(Message.action, answer)), self
         else:
             logger.warn("unexpected event: %s", str(event))
             return None, self

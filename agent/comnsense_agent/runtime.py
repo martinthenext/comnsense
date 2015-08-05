@@ -1,7 +1,9 @@
 import logging
 import enum
+import collections
 
 from comnsense_agent.context import Context
+from comnsense_agent.message import Message
 
 from comnsense_agent.automaton.waiting_workbook import WaitingWorkbookID
 from comnsense_agent.automaton.waiting_context import WaitingContext
@@ -33,10 +35,10 @@ class Runtime(object):
             return Runtime.SpecialAnswer.finished
         if answer is None:
             return Runtime.SpecialAnswer.noanswer
-        if isinstance(answer, tuple):
-            return list(answer)
-        else:
+        if isinstance(answer, Message):
             return [answer]
+        else:
+            return [x for x in answer if isinstance(x, Message)]
 
     def run(self, message):
         logger.debug("state before: %s", self.currentState.__class__.__name__)
@@ -45,4 +47,5 @@ class Runtime(object):
                 self.currentState.next(context, message)
             logger.debug(
                 "state after: %s", self.currentState.__class__.__name__)
-            return self.prepare_answer(answer)
+            answer = self.prepare_answer(answer)
+        return answer
