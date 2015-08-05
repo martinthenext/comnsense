@@ -1,5 +1,7 @@
 import allure
 import pytest
+import platform
+
 from hamcrest import *
 
 from zmq.eventloop import ioloop
@@ -92,10 +94,10 @@ def scenario(workbook):
     yield sc
 
 
-@allure.feature("Blackbox")
+@allure.feature("System Test")
 @allure.story("First Demo Day")
 @pytest.mark.parametrize("interval", [pytest.mark.xfail(300), 500, 1000])
-@pytest.mark.timeout(20)
+@pytest.mark.skipif(platform.system().lower() == "windows", reason="issue #14")
 def test_system_first_demo_day(agent, addin, interval, expected):
     loop = ioloop.IOLoop()
     addin.run(loop, interval)
