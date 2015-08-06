@@ -49,7 +49,7 @@ def expected(event, request):
 
 @pytest.yield_fixture(
     scope="module",
-    params=["workbook open", "range response", "sheet change"])
+    params=["range response", "sheet change"])
 def event(workbook, sheetname, request):
     if request.param == "workbook open":
         yield next(workbook_open(workbook))

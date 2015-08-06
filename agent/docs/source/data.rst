@@ -12,5 +12,8 @@ Data structrures in communication protocol
 .. autoclass:: comnsense_agent.data.Event
    :members:
 
+.. autoclass:: comnsense_agent.data.Action
+   :members:
+
 .. autoclass:: comnsense_agent.data.Signal
    :members:

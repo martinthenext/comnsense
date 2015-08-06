@@ -3,19 +3,17 @@ import json
 import enum
 
 from comnsense_agent.data.cell import Cell
+from comnsense_agent.data.data import Data
 from comnsense_agent.utils.exception import convert_exception
+from comnsense_agent.utils.serialization import JsonSerializable
 
 
 logger = logging.getLogger()
 
 
-class ActionError(RuntimeError):
-    pass
-
-
-class Action(object):
+class Action(JsonSerializable, Data):
     """
-    Action is representation some commands for Excel's addin
+    Action is representation of some commands for addin.
     """
 
     @enum.unique
@@ -23,11 +21,11 @@ class Action(object):
         """
         Action type enumeration
 
-        .. py:attribute:: ChangeCell
+        .. attribute:: ChangeCell
 
         change some cells on worksheet
 
-        .. py:attribute:: RangeRequest
+        .. attribute:: RangeRequest
 
         request cells from worksheet
 
@@ -41,168 +39,251 @@ class Action(object):
         """
         Action flags enumeration
 
-        .. py:attribute:: RequestColor
+        .. attribute:: NoFlags
 
-        request color of cell's font
+        default value, no extra flags
+
+        .. attribute:: RequestColor
+
+        request cell's background color
 
            .. note::
 
-           in `Action.Type.RangeRequest` only
+              in `RangeRequest <Action.Type.RangeRequest>` only
 
-        .. py:attribute:: RequestFont
+        .. attribute:: RequestFont
 
         request font name of cell
 
            .. note::
 
-           in `Action.Type.RangeRequest` only
+              in `RangeRequest <Action.Type.RangeRequest>` only
 
-        .. py:attribute:: RequestFontstyle
+        .. attribute:: RequestFontstyle
 
         request style (italic, bold, underline) of cell's font
 
            .. note::
 
-           in `Action.Type.RangeRequest` only
+              in `RangeRequest <Action.Type.RangeRequest>` only
 
-        .. py:attribute:: RequestBorders
+        .. attribute:: RequestBorders
 
-        reques cell's borders
+        request cell's borders
 
            .. note::
 
-           in `Action.Type.RangeRequest` only
+              in `RangeRequest <Action.Type.RangeRequest>` only
 
         """
-
+        NoFlags = 0
         RequestColor = 1
         RequestFont = 2
         RequestFontstyle = 4
         RequestBorders = 8
 
-    __slots__ = ("type", "workbook", "sheet", "arg", "flags")
+    __slots__ = ("_type", "_workbook", "_sheet", "_content", "_flags")
 
-    @convert_exception(ActionError)
-    def __init__(self, *args):
-        for name, value in zip(self.__slots__[:len(args)], args):
-            setattr(self, name, value)
-        if not isinstance(self.type, Action.Type):
-            raise ActionError("type should be member of Action.Type")
-        if not self.workbook:
-            raise ActionError("workbook should not be empty")
-        if not hasattr(self, "sheet"):
-            raise ActionError("sheet should not be empty")
-        if not hasattr(self, "arg") or self.arg is None:
-            if self.type == Action.Type.ChangeCell:
-                self.arg = []
-            elif self.type == Action.Type.RangeRequest:
-                self.arg = ""
-        if not hasattr(self, "flags") or self.flags is None:
-            self.flags = 0
-        if isinstance(self.flags, Action.Flags):
-            self.flags = self.flags.value
+    def __init__(self, type, workbook, sheet, content, flags=None):
+        self._type = type
+        self._workbook = workbook
+        self._sheet = sheet
+        self._content = content
+        self._flags = flags or Action.Flags.NoFlags
+        self.validate()
 
-        assert ((self.type == Action.Type.ChangeCell and
-                 isinstance(self.arg, list)) or
-                (self.type == Action.Type.RangeRequest and
-                 isinstance(self.arg, (unicode, str))))
-        assert 0 <= self.flags <= 15
+    def validate(self):
+        if not isinstance(self._type, Action.Type):
+            raise Data.ValidationError("type should be member of Action.Type")
+        if not self._workbook:
+            raise Data.ValidationError("workbook should not be empty")
+        if not self._sheet:
+            raise Data.ValidationError("sheet should not be empty")
+        if not self._content:
+            raise Data.ValidationError("content (%s) should not be empty" %
+                                       self._get_content_name())
+
+        if self._type == Action.Type.ChangeCell:
+            self._type = Action.Flags.NoFlags
+
+        if isinstance(self._flags, Action.Flags):
+            self._flags = self._flags.value
+
+        if self._type == Action.Type.ChangeCell and \
+                not isinstance(self._content, list):
+            raise Data.ValidationError("%s should be a list" %
+                                       self._get_content_name())
+
+        if self._type == Action.Type.RangeRequest and \
+                not isinstance(self._content, (unicode, str)):
+            raise Data.ValidationError("%s should be a str" %
+                                       self._get_content_name())
+
+        if not 0 <= self._flags <= self._get_max_flags():
+            raise Data.ValidationError(
+                "flags cannot be greater than %d and less that %d" %
+                (self._get_max_flags(), Action.Flags.NoFlags.value))
+
+    def _get_content_name(self):
+        if self._type == self.Type.ChangeCell:
+            return "cells"
+        elif self._type == self.Type.RangeRequest:
+            return "rangeName"
+
+    def _get_max_flags(self):
+        return sum(map(lambda x: x.value,
+                       Action.Flags.__members__.values()))
+
+    @property
+    def type(self):
+        """
+        Action `type <Action.Type>`
+        """
+        return self._type
+
+    @property
+    def workbook(self):
+        """
+        The id of the workbook that should receive this action
+        """
+        return self._workbook
+
+    @property
+    def sheet(self):
+        """
+        The sheet name to which action should be applied
+        """
+        return self._sheet
 
     @property
     def range_name(self):
-        if self.type != Action.Type.RangeRequest:
-            return None
-        return self.arg
+        """
+        Requested range name
 
-    @range_name.setter
-    @convert_exception(ActionError)
-    def range_name(self, value):
-        assert isinstance(value, (unicode, str))
-        assert self.type == Action.Type.RangeRequest
-        self.arg = value
+        .. note::
+
+              in `RangeRequest <Action.Type.RangeRequest>` only
+        """
+        if self._type != Action.Type.RangeRequest:
+            return None
+        return self._content
 
     @property
     def cells(self):
-        if self.type != Action.Type.ChangeCell:
+        """
+        The sequence of cells which should be changed
+
+        .. note::
+
+              in `ChangeCell <Action.Type.ChangeCell>` only
+        """
+        if self._type != Action.Type.ChangeCell:
             return None
-        return self.arg
+        return self._content
 
-    @cells.setter
-    @convert_exception(ActionError)
-    def cells(self, value):
-        assert isinstance(value, list)
-        assert self.type == Action.Type.ChangeCell
-        self.arg = value
+    @property
+    def flags(self):
+        """
+        Action modification `flags <Action.Flags>`
+        """
+        return self._flags
 
-    @convert_exception(ActionError)
-    def serialize(self):
-        data = {"type": self.type.value,
-                "workbook": self.workbook,
-                "sheet": self.sheet}
-        if isinstance(self.flags, Action.Flags):
-            self.flags = self.flags.value
-        if self.flags > 0:
-            data["flags"] = self.flags
-        if self.type == Action.Type.ChangeCell:
-            data["cells"] = Cell.table_to_primitive(self.arg)
-        elif self.type == Action.Type.RangeRequest:
-            data["rangeName"] = self.arg
-        return json.dumps(data)
+    def __getstate__(self):
+        state = {
+            "type": self._type.value,
+            "workbook": self._workbook,
+            "sheet": self._sheet
+        }
 
-    @staticmethod
-    @convert_exception(ActionError)
-    def deserialize(data):
+        if self._flags != Action.Flags.NoFlags.value:
+            state["flags"] = self._flags
 
-        def hook(dct):
-            key = "cells"
-            if key in dct:
-                dct[key] = Cell.table_from_primitive(dct[key])
-            return dct
+        if self._type == Action.Type.ChangeCell:
+            state[self._get_content_name()] = \
+                Cell.table_to_primitive(self._content)
+        elif self._type == Action.Type.RangeRequest:
+            state[self._get_content_name()] = self._content
+        else:
+            raise NotImplementedError("unknown type: %s" % repr(self._type))
 
-        try:
-            data = json.loads(data, object_hook=hook)
-        except ValueError, e:
-            raise ActionError(e)
-        type = Action.Type(data.get("type"))
-        workbook = data.get("workbook")
-        sheet = data.get("sheet")
-        arg = None
-        if type == Action.Type.ChangeCell:
-            arg = data.get("cells")
-        elif type == Action.Type.RangeRequest:
-            arg = data.get("rangeName")
-        flags = data.get("flags")
-        return Action(type, workbook, sheet, arg, flags)
+        return state
+
+    def __setstate__(self, state):
+        self._type = Action.Type(state.get("type"))
+        self._workbook = state.get("workbook")
+        self._sheet = state.get("sheet")
+
+        if self._type == Action.Type.ChangeCell:
+            self._content = Cell.table_from_primitive(
+                state.get(self._get_content_name()))
+        elif self._type == Action.Type.RangeRequest:
+            self._content = state.get(self._get_content_name())
+        else:
+            raise NotImplementedError("unknown type: %s" % repr(self._type))
+
+        self._flags = state.get("flags", Action.Flags.NoFlags)
+        self.validate()
 
     @staticmethod
-    def change(workbook, sheet, cells, flags=0):
-        return Action(Action.Type.ChangeCell, workbook, sheet, cells, flags)
+    def change(workbook, sheet, cells):
+        """
+        Static constructor for `Action.Type.ChangeCell`.
+
+        :param workbook: `workbook id <Action.workbook>`
+        :param sheet:    `sheet name <Action.sheet>`
+        :param cells:    `chaged cells <Action.cells>`
+
+        :return: `Action`
+        """
+        return Action(Action.Type.ChangeCell, workbook, sheet, cells)
 
     @staticmethod
-    def change_from_event(event, cells, flags=0):
+    def change_from_event(event, cells):
+        """
+        Static constructor for `Action.Type.ChangeCell`.
+
+        :param event: event `Event` - `SheetChange <Event.Type.SheetChange>`
+                      or `RangeRequest <Event.Type.RangeResponse>`
+        :param cells: `changed cells <Action.cells>`
+
+        :return: `Action`
+        """
         return Action(
-            Action.Type.ChangeCell, event.workbook,
-            event.sheet, cells, flags)
+            Action.Type.ChangeCell, event.workbook, event.sheet, cells)
 
     @staticmethod
-    def request(workbook, sheet, range_name, flags=0):
+    def request(workbook, sheet, range_name, flags=None):
+        """
+        Static constructor for `Action.Type.RangeRequest`.
+
+        :param workbook:   `workbook id <Action.workbook>`
+        :param sheet:      `sheet name <Action.sheet>`
+        :param range_name: `requested range <Action.range_name>`
+        :param flags:      `modification flags <Action.Flags>`
+
+        :return: `Action`
+        """
         return Action(
             Action.Type.RangeRequest, workbook, sheet, range_name, flags)
 
     @staticmethod
-    def request_from_event(event, range_name, flags=0):
+    def request_from_event(event, range_name, flags=None):
+        """
+        Static constructor for `Action.Type.RangeRequest`.
+
+        :param event:    event `Event` - `SheetChange <Event.Type.SheetChange>`
+                           or `RangeRequest <Event.Type.RangeResponse>`
+        :param range_name: `requested range <Action.range_name>`
+        :param flags:      `modification flags <Action.Flags>`
+
+        :return: `Action`
+        """
         return Action(
             Action.Type.RangeRequest, event.workbook,
             event.sheet, range_name, flags)
 
-    def __eq__(self, another):
-        for attr in Action.__slots__:
-            if getattr(self, attr) != getattr(another, attr):
-                return False
-        return True
-
-    def __ne__(self, another):
-        return not self.__eq__(another)
-
     def __repr__(self):
-        return "Action %s" % self.serialize()
+        return self.serialize()
+
+    def __str__(self):
+        return repr(self)
