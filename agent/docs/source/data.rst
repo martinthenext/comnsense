@@ -1,19 +1,35 @@
-Data structures
-========================
+``comnsense_agent.data`` - Data structures
+==========================================
 
-.. py:module:: comnsense_agent.data
+.. testsetup::
 
-Data structrures in communication protocol
-------------------------------------------
+   from comnsense_agent.data import Action, Event, Signal, Request, Response
+   from comnsense_agent.data import Cell
 
-.. autoclass:: comnsense_agent.data.data.Data
-   :members:
+.. automodule:: comnsense_agent.data.data
 
-.. autoclass:: comnsense_agent.data.Event
-   :members:
+   Basic
+   -----
 
-.. autoclass:: comnsense_agent.data.Action
-   :members:
+   .. autoclass:: comnsense_agent.data.data.Data
+      :members:
 
-.. autoclass:: comnsense_agent.data.Signal
-   :members:
+.. automodule:: comnsense_agent.data
+
+   Event
+   -----
+
+   .. autoclass:: comnsense_agent.data.Event
+      :members:
+
+   Action
+   ------
+
+   .. autoclass:: comnsense_agent.data.Action
+      :members:
+
+   Signal
+   ------
+
+   .. autoclass:: comnsense_agent.data.Signal
+      :members:

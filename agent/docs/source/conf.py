@@ -2,6 +2,7 @@
 import sys
 import os
 import shlex
+import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -44,7 +45,8 @@ pygments_style = 'sphinx'
 todo_include_todos = True
 
 
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 html_static_path = ['_static']
 

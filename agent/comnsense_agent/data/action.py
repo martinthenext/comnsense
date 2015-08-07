@@ -14,6 +14,33 @@ logger = logging.getLogger()
 class Action(JsonSerializable, Data):
     """
     Action is representation of some commands for addin.
+
+    Action should be used to changing cell's value on worksheet.
+    E.g. you can set new value *John* to cell *$A$2* on sheet *Contacts*:
+
+    .. doctest::
+       :options: +NORMALIZE_WHITESPACE
+
+       >>> from comnsense_agent.data import Action, Cell
+       >>> action = Action(
+       ... Action.Type.ChangeCell,
+       ... '6febeb82-3c86-11e5-baeb-3c07543b8a2e',
+       ... 'Contacts',
+       ... [[Cell('$A$2', 'John')]])
+       >>> print action.serialize(indent=2)
+       {
+         "cells": [
+           [
+             {
+               "key": "$A$2",
+               "value": "John"
+             }
+           ]
+         ],
+         "sheet": "Contacts",
+         "type": 0,
+         "workbook": "6febeb82-3c86-11e5-baeb-3c07543b8a2e"
+       }
     """
 
     @enum.unique
@@ -23,11 +50,11 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: ChangeCell
 
-        change some cells on worksheet
+           Change some cells on worksheet
 
         .. attribute:: RangeRequest
 
-        request cells from worksheet
+           Request some cells from worksheet
 
         """
 
@@ -41,11 +68,11 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: NoFlags
 
-        default value, no extra flags
+           Default value, no extra flags
 
         .. attribute:: RequestColor
 
-        request cell's background color
+           Request cell's background color
 
            .. note::
 
@@ -53,7 +80,7 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: RequestFont
 
-        request font name of cell
+           Request font name of cell
 
            .. note::
 
@@ -61,7 +88,7 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: RequestFontstyle
 
-        request style (italic, bold, underline) of cell's font
+           Request style (italic, bold, underline) of cell's font
 
            .. note::
 
@@ -69,7 +96,7 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: RequestBorders
 
-        request cell's borders
+           Request cell's borders
 
            .. note::
 
@@ -162,7 +189,7 @@ class Action(JsonSerializable, Data):
 
         .. note::
 
-              in `RangeRequest <Action.Type.RangeRequest>` only
+           in `RangeRequest <Action.Type.RangeRequest>` only
         """
         if self._type != Action.Type.RangeRequest:
             return None
@@ -175,7 +202,7 @@ class Action(JsonSerializable, Data):
 
         .. note::
 
-              in `ChangeCell <Action.Type.ChangeCell>` only
+           in `ChangeCell <Action.Type.ChangeCell>` only
         """
         if self._type != Action.Type.ChangeCell:
             return None

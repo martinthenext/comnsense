@@ -53,24 +53,24 @@ PROVIDERS = {
 }
 
 
-def serialize(provider, content):
-    return PROVIDERS[provider][0](content)
+def serialize(provider, content, **kwargs):
+    return PROVIDERS[provider][0](content, **kwargs)
 
 
-def deserialize(provider, data):
-    return PROVIDERS[provider][1](data)
+def deserialize(provider, data, **kwargs):
+    return PROVIDERS[provider][1](data, **kwargs)
 
 
 def Serializable(provider):
     assert provider in PROVIDERS
 
-    def serialize_(self):
+    def serialize_(self, **kwargs):
         content = get_content(self)
-        return serialize(provider, content)
+        return serialize(provider, content, **kwargs)
 
     @classmethod
-    def deserialize_(cls, data):
-        content = deserialize(provider, data)
+    def deserialize_(cls, data, **kwargs):
+        content = deserialize(provider, data, **kwargs)
         obj = cls.__new__(cls)
         return restore_content(obj, content)
 
