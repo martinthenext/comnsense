@@ -1,5 +1,13 @@
-Intercommunication data structures
-==================================
+Inservice communication data structures
+=======================================
+
+.. automodule:: comnsense_agent.data.response
+
+   Response
+   --------
+
+   .. autoclass:: comnsense_agent.data.response.Response
+      :members:
 
 .. automodule:: comnsense_agent.data.signal
 
