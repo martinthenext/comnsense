@@ -21,7 +21,6 @@ class Action(JsonSerializable, Data):
     .. doctest::
        :options: +NORMALIZE_WHITESPACE
 
-       >>> from comnsense_agent.data import Action, Cell
        >>> action = Action(
        ... Action.Type.ChangeCell,
        ... '6febeb82-3c86-11e5-baeb-3c07543b8a2e',
@@ -39,6 +38,26 @@ class Action(JsonSerializable, Data):
          ],
          "sheet": "Contacts",
          "type": 0,
+         "workbook": "6febeb82-3c86-11e5-baeb-3c07543b8a2e"
+       }
+
+    Also you can use action to request some cells from workbook:
+
+    .. doctest::
+       :options: +NORMALIZE_WHITESPACE
+
+       >>> action = Action(
+       ... Action.Type.RangeRequest,
+       ... '6febeb82-3c86-11e5-baeb-3c07543b8a2e',
+       ... 'Contacts',
+       ... '$A$1:$E$1',
+       ... Action.Flags.RequestColor | Action.Flags.RequestFont)
+       >>> print action.serialize(indent=2)
+       {
+         "flags": 3,
+         "rangeName": "$A$1:$E$1",
+         "sheet": "Contacts",
+         "type": 1,
          "workbook": "6febeb82-3c86-11e5-baeb-3c07543b8a2e"
        }
     """

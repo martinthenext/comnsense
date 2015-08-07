@@ -1,10 +1,11 @@
 ``comnsense_agent.data`` - Data structures
 ==========================================
 
-.. testsetup::
+.. toctree::
 
-   from comnsense_agent.data import Action, Event, Signal, Request, Response
-   from comnsense_agent.data import Cell
+   data-addin
+   data-inter
+   data-workbook
 
 .. automodule:: comnsense_agent.data.data
 
@@ -12,24 +13,4 @@
    -----
 
    .. autoclass:: comnsense_agent.data.data.Data
-      :members:
-
-.. automodule:: comnsense_agent.data
-
-   Event
-   -----
-
-   .. autoclass:: comnsense_agent.data.Event
-      :members:
-
-   Action
-   ------
-
-   .. autoclass:: comnsense_agent.data.Action
-      :members:
-
-   Signal
-   ------
-
-   .. autoclass:: comnsense_agent.data.Signal
       :members:
