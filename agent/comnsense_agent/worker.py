@@ -76,11 +76,7 @@ def worker_main(ident, connection, loop=None, ctx=None):
         else:
             logger.warn("unexpected message kind: %s", msg.kind)
 
-    def on_close(*args):
-        logger.warn("socket is closed: %s" % repr(args))
-
     socket_stream.on_recv(Message.call(on_recv))
-    socket_stream.set_close_callback(on_close)
 
     # TODO fix it, strange
     socket_stream.send_multipart(
