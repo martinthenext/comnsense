@@ -1,2 +1,2 @@
-Workbook representation data sturctures
+Workbook representation data structures
 =======================================

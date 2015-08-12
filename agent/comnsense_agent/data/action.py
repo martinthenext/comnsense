@@ -4,7 +4,6 @@ import enum
 
 from comnsense_agent.data.cell import Cell
 from comnsense_agent.data.data import Data
-from comnsense_agent.utils.exception import convert_exception
 from comnsense_agent.utils.serialization import JsonSerializable
 
 
@@ -69,11 +68,11 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: ChangeCell
 
-           Change some cells on worksheet
+           Change some cells on worksheet.
 
         .. attribute:: RangeRequest
 
-           Request some cells from worksheet
+           Request some cells from worksheet.
 
         """
 
@@ -87,39 +86,30 @@ class Action(JsonSerializable, Data):
 
         .. attribute:: NoFlags
 
-           Default value, no extra flags
+           Default value, no extra flags.
 
         .. attribute:: RequestColor
 
-           Request cell's background color
-
-           .. note::
-
-              in `RangeRequest <Action.Type.RangeRequest>` only
+           Request cell's background color.
 
         .. attribute:: RequestFont
 
-           Request font name of cell
-
-           .. note::
-
-              in `RangeRequest <Action.Type.RangeRequest>` only
+           Request font name of cell.
 
         .. attribute:: RequestFontstyle
 
-           Request style (italic, bold, underline) of cell's font
-
-           .. note::
-
-              in `RangeRequest <Action.Type.RangeRequest>` only
+           Request style (italic, bold, underline) of cell's font.
 
         .. attribute:: RequestBorders
 
-           Request cell's borders
+           Request cell's borders.
 
-           .. note::
+       .. note::
 
-              in `RangeRequest <Action.Type.RangeRequest>` only
+          Flags `Action.Flags.RequestColor`, `Action.Flags.RequestFont`,
+          `Action.Flags.RequestFontstyle` and `Action.Flags.RequestBorders`
+          are meaningful only in `RangeRequest <Action.Type.RangeRequest>`
+          action.
 
         """
         NoFlags = 0
@@ -208,7 +198,8 @@ class Action(JsonSerializable, Data):
 
         .. note::
 
-           in `RangeRequest <Action.Type.RangeRequest>` only
+           It is meaningful in `RangeRequest <Action.Type.RangeRequest>` only,
+           otherwise it is ``None``.
         """
         if self._type != Action.Type.RangeRequest:
             return None
@@ -221,7 +212,8 @@ class Action(JsonSerializable, Data):
 
         .. note::
 
-           in `ChangeCell <Action.Type.ChangeCell>` only
+           It is meaningful `ChangeCell <Action.Type.ChangeCell>` only,
+           otherwise it is ``None``
         """
         if self._type != Action.Type.ChangeCell:
             return None
@@ -288,6 +280,9 @@ class Action(JsonSerializable, Data):
         """
         Static constructor for `Action.Type.ChangeCell`.
 
+        It is very useful if you want send action as answer to the event.
+        Of course, the event should contain `sheetname <Event.sheet>`.
+
         :param event: event `Event` - `SheetChange <Event.Type.SheetChange>`
                       or `RangeRequest <Event.Type.RangeResponse>`
         :param cells: `changed cells <Action.cells>`
@@ -316,6 +311,9 @@ class Action(JsonSerializable, Data):
     def request_from_event(event, range_name, flags=None):
         """
         Static constructor for `Action.Type.RangeRequest`.
+
+        It is very useful if you want send action as answer to the event.
+        Of course, the event should contain `sheetname <Event.sheet>`.
 
         :param event:    event `Event` - `SheetChange <Event.Type.SheetChange>`
                            or `RangeRequest <Event.Type.RangeResponse>`
