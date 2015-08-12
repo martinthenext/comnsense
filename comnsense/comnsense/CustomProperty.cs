@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.Office.Interop.Excel;
+﻿using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Core;
 
 namespace comnsense
@@ -9,39 +8,39 @@ namespace comnsense
     /// </summary>
     internal class CustomProperty
     {
-        private string key;
-        private Workbook wb;
-        private string cached;
+        private readonly string _key;
+        private readonly Workbook _workbook;
+        private string _cache;
 
-        public CustomProperty(string key, Workbook wb)
+        public CustomProperty(string key, Workbook workbook)
         {
-            this.key = key;
-            this.wb = wb;
+            _key = key;
+            _workbook = workbook;
         }
 
         public string Get(string def = null)
         {
-            if (cached != null)
-                return cached;
+            if (_cache != null)
+                return _cache;
 
-            var properties = (DocumentProperties)wb.CustomDocumentProperties;
+            DocumentProperties properties = _workbook.CustomDocumentProperties;
             foreach (DocumentProperty prop in properties)
             {
-                if (prop.Name != key)
+                if (prop.Name != _key)
                     continue;
-                cached = prop.Value.ToString();
-                return cached;
+                _cache = prop.Value.ToString();
+                return _cache;
             }
             return def;
         }
 
         public void Set(string ident)
         {
-            var properties = (DocumentProperties) wb.CustomDocumentProperties;
+            DocumentProperties properties = _workbook.CustomDocumentProperties;
             if (Get() != null)
-                properties[key].Delete();
-            properties.Add(key, false, MsoDocProperties.msoPropertyTypeString, ident);
-            cached = ident;
+                properties[_key].Delete();
+            properties.Add(_key, false, MsoDocProperties.msoPropertyTypeString, ident);
+            _cache = ident;
         }
     }
 }

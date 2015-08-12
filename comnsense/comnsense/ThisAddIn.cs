@@ -38,14 +38,14 @@ namespace comnsense
         private void ThisAddIn_WorkbookOpen(Workbook wb)
         {
             string ident = GetWorkbookIdent(wb);
-            RunRouter(ident);
+            RunRouter(wb, ident);
             _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
         private void ThisAddIn_NewWorkbook(Workbook wb)
         {
             string ident = GetWorkbookIdent(wb);
-            RunRouter(ident);
+            RunRouter(wb, ident);
             _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
@@ -95,7 +95,7 @@ namespace comnsense
             return ident.ToString();
         }
 
-        private void RunRouter(string ident)
+        private void RunRouter(Workbook workbook, string ident)
         {
             KeyValuePair<Thread, CancellationTokenSource> pair;
             if (_routers.TryGetValue(ident, out pair))
@@ -108,7 +108,7 @@ namespace comnsense
             var canceller = new CancellationTokenSource();
             var routerThread = new Thread(() =>
             {
-                var router = new Router(_context, Application, ident);
+                var router = new Router(_context, workbook, ident);
                 router.Run(canceller.Token);
             });
             _routers.Add(ident, new KeyValuePair<Thread, CancellationTokenSource>(routerThread, canceller));
