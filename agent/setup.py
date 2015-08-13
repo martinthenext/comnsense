@@ -4,6 +4,8 @@ import platform
 import sys
 import os
 
+from comnsense_agent import __version__, __author__
+
 requirements = [
     'bitarray==0.8.1'
     'msgpack-python',
@@ -49,9 +51,9 @@ test_requirements = [
 ]
 
 setup(name='comnsense-agent',
-      version='0.0.1',
+      version=__version__,
       description="Comnsense Agent",
-      author='Comnsense Team',
+      author=__author__,
       author_email='team@comnsense.io',
       packages=["comnsense_agent",
                 "comnsense_agent.algorithm",
