@@ -42,7 +42,7 @@ def prepare_py2exe():
         windows = [{'script': 'bin/comnsense-agent'},
                    {'script': 'bin/comnsense-worker'},
                    {'script': 'bin/comnsense-tray',
-                    'icon_resources': [(0, iconfile), (1, iconfile)]}],
+                    'icon_resources': [(0, iconfile), (1, iconfile)]}]
         return dict(options=options, data_files=data_files, windows=windows)
     return {}
 
