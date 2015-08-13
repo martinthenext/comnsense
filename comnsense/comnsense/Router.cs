@@ -14,17 +14,13 @@ namespace comnsense
         public static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(500);
 
         private readonly ZContext _context;
-        private readonly Application _excel;
+        private readonly Workbook _workbook;
         private readonly string _ident;
 
-        // This socket should be accessible to every method 
-        // in case you want to send Event right after Action has been received
-        // private ZSocket agent;
-
-        public Router(ZContext context, Application excel, string ident)
+        public Router(ZContext context, Workbook workbook, string ident)
         {
             _context = context;
-            _excel = excel;
+            _workbook = workbook;
             _ident = ident;
         }
 
@@ -39,14 +35,6 @@ namespace comnsense
         public static bool BitToBool(byte bitmask, int position)
         {
             return (bitmask & (1 << position)) != 0;
-        }
-
-        private Workbook GetWorkbook()
-        {
-            return (from Workbook wb in _excel.Workbooks
-                    let id = new Ident(wb)
-                    where _ident == id.ToString()
-                    select wb).FirstOrDefault();
         }
 
         // TODO refactor, this is awful
@@ -91,14 +79,13 @@ namespace comnsense
 
         private void ApplyChange(Action action)
         {
-            _excel.EnableEvents = false;
+            _workbook.Application.EnableEvents = false;
             try
             {
                 if (action.workbook != _ident)
                     return;
 
-                var wb = GetWorkbook();
-                Worksheet ws = wb.Worksheets[action.sheet];
+                Worksheet ws = _workbook.Worksheets[action.sheet];
 
                 foreach (var row in action.cells)
                 {
@@ -131,7 +118,7 @@ namespace comnsense
             }
             finally
             {
-                _excel.EnableEvents = true;
+                _workbook.Application.EnableEvents = true;
             }
         }
 
@@ -139,13 +126,12 @@ namespace comnsense
         private ZMessage ServeRangeRequest(Action action)
         {
             // TODO lousy boilerplate from above
-            _excel.EnableEvents = false;
+            _workbook.Application.EnableEvents = false;
             try
             {
                 if (action.workbook != _ident)
                     return null;
-                var wb = GetWorkbook();
-                Worksheet ws = wb.Worksheets[action.sheet];
+                Worksheet ws = _workbook.Worksheets[action.sheet];
 
                 // boilerplate ends
 
@@ -183,7 +169,7 @@ namespace comnsense
             }
             finally
             {
-                _excel.EnableEvents = true;
+                _workbook.Application.EnableEvents = true;
             }
         }
 
