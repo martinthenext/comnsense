@@ -35,7 +35,7 @@ BASEDIR = os.path.dirname(__file__)
 
 FILES = [
     (os.path.join(BASEDIR, "agent", "comnsense_agent", "version.py"),
-     re.compile(r'__version__\s*=\s*"(.+?)"', re.S | re.U)),
+     re.compile(r'__version__\s*=\s*u?"(.+?)"', re.S | re.U)),
     (os.path.join(BASEDIR, "comnsense", "comnsense", "Properties", "AssemblyInfo.cs"),
      re.compile(r'AssemblyVersion\("(.+?)"\)', re.S | re.U)),
     (os.path.join(BASEDIR, "comnsense", "comnsense", "Properties", "AssemblyInfo.cs"),
