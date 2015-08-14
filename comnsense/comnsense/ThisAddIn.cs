@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using comnsense.Data;
 using Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 
@@ -10,6 +11,7 @@ namespace comnsense
     public partial class ThisAddIn
     {
         private ZContext _context;
+        private ISerializer _serializer;
         private EventPublisher _publisher;
         private Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>> _routers;
         private Dictionary<string, Cell[][]> _lastSelectedValues;
@@ -17,7 +19,8 @@ namespace comnsense
         private void ThisAddIn_Startup(object sender, EventArgs e)
         {
             _context = new ZContext();
-            _publisher = new EventPublisher(_context);
+            _serializer = new JsonNetSerializer();
+            _publisher = new EventPublisher(_context, _serializer);
             _routers = new Dictionary<string, KeyValuePair<Thread, CancellationTokenSource>>();
             _lastSelectedValues = new Dictionary<string, Cell[][]>();
 
@@ -108,7 +111,7 @@ namespace comnsense
             var canceller = new CancellationTokenSource();
             var routerThread = new Thread(() =>
             {
-                var router = new Router(_context, workbook, ident);
+                var router = new Router(_context, _serializer, workbook, ident);
                 router.Run(canceller.Token);
             });
             _routers.Add(ident, new KeyValuePair<Thread, CancellationTokenSource>(routerThread, canceller));

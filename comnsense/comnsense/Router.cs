@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using comnsense.Data;
 using Microsoft.Office.Interop.Excel;
-using Newtonsoft.Json;
 using ZeroMQ;
 
 namespace comnsense
@@ -14,12 +15,27 @@ namespace comnsense
         public static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(500);
 
         private readonly ZContext _context;
+        private readonly ISerializer _serializer;
         private readonly Workbook _workbook;
         private readonly string _ident;
 
-        public Router(ZContext context, Workbook workbook, string ident)
+        public Router(
+            ZContext context, 
+            ISerializer serializer,
+            Workbook workbook, 
+            string ident)
         {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (serializer == null)
+                throw new ArgumentNullException(nameof(serializer));
+            if (workbook == null)
+                throw new ArgumentNullException(nameof(workbook));
+            if (ident == null)
+                throw new ArgumentNullException(nameof(ident));
+
             _context = context;
+            _serializer = serializer;
             _workbook = workbook;
             _ident = ident;
         }
@@ -160,11 +176,7 @@ namespace comnsense
                     cells = cellsToSend,
                 };
 
-                var eventJson = JsonConvert.SerializeObject(
-                    responseEvent, 
-                    Formatting.None,
-                    new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
-
+                var eventJson = _serializer.SerializeAsString(responseEvent);
                 return new ZMessage {new ZFrame("event"), new ZFrame(Encoding.UTF8.GetBytes(eventJson))};
             }
             finally
@@ -217,11 +229,9 @@ namespace comnsense
                         Action action = null;
                         try
                         {
-                            action = JsonConvert.DeserializeObject<Action>(
-                                payload,
-                                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
+                            action = _serializer.DeserializeFromString<Action>(payload);
                         }
-                        catch
+                        catch(SerializationException)
                         {
                             // ignore deserialization errors
                         }

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using Newtonsoft.Json;
+using comnsense.Data;
 using ZeroMQ;
 
 namespace comnsense
@@ -12,20 +12,23 @@ namespace comnsense
     {
         public const string RouterAddress = "inproc://events";
         private readonly ZSocket _socket;
+        private readonly ISerializer _serializer;
 
-        public EventPublisher(ZContext context)
+        public EventPublisher(ZContext context, ISerializer serializer)
         {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+            if (serializer == null)
+                throw new ArgumentNullException(nameof(serializer));
+
             _socket = new ZSocket(context, ZSocketType.PUB);
             _socket.Bind(RouterAddress);
+            _serializer = serializer;
         }
 
         public void Send(Event @event)
         {
-            var data = JsonConvert.SerializeObject(
-                @event, 
-                Formatting.None, 
-                new JsonSerializerSettings {NullValueHandling = NullValueHandling.Ignore});
-
+            var data = _serializer.SerializeAsString(@event);
             using (var message = new ZMessage())
             {
                 message.Add(new ZFrame(Encoding.UTF8.GetBytes(@event.workbook)));
@@ -48,8 +51,7 @@ namespace comnsense
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
-                if (_socket != null)
-                    _socket.Dispose();
+                _socket?.Dispose();
         }
     }
 }
