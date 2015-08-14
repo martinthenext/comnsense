@@ -32,14 +32,14 @@ namespace comnsense.Data
             }
         }
 
-        public static T DeserializeAsString<T>(
+        public static T DeserializeFromString<T>(
             this ISerializer serializer,
             string value)
         {
-            return DeserializeAsString<T>(serializer, value, Encoding.UTF8);
+            return DeserializeFromString<T>(serializer, value, Encoding.UTF8);
         }
 
-        public static T DeserializeAsString<T>(
+        public static T DeserializeFromString<T>(
             this ISerializer serializer,
             string value,
             Encoding encoding)

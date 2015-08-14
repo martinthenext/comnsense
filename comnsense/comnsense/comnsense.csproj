@@ -186,6 +186,9 @@
   <ItemGroup>
     <Compile Include="Action.cs" />
     <Compile Include="Cell.cs" />
+    <Compile Include="Data\ISerializer.cs" />
+    <Compile Include="Data\JsonNetSerializer.cs" />
+    <Compile Include="Data\StringSerializer.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="EventPublisher.cs" />
     <Compile Include="CustomProperty.cs" />
