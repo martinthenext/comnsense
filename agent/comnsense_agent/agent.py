@@ -12,7 +12,6 @@ from comnsense_agent.worker import create_new_worker
 from comnsense_agent.message import Message
 from comnsense_agent.data import Signal
 from comnsense_agent.socket import ZMQRouter, ZMQDealer
-from comnsense_agent.socket import AddressAlreadyInUse
 
 
 logger = logging.getLogger(__name__)
@@ -21,57 +20,41 @@ logger = logging.getLogger(__name__)
 class Agent:
     def __init__(self, bind_str, server_str):
         self.bind_str = bind_str
-        logger.debug("bind socket: %s", bind_str)
         self.server_str = server_str
         logger.debug("server connection str: %s", server_str)
-        self.port_range = (30000, 40000)
-        logger.debug("iam: %s", sys.argv)
 
-    def setup_agent(self, loop):
-        logger.debug("setup agent socket")
-        agent = ZMQRouter()
-        agent.bind(self.bind_str, loop)
-        return agent
+    def create_frontend_socket(self, loop):
+        frontend = ZMQRouter()
+        frontend.bind(self.bind_str, loop)
+        logger.info("frontend socket bind: %s", self.bind_str)
+        return frontend
 
     def setup_server(self, loop):
-        logger.debug("setup server socket")
         server_stream = ServerStream(self.server_str, loop)
         return server_stream
 
-    def setup_worker(self, loop):
-        logger.debug("setup worker socket")
-        worker = ZMQRouter()
-        port_range = range(*self.port_range)
-        random.shuffle(port_range)
-        conn_str = ""
-        for port in port_range:
-            try:
-                logger.debug("try port %d", port)
-                conn_str = "tcp://127.0.0.1:%d" % port
-                worker.bind(conn_str, loop)
-            except AddressAlreadyInUse:
-                pass
-            else:
-                break
-        logger.debug("worker bind str: %s", conn_str)
-        return worker, conn_str
+    def create_backend_socket(self, loop):
+        backend = ZMQRouter()
+        bind_str = backend.bind_unused_port(loop)
+        logger.debug("backend socket bind: %s", bind_str)
+        return backend, bind_str
 
     def run(self, loop=None):
         if loop is None:
             loop = ioloop.IOLoop.instance()
 
         server_stream = self.setup_server(loop)
-        agent_stream = self.setup_agent(loop)
-        worker_stream, worker_conn = self.setup_worker(loop)
+        frontend = self.create_frontend_socket(loop)
+        backend, backend_conn = self.create_backend_socket(loop)
 
         workers = {}
 
-        def on_agent_recv(msg):
-            logger.debug("agent recv: %s", msg)
+        def on_frontend_recv(msg):
+            logger.debug("frontend recv: %s", msg)
             if msg.is_event() or msg.is_request() or msg.is_signal():
                 if msg.ident not in workers or \
                         not workers[msg.ident].is_alive():
-                    worker = create_new_worker(msg.ident, worker_conn)
+                    worker = create_new_worker(msg.ident, backend_conn)
                     workers[msg.ident] = worker
                     # TODO redo this
                     time.sleep(3)
@@ -82,17 +65,17 @@ class Agent:
                     else:
                         logger.warn("unexpected signal: %s", signal)
                 else:
-                    worker_stream.send(msg)
+                    backend.send(msg)
             else:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
-        def on_worker_recv(msg):  # receive answer from worker
+        def on_backend_recv(msg):  # receive answer from backend
             if msg.is_action():
-                logger.debug("agent send to excel: %s", msg)
-                agent_stream.send(msg)  # send answer to excel
+                logger.debug("send to excel: %s", msg)
+                frontend.send(msg)  # send answer to excel
             elif msg.is_request():  # send request to server
                 server_stream.send(msg)
-            elif msg.is_log():  # log from worker
+            elif msg.is_log():  # log from backend
                 logger.handle(pickle.loads(msg.payload))
             elif msg.is_signal():
                 signal = Signal.deserialize(msg.payload)
@@ -104,10 +87,10 @@ class Agent:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
         def on_server_recv(msg):
-            worker_stream.send(msg)
+            backend.send(msg)
 
-        agent_stream.on_recv(on_agent_recv)
-        worker_stream.on_recv(on_worker_recv)
+        frontend.on_recv(on_frontend_recv)
+        backend.on_recv(on_backend_recv)
         server_stream.on_recv(on_server_recv)
         try:
             loop.start()
@@ -117,5 +100,5 @@ class Agent:
                     worker.kill()
                     worker.join()
 
-            agent_stream.close()
-            worker_stream.close()
+            frontend.close()
+            backend.close()

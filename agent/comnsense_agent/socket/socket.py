@@ -32,3 +32,9 @@ class AddressAlreadyInUse(SocketError):
     def __init__(self, addr):
         super(AddressAlreadyInUse, self).__init__(
             "'%s' already in use" % addr, "SOCK001")
+
+
+class NoAvailablePorts(SocketError):
+    def __init__(self, port_range):
+        super(NoAvailablePorts, self).__init__(
+            "there are no available ports in range %s" % port_range, "SOCK002")

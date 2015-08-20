@@ -1,10 +1,12 @@
 import logging
 import sys
+import random
 
 import zmq
 from zmq.eventloop import zmqstream
 
-from .socket import Socket, AddressAlreadyInUse, SocketError
+from .socket import Socket
+from .socket import NoAvailablePorts, AddressAlreadyInUse, SocketError
 from comnsense_agent.message import Message
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,10 @@ class ZMQContext(object):
     @property
     def instance(self):
         return self._context
+
+    @property
+    def sockets(self):
+        return self._sock_count
 
     def create_socket(self, kind):
         sock = self._context.socket(kind)
@@ -102,7 +108,32 @@ class ZMQRouter(ZMQSocket):
     def __init__(self):
         super(ZMQRouter, self).__init__(zmq.ROUTER)
 
+    def bind_unused_port(self, loop, host="127.0.0.1", port_range=None):
+        if port_range is None:
+            port_range = (30000, 50000)
+
+        ports = range(*port_range)
+        random.shuffle(ports)
+
+        for port in ports:
+            address = "tcp://%s:%d" % (host, port)
+            try:
+                self._socket.bind(address)
+            except zmq.error.ZMQError, e:
+                if e.errno == 48:
+                    continue
+                else:
+                    raise
+            else:
+                self._stream = zmqstream.ZMQStream(self._socket, loop)
+                self._stream.set_close_callback(ZMQContext().release_socket)
+                return address
+
+        raise NoAvailablePorts(port_range)
+
 
 class ZMQDealer(ZMQSocket):
-    def __init__(self):
+    def __init__(self, identity=None):
         super(ZMQDealer, self).__init__(zmq.DEALER)
+        if identity is not None:
+            self._socket.setsockopt(zmq.IDENTITY, identity)

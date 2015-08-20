@@ -92,31 +92,42 @@ def client(request, caplog):
         yield dealer
 
 
+@pytest.yield_fixture(params=[True, False], ids=["regular", "random"])
+def connection(host, port, request):
+    if not request.param:
+        yield None
+    else:
+        yield "tcp://%s:%s" % (host, port)
+
+
 @allure.feature("Socket")
 @allure.story("ZMQ Echo Server on ZMQRouter")
 @pytest.mark.timeout(1)
-def test_zmq_socket_echo(io_loop, host, port, message, client):
-    connection = "tcp://%s:%s" % (host, port)
+def test_zmq_socket_echo(io_loop, connection, message, client):
 
     def server(connection, loop):
         socket = ZMQRouter()
-        socket.bind(connection, loop)
-        logging.info("asd")
+        if connection is None:
+            address = socket.bind_unused_port(loop)
+        else:
+            socket.bind(connection, loop)
+            address = connection
 
         def on_recv(msg):
             socket.send(msg)
 
         def on_send(msg):
             if msg.is_signal():
-                raise Exception(1)
                 socket.close()
 
         socket.on_recv(on_recv)
         socket.on_send(on_send)
+        return address
 
-    server(connection, io_loop)
+    address = server(connection, io_loop)
     count = 10
-    messages = client(message, connection, io_loop, count)
+    messages = client(message, address, io_loop, count)
     assert_that(messages, has_length(0))
     io_loop.start()
     assert_that(messages, has_length(count + 1))
+    assert_that(ZMQContext().sockets, equal_to(0))
