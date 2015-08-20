@@ -21,7 +21,7 @@ class LocalFileStream(object):
             callback = self.default_callback
         self.callback = callback
 
-    def send_multipart(self, message):
+    def send(self, message):
         try:
             if not os.path.isdir(self.basepath):
                 os.makedirs(self.basepath)

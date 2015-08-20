@@ -4,13 +4,15 @@ import pickle
 import sys
 import time
 
-import zmq
-from zmq.eventloop import ioloop, zmqstream
+# import zmq
+# from zmq.eventloop import ioloop, zmqstream
 
 from comnsense_agent.serverstream import ServerStream
 from comnsense_agent.worker import create_new_worker
 from comnsense_agent.message import Message
 from comnsense_agent.data import Signal
+from comnsense_agent.socket import ZMQRouter, ZMQDealer
+from comnsense_agent.socket import AddressAlreadyInUse
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 class Agent:
     def __init__(self, bind_str, server_str):
-        self.context = zmq.Context()
         self.bind_str = bind_str
         logger.debug("bind socket: %s", bind_str)
         self.server_str = server_str
@@ -26,33 +27,20 @@ class Agent:
         self.port_range = (30000, 40000)
         logger.debug("iam: %s", sys.argv)
 
-    def setup_agent(self, ctx, loop):
+    def setup_agent(self, loop):
         logger.debug("setup agent socket")
-        agent = ctx.socket(zmq.ROUTER)
-        agent.bind(self.bind_str)
+        agent = ZMQRouter()
+        agent.bind(self.bind_str, loop)
+        return agent
 
-        def on_close(*args):
-            logger.warn("agent stream is closed: %s", args)
-
-        agent_stream = zmqstream.ZMQStream(agent, loop)
-        agent_stream.set_close_callback(on_close)
-        return agent_stream
-
-    def setup_server(self, ctx, loop):
+    def setup_server(self, loop):
         logger.debug("setup server socket")
-        if self.server_str.startswith("https://") or \
-                self.server_str.startswith("http://"):
-            server_stream = ServerStream(self.server_str, loop)
-            return server_stream
-        else:
-            server = ctx.socket(zmq.DEALER)
-            server.connect(self.server_str)
-            server_stream = zmqstream.ZMQStream(server, loop)
-            return server_stream
+        server_stream = ServerStream(self.server_str, loop)
+        return server_stream
 
-    def setup_worker(self, ctx, loop):
+    def setup_worker(self, loop):
         logger.debug("setup worker socket")
-        worker = ctx.socket(zmq.ROUTER)
+        worker = ZMQRouter()
         port_range = range(*self.port_range)
         random.shuffle(port_range)
         conn_str = ""
@@ -60,30 +48,21 @@ class Agent:
             try:
                 logger.debug("try port %d", port)
                 conn_str = "tcp://127.0.0.1:%d" % port
-                worker.bind(conn_str)
-            except zmq.error.ZMQError, e:
-                if e.errno != 48:  # address already in use
-                    raise
+                worker.bind(conn_str, loop)
+            except AddressAlreadyInUse:
+                pass
             else:
                 break
         logger.debug("worker bind str: %s", conn_str)
+        return worker, conn_str
 
-        def on_close(*args):
-            logger.warn("worker stream is closed: %s", args)
-
-        worker_stream = zmqstream.ZMQStream(worker, loop)
-        worker_stream.set_close_callback(on_close)
-        return worker_stream, conn_str
-
-    def run(self, loop=None, ctx=None):
+    def run(self, loop=None):
         if loop is None:
             loop = ioloop.IOLoop.instance()
-        if ctx is None:
-            ctx = zmq.Context()
 
-        server_stream = self.setup_server(ctx, loop)
-        agent_stream = self.setup_agent(ctx, loop)
-        worker_stream, worker_conn = self.setup_worker(ctx, loop)
+        server_stream = self.setup_server(loop)
+        agent_stream = self.setup_agent(loop)
+        worker_stream, worker_conn = self.setup_worker(loop)
 
         workers = {}
 
@@ -103,16 +82,16 @@ class Agent:
                     else:
                         logger.warn("unexpected signal: %s", signal)
                 else:
-                    worker_stream.send_multipart(list(msg))
+                    worker_stream.send(msg)
             else:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
         def on_worker_recv(msg):  # receive answer from worker
             if msg.is_action():
                 logger.debug("agent send to excel: %s", msg)
-                agent_stream.send_multipart(list(msg))  # send answer to excel
+                agent_stream.send(msg)  # send answer to excel
             elif msg.is_request():  # send request to server
-                server_stream.send_multipart(list(msg))
+                server_stream.send(msg)
             elif msg.is_log():  # log from worker
                 logger.handle(pickle.loads(msg.payload))
             elif msg.is_signal():
@@ -125,11 +104,11 @@ class Agent:
                 logger.warn("unexpected message kind: %s", msg.kind)
 
         def on_server_recv(msg):
-            worker_stream.send_multipart(msg)
+            worker_stream.send(msg)
 
-        agent_stream.on_recv(Message.call(on_agent_recv))
-        worker_stream.on_recv(Message.call(on_worker_recv))
-        server_stream.on_recv(Message.call(on_server_recv))
+        agent_stream.on_recv(on_agent_recv)
+        worker_stream.on_recv(on_worker_recv)
+        server_stream.on_recv(on_server_recv)
         try:
             loop.start()
         finally:
@@ -137,3 +116,6 @@ class Agent:
                 if worker.is_alive():
                     worker.kill()
                     worker.join()
+
+            agent_stream.close()
+            worker_stream.close()

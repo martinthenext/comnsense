@@ -6,9 +6,11 @@ from hamcrest import *
 
 from zmq.eventloop import ioloop
 
-from ..fixtures.agent import agent, agent_port, agent_host
 from ..fixtures.addin import addin
+from ..fixtures.agent import agent
+from ..fixtures.async import zmq_io_loop as io_loop
 from ..fixtures.excel import workbook as workbook_id
+from ..fixtures.network import port, host
 from ..workbook.workbook import Workbook
 from ..workbook.scenario import Scenario
 
@@ -98,9 +100,8 @@ def scenario(workbook):
 @allure.story("First Demo Day")
 @pytest.mark.parametrize("interval", [pytest.mark.xfail(300), 500, 1000])
 @pytest.mark.skipif(platform.system().lower() == "windows", reason="issue #14")
-def test_system_first_demo_day(agent, addin, interval, expected):
-    loop = ioloop.IOLoop()
-    addin.run(loop, interval)
+def test_system_first_demo_day(agent, addin, interval, expected, io_loop):
+    addin.run(io_loop, interval)
     with allure.step("compare with expected"):
         for sheet in expected.sheets():
             allure.attach("expected.%s" % sheet,

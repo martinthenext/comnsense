@@ -42,16 +42,13 @@ def main(args):
     agent = comnsense_agent.agent.Agent(args.bind, args.server)
     while True:
         loop = ioloop.IOLoop.instance()
-        context = zmq.Context()
         try:
-            agent.run(loop, context)
+            agent.run(loop)
         except (SystemExit, KeyboardInterrupt):
             break
         except Exception, e:
             logger.exception(e)
         finally:
-            context.destroy()
-            context.term()
             loop.stop()
             loop.start()
             loop.close(True)

@@ -26,7 +26,7 @@ class TestLocalFileStream(unittest.TestCase):
         msg = Message.request(req, ident)
         callback = mock.Mock()
         self.stream.on_recv(callback)
-        self.stream.send_multipart(msg)
+        self.stream.send(msg)
         self.assertEquals(len(callback.mock_calls), 1)
         kall = callback.mock_calls[0]
         args = kall[1]

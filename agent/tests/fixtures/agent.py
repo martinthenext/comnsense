@@ -7,20 +7,12 @@ import random
 import subprocess
 import time
 
-
-@pytest.yield_fixture(scope="session")
-def agent_host():
-    yield "127.0.0.1"
-
-
-@pytest.yield_fixture(scope="session")
-def agent_port():
-    yield random.choice(range(50000, 51000))
+from .network import host, port
 
 
 @pytest.yield_fixture()
-def agent(agent_host, agent_port, tmpdir, request):
-    connection = "tcp://%s:%d" % (agent_host, agent_port)
+def agent(host, port, tmpdir, request):
+    connection = "tcp://%s:%d" % (host, port)
     log = tmpdir.join("comnsense-agent.log").strpath
     level = "DEBUG"
     path = request.config.rootdir.join("bin").join("comnsense-agent").strpath

@@ -8,7 +8,7 @@ from comnsense_agent.data import Action
 
 
 @pytest.yield_fixture()
-def addin(scenario, agent_host, agent_port):
+def addin(scenario, host, port):
     class AddIn(object):
         def __init__(self, host, port, scenario):
             self.connection = "tcp://%s:%d" % (host, port)
@@ -59,7 +59,7 @@ def addin(scenario, agent_host, agent_port):
             ctx.destroy()
             ctx.term()
 
-    addin = AddIn(agent_host, agent_port, scenario)
+    addin = AddIn(host, port, scenario)
     with allure.step("start addin: %s" % addin.connection):
         for sheet in addin.scenario.workbook.sheets():
             allure.attach("workbook.%s" % sheet,
