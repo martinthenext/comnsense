@@ -21,8 +21,9 @@ class ZMQContext(object):
         return ZMQContext.__context
 
     def __init__(self):
-        self._context = zmq.Context()
-        self._sock_count = 0
+        if not hasattr(self, "_context"):
+            self._context = zmq.Context()
+            self._sock_count = 0
 
     @property
     def instance(self):

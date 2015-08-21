@@ -131,3 +131,11 @@ def test_zmq_socket_echo(io_loop, connection, message, client):
     io_loop.start()
     assert_that(messages, has_length(count + 1))
     assert_that(ZMQContext().sockets, equal_to(0))
+
+
+@allure.feature("Socket")
+@allure.story("ZMQContext")
+def test_zmq_context_singleton(caplog):
+    inst0 = ZMQContext().instance
+    inst1 = ZMQContext().instance
+    assert_that(inst0, is_(inst1))
