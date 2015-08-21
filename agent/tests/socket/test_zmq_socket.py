@@ -18,7 +18,6 @@ from comnsense_agent.data import Event
 from comnsense_agent.data import Signal
 
 from comnsense_agent.socket import ZMQRouter, ZMQDealer
-from comnsense_agent.socket.zmq_socket import ZMQContext
 
 
 @pytest.yield_fixture(params=[
@@ -30,7 +29,7 @@ def message(workbook, request):
 
 
 @pytest.yield_fixture(params=["simple", "dealer"])
-def client(request, caplog):
+def client(request):
     stop = Message.signal(Signal.stop())
 
     def simple(message, connection, loop, count):
@@ -42,7 +41,6 @@ def client(request, caplog):
 
         def check(data):
             messages.append(data)
-            logging.info("client receive: %s", data)
             answer = Message(*data)
             if len(messages) < count:
                 assert_that(answer.kind, equal_to(message.kind))
@@ -68,7 +66,6 @@ def client(request, caplog):
 
         def check(msg):
             messages.append(msg)
-            logging.info("client receive: %s", msg)
             if len(messages) < count:
                 assert_that(msg.kind, equal_to(message.kind))
                 assert_that(msg.payload, equal_to(message.payload))
@@ -130,12 +127,3 @@ def test_zmq_socket_echo(io_loop, connection, message, client):
     assert_that(messages, has_length(0))
     io_loop.start()
     assert_that(messages, has_length(count + 1))
-    assert_that(ZMQContext().sockets, equal_to(0))
-
-
-@allure.feature("Socket")
-@allure.story("ZMQContext")
-def test_zmq_context_singleton(caplog):
-    inst0 = ZMQContext().instance
-    inst1 = ZMQContext().instance
-    assert_that(inst0, is_(inst1))

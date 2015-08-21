@@ -24,6 +24,6 @@ def zmq_io_loop():
     yield loop
 
     loop.clear_current()
-    if (not tornado.ioloop.IOLoop.initialized() or
-            loop is not tornado.ioloop.IOLoop.instance()):
+    if (not zmq.eventloop.ioloop.IOLoop.initialized() or
+            loop is not zmq.eventloop.ioloop.IOLoop.instance()):
         loop.close(all_fds=True)
