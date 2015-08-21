@@ -39,21 +39,22 @@ def main(args):
     comnsense_agent.utils.log.setup(args.log_level, args.log_filename)
     global logger
     logger = logging.getLogger("comnsense_agent")
-    agent = comnsense_agent.agent.Agent(args.bind, args.server)
     while True:
-        loop = ioloop.IOLoop.instance()
+        loop = ioloop.IOLoop()
+        loop.make_current()
         try:
-            agent.run(loop)
+            agent = comnsense_agent.agent.Agent(args.bind, args.server, loop)
+            agent.start()
         except (SystemExit, KeyboardInterrupt):
             break
-        except Exception, e:
-            logger.exception(e)
+        except:
+            logger.exception("unhandled exception! agent will be recreated")
         finally:
             loop.stop()
-            loop.start()
-            loop.close(True)
-            ioloop.IOLoop.clear_instance()
-            ioloop.install()
+            loop.clear_current()
+            if (not ioloop.IOLoop.initialized or
+                    loop is not ioloop.IOLoop.instance):
+                loop.close(all_fds=True)
 
 
 if __name__ == '__main__':
