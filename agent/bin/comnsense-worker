@@ -1,9 +1,7 @@
 #!/usr/bin/env python2
 import argparse
 
-import zmq
 from zmq.eventloop import ioloop
-ioloop.install()
 
 try:
     import comnsense_agent.worker
@@ -26,17 +24,14 @@ def parse_args(args=None):
 
 
 def main(args):
-    loop = ioloop.IOLoop.instance()
-    context = zmq.Context()
+    loop = ioloop.IOLoop()
+    loop.make_current()
     try:
-        comnsense_agent.worker.worker_main(
-            args.ident, args.connection, loop, context)
+        worker = comnsense_agent.worker.Worker(
+            args.ident, args.connection, loop)
+        worker.start()
     except (SystemExit, KeyboardInterrupt):
         pass
-    finally:
-        context.destroy()
-        context.term()
-
 
 if __name__ == '__main__':
     main(parse_args())

@@ -4,13 +4,55 @@ import os
 import subprocess
 import sys
 
-import zmq
-from zmq.eventloop import ioloop, zmqstream
-
 from comnsense_agent.message import Message
 from comnsense_agent.utils.log import worker_setup as worker_logger_setup
 from comnsense_agent.data import Signal
 from comnsense_agent.runtime import Runtime
+from comnsense_agent.socket import ZMQDealer
+
+
+class Worker(object):
+    def __init__(self, session, address, loop):
+        self.loop = loop
+
+        self.client = self.create_client_socket(session, address, loop)
+        self.client.on_recv(self.routine)
+        self.setup_logger(session)
+
+        self.runtime = Runtime()
+
+    def create_client_socket(self, session, address, loop):
+        socket = ZMQDealer(session)
+        socket.connect(address, loop)
+        return socket
+
+    def setup_logger(self, session):
+        global logger
+        worker_logger_setup(self.client, session)
+        logger = logging.getLogger(__name__)
+
+    def routine(self, msg):
+        if msg.is_signal():
+            signal = Signal.deserialize(msg.payload)
+            if signal.code == Signal.Code.Stop:
+                self.loop.stop()
+
+        elif msg.is_event() or msg.is_response():
+            answer = self.runtime.run(msg)
+            logger.debug("runtime answer: %s", repr(answer))
+
+            if answer == Runtime.SpecialAnswer.finished:
+                self.loop.stop()
+            elif answer != Runtime.SpecialAnswer.noanswer:
+                for msg in answer:
+                    self.client.send(msg)
+
+    def start(self):
+        self.client.send(Message.signal(Signal.ready()))
+        try:
+            self.loop.start()
+        finally:
+            self.client.close()
 
 
 class WorkerProcess(object):
@@ -29,61 +71,6 @@ class WorkerProcess(object):
         return self.popen.terminate()
 
     pid = property(lambda x: x.popen.pid)
-
-
-def worker_main(ident, connection, loop=None, ctx=None):
-    if loop is None:
-        loop = ioloop.IOLoop.instance()
-    if ctx is None:
-        ctx = zmq.Context()
-
-    def setup_socket():
-        socket = ctx.socket(zmq.DEALER)
-        socket.setsockopt(zmq.IDENTITY, ident)
-        socket.connect(connection)
-        socket_stream = zmqstream.ZMQStream(socket, loop)
-        return socket_stream
-
-    def setup_logger(socket):
-        worker_logger_setup(socket, ident)
-        return logging.getLogger(__name__)
-
-    socket_stream = setup_socket()
-    logger = setup_logger(socket_stream)
-    runtime = Runtime()
-
-    def on_signal_recv(msg):
-        signal = Signal.deserialize(msg.payload)
-        if signal.code == Signal.Code.Stop.value:
-            loop.stop()
-        else:
-            logger.warn("unexpected signal: %s", signal)
-
-    def on_recv(msg):
-        logger.debug("worker on_recv: %s", repr(msg))
-        if msg.is_signal():
-            on_signal_recv(msg)
-        if msg.is_request():
-            socket_stream.send_multipart(list(msg))
-        elif msg.is_event() or msg.is_response():
-            answer = runtime.run(msg)
-            logger.debug("runtime answer: %s", repr(answer))
-            if answer == Runtime.SpecialAnswer.finished:
-                loop.stop()
-            elif answer != Runtime.SpecialAnswer.noanswer:
-                for msg in answer:
-                    socket_stream.send_multipart(list(msg))
-        else:
-            logger.warn("unexpected message kind: %s", msg.kind)
-
-    socket_stream.on_recv(Message.call(on_recv))
-
-    # TODO fix it, strange
-    socket_stream.send_multipart(
-        list(Message.signal(Signal.ready())))
-
-    loop.start()
-    socket_stream.close(1000)
 
 
 def get_worker_script(searchpath=None):

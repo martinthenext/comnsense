@@ -121,7 +121,7 @@ def worker_setup(socket, ident, level=None, logdir=None):
                 "formatter": "stream",
             },
             "zmq": {
-                "class": "comnsense_agent.utils.log.ZLogHandler",
+                "class": "comnsense_agent.utils.log.SocketHandler",
                 "socket": socket,
                 "filters": ["ident"],
             },
@@ -149,10 +149,10 @@ def worker_setup(socket, ident, level=None, logdir=None):
     logging.config.dictConfig(config)
 
 
-class ZLogHandler(logging.Handler):
+class SocketHandler(logging.Handler):
     def __init__(self, socket, level=logging.NOTSET):
         self.socket = socket
-        super(ZLogHandler, self).__init__()
+        super(SocketHandler, self).__init__()
 
     def emit(self, record):
         try:
@@ -160,6 +160,6 @@ class ZLogHandler(logging.Handler):
                 dummy = self.format(record)
                 record.exc_info = None
             data = pickle.dumps(record)
-            self.socket.send_multipart(list(Message.log(data)))
+            self.socket.send(Message.log(data))
         except:
             self.handleError(record)
