@@ -37,7 +37,7 @@ class ZMQSocket(Socket):
             if e.errno == 48:
                 raise AddressAlreadyInUse(address)
             else:
-                raise SocketError("ZMQError: %s " % repr(e))
+                raise SocketError("ZMQError: %s: %s" % (repr(e), e.errno))
         self._stream = zmqstream.ZMQStream(self._socket, loop)
 
     def connect(self, address, loop):
