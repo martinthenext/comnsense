@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 class Agent(object):
     def __init__(self, frontend_bind, server_address, loop):
-        self.frontend, _ = self.create_frontend_socket(loop, frontend_bind)
-        self.backend, self.backend_bind = self.create_backend_socket(loop)
-        self.client, _ = self.create_client_socket(loop, server_address)
+        self.frontend, _ = Agent.create_frontend_socket(loop, frontend_bind)
+        self.backend, self.backend_bind = Agent.create_backend_socket(loop)
+        self.client, _ = Agent.create_client_socket(loop, server_address)
 
         self.frontend.on_recv(self.frontend_routine)
         self.backend.on_recv(self.backend_routine)
@@ -26,18 +26,21 @@ class Agent(object):
         self.workers = {}
         self.loop = loop
 
-    def create_frontend_socket(self, loop, bind_str):
+    @staticmethod
+    def create_frontend_socket(loop, bind_str):
         frontend = ZMQRouter()
         frontend.bind(bind_str, loop)
         logger.info("frontend socket bind: %s", bind_str)
         return frontend, bind_str
 
-    def create_client_socket(self, loop, address):
+    @staticmethod
+    def create_client_socket(loop, address):
         client = ServerStream(address, loop)
         logger.info("client connects to: %s", address)
         return client, address
 
-    def create_backend_socket(self, loop):
+    @staticmethod
+    def create_backend_socket(loop):
         backend = ZMQRouter()
         bind_str = backend.bind_unused_port(loop)
         logger.info("backend socket bind: %s", bind_str)
@@ -73,7 +76,8 @@ class Agent(object):
                 logger.info("worker with ident %s is ready", msg.ident)
 
     def client_routine(self, msg):
-        self.backend.send(msg)
+        if msg.is_response():
+            self.backend.send(msg)
 
     def start(self):
         try:
