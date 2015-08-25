@@ -4,11 +4,11 @@ import os
 import subprocess
 import sys
 
-from comnsense_agent.message import Message
-from comnsense_agent.utils.log import worker_setup as worker_logger_setup
 from comnsense_agent.data import Signal
+from comnsense_agent.message import Message
 from comnsense_agent.runtime import Runtime
 from comnsense_agent.socket import ZMQDealer
+from comnsense_agent.utils.log import worker_setup as worker_logger_setup
 
 
 class Worker(object):

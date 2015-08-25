@@ -14,6 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class ZMQSocket(Socket):
+    """
+    0MQ `Socket <socket>` implementation.
+
+    :param kind:    is one of 0MQ socket kinds,
+                      e.g.: ``zmq.ROUTER``, ``zmq.PUSH``.
+    :param context:  0mq context, if it is not defined global instance is used.
+    :type context: `zmq.Context <zmq_context_>`_ or None
+    """
+
     LINGER = 1000
     IO_THREADS = 1
 
@@ -67,6 +76,10 @@ class ZMQSocket(Socket):
 
 
 class ZMQRouter(ZMQSocket):
+    """
+    ``zmq.ROUTER`` socket impementation.
+    """
+
     MIN_PORT = 30000
     MAX_PORT = 50000
 
@@ -74,9 +87,23 @@ class ZMQRouter(ZMQSocket):
         super(ZMQRouter, self).__init__(zmq.ROUTER)
 
     def bind_unused_port(self, loop, host="127.0.0.1", port_range=None):
+        """
+        Tryes to bind socket to unused port.
+        Instead of `bind <Socket.bind>` this method
+        tryes to bind search free TCP port and bind it.
+
+        :param loop:    event loop in which socket should be registered
+        :type loop:     `IOLoop <ioloop_>`_
+
+        :param host:   IP address, default ``127.0.0.1``
+        :type host:    str
+
+        :param port_range: search port range, minimum and maximum port number,
+                           default (30000, 50000)
+        :type port_range: tuple(int, int) or None
+        """
         if port_range is None:
             port_range = (ZMQRouter.MIN_PORT, ZMQRouter.MAX_PORT)
-
         ports = range(*port_range)
         random.shuffle(ports)
 
@@ -97,6 +124,10 @@ class ZMQRouter(ZMQSocket):
 
 
 class ZMQDealer(ZMQSocket):
+    """
+    ``zmq.DEALER`` socket impementation.
+    """
+
     def __init__(self, identity=None):
         super(ZMQDealer, self).__init__(zmq.DEALER)
         if identity is not None:
