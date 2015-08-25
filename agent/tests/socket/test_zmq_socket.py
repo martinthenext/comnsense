@@ -5,6 +5,7 @@ import threading
 import multiprocessing
 import time
 import logging
+import socket
 from hamcrest import *
 
 import zmq
@@ -95,6 +96,15 @@ def connection(host, port, request):
         yield None
     else:
         yield "tcp://%s:%s" % (host, port)
+        while True:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                result = sock.connect_ex((host, port))
+                if result != 0:
+                    break
+            finally:
+                sock.close()
+            time.sleep(0.2)
 
 
 @allure.feature("Socket")
