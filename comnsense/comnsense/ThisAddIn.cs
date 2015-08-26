@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using comnsense.Data;
+using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 
@@ -40,27 +41,27 @@ namespace comnsense
 
         private void ThisAddIn_WorkbookOpen(Workbook wb)
         {
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             RunRouter(wb, ident);
             _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
         private void ThisAddIn_NewWorkbook(Workbook wb)
         {
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             RunRouter(wb, ident);
             _publisher.Send(Event.WorkbookOpen(ident, wb));
         }
 
         private void ThisAddIn_WorkbookBeforeClose(Workbook wb, ref bool result)
         {
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             _publisher.Send(Event.WorkbookBeforeClose(ident, wb));
         }
 
         private void ThisAddIn_BeforeClose(Workbook wb, ref bool result)
         {
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             if (!_routers.ContainsKey(ident))
                 return;
             KeyValuePair<Thread, CancellationTokenSource> pair;
@@ -71,7 +72,7 @@ namespace comnsense
         private void ThisAddIn_SheetSelectionChange(object sh, Range target)
         {
             Workbook wb = ((Worksheet) sh).Parent;
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             if (_lastSelectedValues.ContainsKey(ident))
                 _lastSelectedValues[ident] = Event.GetCellsFromRange(target);
             else
@@ -82,7 +83,7 @@ namespace comnsense
         {
             var worksheet = ((Worksheet) sh);
             Workbook wb = worksheet.Parent;
-            string ident = GetWorkbookIdent(wb);
+            string ident = GetWorkbookId(wb);
             if (_lastSelectedValues.ContainsKey(ident))
             {
                 _publisher.Send(
@@ -90,12 +91,16 @@ namespace comnsense
             }
         }
 
-        private string GetWorkbookIdent(Workbook wb)
+        private string GetWorkbookId(Workbook workbook)
         {
-            var ident = new Ident(wb);
-            if (ident.Get() == null)
-                ident.Set(Guid.NewGuid().ToString());
-            return ident.ToString();
+            DocumentProperties properties = workbook.CustomDocumentProperties;
+            var id = properties.GetStringProperty("ComnsenseID");
+            if (id != "")
+                return id;
+
+            id = Guid.NewGuid().ToString();
+            properties.SetStringProperty("ComnsenseID", id);
+            return id;
         }
 
         private void RunRouter(Workbook workbook, string ident)

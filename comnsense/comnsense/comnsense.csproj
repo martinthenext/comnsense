@@ -189,10 +189,9 @@
     <Compile Include="Data\ISerializer.cs" />
     <Compile Include="Data\JsonNetSerializer.cs" />
     <Compile Include="Data\StringSerializer.cs" />
+    <Compile Include="DocumentPropertiesExtenstions.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="EventPublisher.cs" />
-    <Compile Include="CustomProperty.cs" />
-    <Compile Include="Ident.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
