@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using comnsense.Data;
+using Comnsense.ExcelAddin.Data;
 using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     public partial class ThisAddIn
     {

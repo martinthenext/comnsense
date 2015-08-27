@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace comnsense.Data
+namespace Comnsense.ExcelAddin.Data
 {
     public class JsonNetSerializer : ISerializer
     {

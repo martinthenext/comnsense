@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace comnsense.Data
+namespace Comnsense.ExcelAddin.Data
 {
     public static class StringSerializer
     {

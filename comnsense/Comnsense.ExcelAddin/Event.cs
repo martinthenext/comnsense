@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Office.Interop.Excel;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     [Serializable]
     internal class Event

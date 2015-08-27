@@ -3,11 +3,11 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
-using comnsense.Data;
+using Comnsense.ExcelAddin.Data;
 using Microsoft.Office.Interop.Excel;
 using ZeroMQ;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     internal class Router
     {

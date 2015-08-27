@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace comnsense.Properties {
+namespace Comnsense.ExcelAddin.Properties {
     
     
     /// <summary>

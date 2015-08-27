@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace comnsense.Data
+namespace Comnsense.ExcelAddin.Data
 {
     public interface ISerializer
     {

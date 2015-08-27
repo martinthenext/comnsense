@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     [Serializable]
     internal class Action

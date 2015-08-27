@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Microsoft.Office.Core;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     internal static class DocumentPropertiesExtenstions
     {

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
-using comnsense.Data;
+using Comnsense.ExcelAddin.Data;
 using ZeroMQ;
 
-namespace comnsense
+namespace Comnsense.ExcelAddin
 {
     /// <summary>
     ///  EventPublisher binds to a ZMQ Context and can publish Events to it to Router
