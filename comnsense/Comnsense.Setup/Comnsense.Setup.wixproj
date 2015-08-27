@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>6e3aa7af-afc9-4247-8c93-67446b1e8436</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>comnsense.setup</OutputName>
+    <OutputName>Comnsense.Setup</OutputName>
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
@@ -41,8 +41,8 @@
     </WixExtension>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\comnsense\comnsense.csproj">
-      <Name>comnsense</Name>
+    <ProjectReference Include="..\Comnsense.ExcelAddin\Comnsense.ExcelAddin.csproj">
+      <Name>Comnsense.ExcelAddin</Name>
       <Project>{b569c59f-8716-4b89-9887-d466e961b0ac}</Project>
       <Private>True</Private>
       <DoNotHarvest>True</DoNotHarvest>
@@ -53,7 +53,7 @@
   <Import Project="$(WixTargetsPath)" />
   <Target Name="BeforeBuild">
     <Exec Command="&quot;tox&quot;" WorkingDirectory="..\..\agent" Condition="!Exists('..\..\agent\dist\')" />
-    <HeatDirectory Directory="..\comnsense\bin\$(Configuration)\" OutputFile="ExcelAddin.wxs" DirectoryRefId="EXCELADDINDIR" PreprocessorVariable="var.comnsense.TargetDir" ComponentGroupName="ExcelAddinFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
+    <HeatDirectory Directory="..\Comnsense.ExcelAddin\bin\$(Configuration)\" OutputFile="ExcelAddin.wxs" DirectoryRefId="EXCELADDINDIR" PreprocessorVariable="var.Comnsense.ExcelAddin.TargetDir" ComponentGroupName="ExcelAddinFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
     <HeatDirectory Directory="..\..\agent\dist\" OutputFile="Agent.wxs" DirectoryRefId="AGENTDIR" PreprocessorVariable="var.agent.TargetDir" ComponentGroupName="AgentFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
   </Target>
 </Project>

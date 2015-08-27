@@ -220,10 +220,10 @@ $RECYCLE.BIN/
 .DS_Store
 
 # ZeroMQ native libs that automatically copied by MSBuild
-comnsense/comnsense/amd64/
-comnsense/comnsense/i386/
+Comnsense/Comnsense.ExcelAddin/amd64/
+Comnsense/Comnsense.ExcelAddin/i386/
 *.egg-info
 
 # Wix Installer auto-generated files
-comnsense/comnsense.setup/Agent.wxs
-comnsense/comnsense.setup/ExcelAddin.wxs
+Comnsense/Comnsense.Setup/Agent.wxs
+Comnsense/Comnsense.Setup/ExcelAddin.wxs

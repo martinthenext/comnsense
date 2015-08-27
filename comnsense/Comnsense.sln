@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "comnsense", "comnsense\comnsense.csproj", "{B569C59F-8716-4B89-9887-D466E961B0AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Comnsense.ExcelAddin", "Comnsense.ExcelAddin\Comnsense.ExcelAddin.csproj", "{B569C59F-8716-4B89-9887-D466E961B0AC}"
 EndProject
-Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "comnsense.setup", "comnsense.setup\comnsense.setup.wixproj", "{6E3AA7AF-AFC9-4247-8C93-67446B1E8436}"
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Comnsense.Setup", "Comnsense.Setup\Comnsense.Setup.wixproj", "{6E3AA7AF-AFC9-4247-8C93-67446B1E8436}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -90,7 +90,7 @@
                          Root="HKCU"
                          Key="Software\Microsoft\Office\Excel\AddIns\comnsense"
                          Name="Manifest" 
-                         Value="[EXCELADDINDIR]comnsense.vsto|vstolocal"
+                         Value="[EXCELADDINDIR]Comnsense.ExcelAddin.vsto|vstolocal"
                          Type="string" 
                          KeyPath="yes" />
         </Component>
