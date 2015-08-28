@@ -1,3 +1,4 @@
+import allure
 import mock
 import os
 import pytest
@@ -6,10 +7,18 @@ import shutil
 import string
 import tempfile
 import unittest
+from hamcrest import *
 
-from comnsense_agent.worker import get_worker_script
-from comnsense_agent.worker import get_worker_command
+from comnsense_agent.data import Signal
+from comnsense_agent.message import Message
+from comnsense_agent.runtime import Runtime
+from comnsense_agent.worker import Worker
 from comnsense_agent.worker import WorkerProcess
+from comnsense_agent.worker import get_worker_command
+from comnsense_agent.worker import get_worker_script
+
+from .fixtures.network import port, host
+from .fixtures.excel import workbook
 
 
 def touch(filename):
@@ -17,6 +26,7 @@ def touch(filename):
         pass
 
 
+@allure.feature("Worker")
 class TestGetWorkerScript(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -44,6 +54,7 @@ class TestGetWorkerScript(unittest.TestCase):
             shutil.rmtree(self.tmpdir)
 
 
+@allure.feature("Worker")
 class TestGetWorkerCommand(unittest.TestCase):
     def setUp(self):
         # TODO replace with get_free_tcp_connection
@@ -74,6 +85,7 @@ class TestGetWorkerCommand(unittest.TestCase):
         self.basic_test(cmd)
 
 
+@allure.feature("Worker")
 class TestWorkerProcess(unittest.TestCase):
     def setUp(self):
         self.proc = mock.Mock()
@@ -99,3 +111,120 @@ class TestWorkerProcess(unittest.TestCase):
         wp = WorkerProcess(self.proc)
         wp.kill()
         self.assertEquals(len(self.proc.terminate.mock_calls), 1)
+
+
+@pytest.fixture(scope="module")
+def connection(host, port):
+    return "tcp://%s:%d" % (host, port)
+
+
+@pytest.yield_fixture(autouse=True)
+def dummy_dealer(monkeypatch):
+
+    from comnsense_agent.socket.zmq_socket import ZMQDealer
+
+    def new(cls, *args, **kwargs):
+        dealer = mock.Mock()
+        return dealer
+
+    monkeypatch.setattr(ZMQDealer, "__new__", classmethod(new))
+    monkeypatch.setattr(ZMQDealer, "__init__", lambda *x, **y: None)
+
+    yield None
+
+    monkeypatch.undo()
+    monkeypatch.undo()
+
+
+@pytest.fixture
+def loop():
+    return mock.Mock()
+
+
+@pytest.yield_fixture
+def worker(monkeypatch, workbook, connection, loop):
+    monkeypatch.setattr("comnsense_agent.worker.worker_logger_setup",
+                        lambda *x, **y: None)
+    worker = Worker(workbook, connection, loop)
+    worker.runtime = mock.Mock()
+    yield worker
+    monkeypatch.undo()
+
+
+@allure.feature("Worker")
+def test_worker_create_socket(worker, connection, loop):
+    assert_that(worker.client.connect.mock_calls,
+                equal_to([mock.call(connection, loop)]))
+    assert_that(worker.client.on_recv.mock_calls,
+                equal_to([mock.call(worker.routine)]))
+
+
+@allure.feature("Worker")
+def test_worker_stop_signal(worker):
+    msg = Message.signal(Signal.stop())
+    worker.routine(msg)
+    assert_that(worker.runtime.run.mock_calls, equal_to([]))
+    assert_that(worker.client.send.mock_calls, equal_to([]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([mock.call()]))
+
+
+@allure.feature("Worker")
+def test_worker_event(worker):
+    msg = Message.event("event")
+    worker.runtime.run.return_value = []
+    worker.routine(msg)
+    assert_that(worker.runtime.run.mock_calls, equal_to([mock.call(msg)]))
+    assert_that(worker.client.send.mock_calls, equal_to([]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([]))
+
+
+@allure.feature("Worker")
+def test_worker_response(worker):
+    msg = Message.response("response")
+    worker.runtime.run.return_value = []
+    worker.routine(msg)
+    assert_that(worker.runtime.run.mock_calls, equal_to([mock.call(msg)]))
+    assert_that(worker.client.send.mock_calls, equal_to([]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([]))
+
+
+@allure.feature("Worker")
+def test_worker_runtime_finished(worker):
+    msg = Message.event("event")
+    worker.runtime.run.return_value = Runtime.SpecialAnswer.finished
+    worker.routine(msg)
+    assert_that(worker.runtime.run.mock_calls, equal_to([mock.call(msg)]))
+    assert_that(worker.client.send.mock_calls, equal_to([]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([mock.call()]))
+
+
+@allure.feature("Worker")
+def test_worker_runtime_no_answer(worker):
+    msg = Message.event("event")
+    worker.runtime.run.return_value = Runtime.SpecialAnswer.noanswer
+    worker.routine(msg)
+    assert_that(worker.runtime.run.mock_calls, equal_to([mock.call(msg)]))
+    assert_that(worker.client.send.mock_calls, equal_to([]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([]))
+
+
+@allure.feature("Worker")
+def test_worker_runtime_answer(worker):
+    event = Message.event("event")
+    action = Message.action("action")
+    request = Message.request("request")
+    worker.runtime.run.return_value = [action, request]
+    worker.routine(event)
+    assert_that(worker.runtime.run.mock_calls, equal_to([mock.call(event)]))
+    assert_that(worker.client.send.mock_calls,
+                equal_to([mock.call(action), mock.call(request)]))
+    assert_that(worker.loop.stop.mock_calls, equal_to([]))
+
+
+@allure.feature("Worker")
+def test_worker_start(worker):
+    worker.start()
+    assert_that(worker.client.send.mock_calls,
+                equal_to([mock.call(Message.signal(Signal.ready()))]))
+    assert_that(worker.loop.start.mock_calls, equal_to([mock.call()]))
+    assert_that(worker.client.close.mock_calls, equal_to([mock.call()]))

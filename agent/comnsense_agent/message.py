@@ -159,3 +159,6 @@ class Message(object):
             except Exception, e:
                 log.exception(e)
         return oncall
+
+    def __eq__(self, other):
+        return list(self) == list(other)
