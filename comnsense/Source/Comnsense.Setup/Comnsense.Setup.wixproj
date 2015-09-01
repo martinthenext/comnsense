@@ -10,7 +10,7 @@
     <OutputType>Package</OutputType>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
-    <CompilerAdditionalOptions>-dagent.TargetDir=..\..\agent\dist</CompilerAdditionalOptions>
+    <CompilerAdditionalOptions>-dagent.TargetDir=..\..\..\agent\dist</CompilerAdditionalOptions>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
@@ -52,8 +52,8 @@
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <Target Name="BeforeBuild">
-    <Exec Command="&quot;tox&quot;" WorkingDirectory="..\..\agent" Condition="!Exists('..\..\agent\dist\')" />
+    <Exec Command="&quot;tox&quot;" WorkingDirectory="..\..\..\agent" Condition="!Exists('..\..\..\agent\dist\')" />
     <HeatDirectory Directory="..\Comnsense.ExcelAddin\bin\$(Configuration)\" OutputFile="ExcelAddin.wxs" DirectoryRefId="EXCELADDINDIR" PreprocessorVariable="var.Comnsense.ExcelAddin.TargetDir" ComponentGroupName="ExcelAddinFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
-    <HeatDirectory Directory="..\..\agent\dist\" OutputFile="Agent.wxs" DirectoryRefId="AGENTDIR" PreprocessorVariable="var.agent.TargetDir" ComponentGroupName="AgentFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
+    <HeatDirectory Directory="..\..\..\agent\dist\" OutputFile="Agent.wxs" DirectoryRefId="AGENTDIR" PreprocessorVariable="var.agent.TargetDir" ComponentGroupName="AgentFiles" AutogenerateGuids="true" SuppressRegistry="true" SuppressRootDirectory="true" ToolPath="$(WixToolPath)" NoLogo="true" />
   </Target>
 </Project>
