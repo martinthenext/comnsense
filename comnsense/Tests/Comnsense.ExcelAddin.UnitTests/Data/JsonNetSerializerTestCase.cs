@@ -14,16 +14,12 @@ namespace Comnsense.ExcelAddin.UnitTests.Data
 {
     public class JsonNetSerializerTestCase
     {
-        private static JsonNetSerializer CreateSystemUnderTest()
-        {
-            return new JsonNetSerializer(JsonNetSerializer.DefaultSettings);
-        }
+        private static JsonNetSerializer CreateSystemUnderTest() => 
+            new JsonNetSerializer(JsonNetSerializer.DefaultSettings);
 
         [Theory, AutoData]
-        public void SutIsISerializer(JsonNetSerializer sut)
-        {
-            Assert.IsAssignableFrom<ISerializer>(sut);
-        }
+        public void SutIsISerializer(JsonNetSerializer sut) 
+            => Assert.IsAssignableFrom<ISerializer>(sut);
 
         [Theory, SerializerAutoData]
         public void AllMembers_Always_ShouldHaveNullGuards(
@@ -47,44 +43,41 @@ namespace Comnsense.ExcelAddin.UnitTests.Data
             Assert.Equal(expected, actual);
         }
 
-        public static IEnumerable<object[]> SerializationTestData
+        public static IEnumerable<object[]> SerializationTestData => new[]
         {
-            get
+            // Should serialize "empty" values 
+            // (e.g. empty strings, 0 for integers, false for booleans, etc.)
+            new object[]
             {
-                // Should serialize "empty" values 
-                // (e.g. empty strings, 0 for integers, false for booleans, etc.)
-                yield return new object[]
-                {
-                    new Victim {FirstName = ""},
-                    "{\"firstName\":\"\",\"age\":0,\"isGoodEnough\":false}"
-                };
+                new Victim {FirstName = ""},
+                "{\"firstName\":\"\",\"age\":0,\"isGoodEnough\":false}"
+            },
 
-                // Should ignore null values
-                yield return new object[]
-                {
-                    new Victim(),
-                    "{\"age\":0,\"isGoodEnough\":false}"
-                };
+            // Should ignore null values
+            new object[]
+            {
+                new Victim(),
+                "{\"age\":0,\"isGoodEnough\":false}"
+            },
 
-                // Should serialize values with camelCase
-                yield return new object[]
-                {
-                    new Victim {FirstName = "Vasya", Age = 25, IsGoodEnough = true},
-                    "{\"firstName\":\"Vasya\",\"age\":25,\"isGoodEnough\":true}"
-                };
+            // Should serialize values with camelCase
+            new object[]
+            {
+                new Victim {FirstName = "Vasya", Age = 25, IsGoodEnough = true},
+                "{\"firstName\":\"Vasya\",\"age\":25,\"isGoodEnough\":true}"
+            },
 
-                // Should keep casing when serializing dictionaries
-                yield return new object[]
+            // Should keep casing when serializing dictionaries
+            new object[]
+            {
+                new Dictionary<string, string>
                 {
-                    new Dictionary<string, string>
-                    {
-                        {"FirstKey", "foo"},
-                        {"secondKey", "bar"}
-                    },
-                    "{\"FirstKey\":\"foo\",\"secondKey\":\"bar\"}"
-                };
+                    {"FirstKey", "foo"},
+                    {"secondKey", "bar"}
+                },
+                "{\"FirstKey\":\"foo\",\"secondKey\":\"bar\"}"
             }
-        }
+        };
 
         [Theory, AutoData]
         public void Serialize_WithInvalidInput_ShouldThrowSerializationException(
@@ -106,18 +99,14 @@ namespace Comnsense.ExcelAddin.UnitTests.Data
             Assert.Equal(expected, actual, new SemanticComparer<T>());
         }
 
-        public static IEnumerable<object[]> DeserializationTestData
+        public static IEnumerable<object[]> DeserializationTestData => new[]
         {
-            get
+            new object[]
             {
-                // Should ignore missing properties while deserialization
-                yield return new object[]
-                {
-                    "{\"firstName\":\"Vasya\",\"age\":25,\"missingProperty\":\"foo\"}",
-                    new Victim {FirstName = "Vasya", Age = 25}
-                };
+                "{\"firstName\":\"Vasya\",\"age\":25,\"missingProperty\":\"foo\"}",
+                new Victim {FirstName = "Vasya", Age = 25}
             }
-        }
+        };
 
         [Theory, AutoData]
         public void Deserialize_WithInvalidInput_ShouldThrowSerializationException<T>(

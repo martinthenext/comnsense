@@ -4,7 +4,7 @@ using Microsoft.Office.Core;
 
 namespace Comnsense.ExcelAddin
 {
-    internal static class DocumentPropertiesExtensions
+    public static class DocumentPropertiesExtensions
     {
         public static string GetStringProperty(
             this DocumentProperties properties,
