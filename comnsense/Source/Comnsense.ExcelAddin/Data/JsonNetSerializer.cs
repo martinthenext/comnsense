@@ -10,6 +10,7 @@ namespace Comnsense.ExcelAddin.Data
         public static JsonSerializerSettings DefaultSettings => 
             new JsonSerializerSettings
             {
+                ContractResolver = new PreservingDictionaryCasingContractResolver(),
                 NullValueHandling = NullValueHandling.Ignore,
                 Formatting = Formatting.None
             };
