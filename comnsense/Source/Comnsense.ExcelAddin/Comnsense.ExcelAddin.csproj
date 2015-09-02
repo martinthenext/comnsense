@@ -190,7 +190,7 @@
     <Compile Include="Data\JsonNetSerializer.cs" />
     <Compile Include="Data\PreservingDictionaryCasingContractResolver.cs" />
     <Compile Include="Data\StringSerializer.cs" />
-    <Compile Include="DocumentPropertiesExtenstions.cs" />
+    <Compile Include="DocumentPropertiesExtensions.cs" />
     <Compile Include="Event.cs" />
     <Compile Include="EventPublisher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
