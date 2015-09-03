@@ -8,10 +8,7 @@ namespace Comnsense.ExcelAddin.Data
     {
         public static string SerializeAsString(
             this ISerializer serializer,
-            object value)
-        {
-            return SerializeAsString(serializer, value, Encoding.UTF8);
-        }
+            object value) => SerializeAsString(serializer, value, Encoding.UTF8);
 
         public static string SerializeAsString(
             this ISerializer serializer,
@@ -34,10 +31,7 @@ namespace Comnsense.ExcelAddin.Data
 
         public static T DeserializeFromString<T>(
             this ISerializer serializer,
-            string value)
-        {
-            return DeserializeFromString<T>(serializer, value, Encoding.UTF8);
-        }
+            string value) => DeserializeFromString<T>(serializer, value, Encoding.UTF8);
 
         public static T DeserializeFromString<T>(
             this ISerializer serializer,

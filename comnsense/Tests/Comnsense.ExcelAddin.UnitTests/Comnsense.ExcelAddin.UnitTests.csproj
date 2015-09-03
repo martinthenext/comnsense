@@ -94,6 +94,7 @@
     <Compile Include="DataAttributes.cs" />
     <Compile Include="Data\DataAttributes.cs" />
     <Compile Include="Data\JsonNetSerializerTestCase.cs" />
+    <Compile Include="Data\StringSerializerTestCase.cs" />
     <Compile Include="DocumentPropertiesExtensionsTestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
