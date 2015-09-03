@@ -94,12 +94,12 @@ namespace Comnsense.ExcelAddin
         private string GetWorkbookId(Workbook workbook)
         {
             DocumentProperties properties = workbook.CustomDocumentProperties;
-            var id = properties.GetStringProperty("ComnsenseID");
+            var id = properties.GetStringPropertyValue("ComnsenseID");
             if (id != "")
                 return id;
 
             id = Guid.NewGuid().ToString();
-            properties.SetStringProperty("ComnsenseID", id);
+            properties.SetStringPropertyValue("ComnsenseID", id);
             return id;
         }
 

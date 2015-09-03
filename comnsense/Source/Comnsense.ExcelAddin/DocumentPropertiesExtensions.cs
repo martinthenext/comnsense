@@ -6,7 +6,7 @@ namespace Comnsense.ExcelAddin
 {
     public static class DocumentPropertiesExtensions
     {
-        public static string GetStringProperty(
+        public static string GetStringPropertyValue(
             this DocumentProperties properties,
             string propertyName)
         {
@@ -15,14 +15,20 @@ namespace Comnsense.ExcelAddin
             if (propertyName == null)
                 throw new ArgumentNullException(nameof(propertyName));
 
-            var result = properties.Cast<DocumentProperty>()
-                .FirstOrDefault(
-                    p => p.Name == propertyName && 
-                    p.Type == MsoDocProperties.msoPropertyTypeString);
-            return (string) result?.Value ?? "";
+            return (string) properties.FindStringPropertyByName(propertyName)?.Value ?? "";
         }
 
-        public static void SetStringProperty(
+        private static DocumentProperty FindStringPropertyByName(
+            this DocumentProperties properties,
+            string propertyName)
+        {
+            return properties.Cast<DocumentProperty>()
+                .FirstOrDefault(
+                    p => p.Name == propertyName &&
+                         p.Type == MsoDocProperties.msoPropertyTypeString);
+        }
+
+        public static void SetStringPropertyValue(
             this DocumentProperties properties, 
             string propertyName, 
             string value)
@@ -34,9 +40,12 @@ namespace Comnsense.ExcelAddin
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
-            if (properties.GetStringProperty(propertyName) != "")
-                properties[propertyName].Delete();
-            properties.Add(propertyName, false, MsoDocProperties.msoPropertyTypeString, value);
+            var result = properties.FindStringPropertyByName(propertyName);
+
+            if (result == null)
+                properties.Add(propertyName, false, MsoDocProperties.msoPropertyTypeString, value, null);
+            else
+                result.Value = value;
         }
     }
 }
