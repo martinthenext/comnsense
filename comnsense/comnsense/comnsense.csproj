@@ -216,6 +216,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="comnsense_1_TemporaryKey.pfx" />
+    <None Include="comnsense_2_TemporaryKey.pfx" />
     <None Include="comnsense_TemporaryKey.pfx" />
     <None Include="i386\libsodium.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -269,10 +270,11 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>comnsense_1_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>
+    </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>10AFECD37C3AED2E2B2C44C1F06BA8452B2BB8C7</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>B28D62DF3D923A556810A7CFC22E1730382D18DF</ManifestCertificateThumbprint>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
