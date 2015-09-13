@@ -52,7 +52,7 @@ def workbook(workbook_id):
 def expected(workbook_id):
     wb = Workbook(workbook_id, """
          A         |           B         |      C
-    -----------------------------------------------------
+    -------------------------------------------------------------
     Account Number | Client Name         | Phone Number
     9283871273     | John Smith          | 078 922 11 55
     2391293821	   | Lisa Dough	         | 077 828 12 33
@@ -74,8 +74,8 @@ def expected(workbook_id):
     1231238273	   | Laura White         | 023 583 23 23
     9391023192	   | Jane Brown	         | 044 287 73 09
     8484827323	   | Jack Green          | 065 502 28 71
-    Dart:color::3  | Dart Vader:color::0 |
-    =====================================================
+                   |                     | 099 112 21 16:color::0
+    =============================================================
     Clients
                   """)
     allure.attach("expected", wb.serialize("Clients"))
@@ -89,19 +89,18 @@ def scenario(workbook):
     sc.open(comment="open workbook")
     sc.change(sheet, "$C$2", "078 922 11 55", comment="change first number")
     sc.change(sheet, "$C$3", "077 828 12 33", comment="change next number")
-    sc.change(sheet, "$A$22", "Dart", comment="add incorrect account")
-    sc.change(sheet, "$B$22", "Vader", comment="add incorrect name")
-    sc.change(sheet, "$B$22", "Dart Vader", comment="correct name")
+    sc.change(sheet, "$C$22", "099-112-21-16",
+              comment="add old formatted number")
+    sc.change(sheet, "$C$22", "099 112 21 16", comment="correct number")
     sc.close(comment="close workbook")
     yield sc
 
 
 @allure.feature("System Test")
-@allure.story("First Demo Day")
-@pytest.mark.parametrize("interval", [200, 500, 1000])
+@allure.story("Second Demo Day")
 @pytest.mark.skipif(platform.system().lower() == "windows", reason="issue #14")
-def test_system_first_demo_day(agent, addin, interval, expected, io_loop):
-    addin.run(io_loop, interval)
+def test_system_first_demo_day(agent, addin, expected, io_loop):
+    addin.run(io_loop, 1000)
     with allure.step("compare with expected"):
         for sheet in expected.sheets():
             allure.attach("expected.%s" % sheet,

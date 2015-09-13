@@ -2,7 +2,8 @@ import logging
 
 from comnsense_agent.data import Event
 from comnsense_agent.message import Message
-from comnsense_agent.multiplexer.first_answer import FirstAnswer
+from comnsense_agent.multiplexer.single_change_all_requests \
+    import SingleChangeAllRequests
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,15 @@ class Ready:
         if event.type in (Event.Type.SheetChange,
                           Event.Type.RangeResponse):
 
-            actions = []
+            answers = []
             for handler in context.handlers(event.sheet):
                 logger.debug("call %s handler", handler.__class__.__name__)
-                actions.append(handler.handle(event, context))
+                try:
+                    answers.append(handler.handle(event, context))
+                except Exception, e:
+                    logger.exception(e)
 
-            answer = FirstAnswer().merge(event, actions)
+            answer = SingleChangeAllRequests().merge(event, answers)
             return list(map(Message.action, answer)), self
         else:
             logger.warn("unexpected event: %s", str(event))

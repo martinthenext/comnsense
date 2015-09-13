@@ -53,10 +53,10 @@ class ColumnErrorDetector(object):
 
     def handle_begin(self, event, context):
         cells = event.columns.get(self.column, [])
-        for cell in cells:
-            if cell.value:
-                self.add_value_to_stats(cell.value)
-            self.update_interval(int(cell.row))
+        # for cell in cells:
+        #     if cell.value:
+        #         self.add_value_to_stats(cell.value)
+        #     self.update_interval(int(cell.row))
         self.state = self.State.waiting_response
         return [self.make_action_request(event, context)]
 
@@ -236,8 +236,8 @@ class ColumnErrorDetector(object):
 
     def make_action_request(self, event, context):
         range_name = "$%s$%%s:$%s$%%s" % (self.column, self.column)
-        min_row = int(min(context.lookup(event.sheet).get_header_rows())) + 1
-        if self.interval.begin <= min_row:
+        min_row = int(max(context.lookup(event.sheet).get_header_rows())) + 1
+        if self.interval.begin <= min_row and self.interval.end >= min_row:
             begin = self.interval.end + 1
         else:
             begin = min_row

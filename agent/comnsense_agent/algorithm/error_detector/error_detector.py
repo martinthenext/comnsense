@@ -1,7 +1,8 @@
+import itertools
 import logging
 import operator
 
-from ..event_handler import EventHandler
+from ..event_handler import EventHandler, publicmethod
 from .column_error_detector import ColumnErrorDetector
 from comnsense_agent.data import Event
 
@@ -68,3 +69,13 @@ class ErrorDetector(EventHandler):
 
         return Event(event.type, event.workbook,
                      event.sheet, cells, prev_cells)
+
+    @publicmethod
+    def invalidate(self, *cells):
+        logger.debug("invlidating stats: %s", repr(cells))
+        columns = set()
+        for cell in itertools.chain.from_iterable(itertools.chain(*cells)):
+            columns.add(cell.column)
+        for column in columns:
+            if column in self.columns:
+                del self.columns[column]

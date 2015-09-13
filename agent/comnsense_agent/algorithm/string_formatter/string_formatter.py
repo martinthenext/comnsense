@@ -1,4 +1,5 @@
 import logging
+import copy
 
 from .transformer import StringTransformer
 from ..event_handler import EventHandler
@@ -64,7 +65,7 @@ class StringFormatter(EventHandler):
             return
         if len(event.cells[0]) > 1:
             return
-        cell = event.cells[0][0]
+        cell = copy.deepcopy(event.cells[0][0])
 
         if self.state != StringFormatter.State.ConfirmedChangingCells:
             # Also, in any state we are only insterested in edits
@@ -124,13 +125,25 @@ class StringFormatter(EventHandler):
                 return
 
         if self.state == StringFormatter.State.ConfirmedChangingCells:
+            # seems we work slowly
+            if cell.column != self.prev_edit_column:
+                return
+
             # We have ordered a value of a cell, see it it's empty
             if not cell.value:
+                context.lookup(event.sheet).invalidate([[cell]])
                 self.start_over()
                 return
 
             # It has a value, transform it and push it back
-            new_value = self.transformer.transform(cell.value)
+            new_value = None
+            try:
+                new_value = self.transformer.transform(cell.value)
+            except ValueError:
+                context.lookup(event.sheet).invalidate([[cell]])
+                self.start_over()
+                return
+
             cell.value = new_value
 
             change_action = Action(

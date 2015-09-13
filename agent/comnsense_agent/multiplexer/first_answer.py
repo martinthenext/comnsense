@@ -6,10 +6,10 @@ logger = logging.getLogger(__name__)
 
 
 class FirstAnswer(Multiplexer):
-    def merge(self, event, actions):
-        if not actions:
+    def merge(self, event, answers):
+        if not answers:
             return []
-        for array in actions:
+        for array in answers:
             if array:
                 return array
         return []

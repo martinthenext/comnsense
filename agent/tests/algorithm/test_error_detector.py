@@ -14,6 +14,8 @@ from ..fixtures.strings import random_word, random_first_last_name
 from ..fixtures.strings import random_address, random_number
 from comnsense_agent.data import Event, Cell, Action
 from comnsense_agent.algorithm.error_detector import ErrorDetector
+from comnsense_agent.algorithm.error_detector.column_error_detector \
+    import ColumnErrorDetector
 
 
 def attach_stats(algorithm, column):
@@ -113,10 +115,20 @@ def test_online_query_without_response(workbook, sheetname, values, wrong):
                 assert_that(action, instance_of(Action))
                 allure.attach("action", action.serialize(),
                               allure.attach_type.JSON)
-                assert_that(
-                    action.range_name,
-                    equal_to("$%s$%d:$%s$%d" %
-                             (column, num + 1, column, num + rows_in_request)))
+                if num == min_row:
+                    assert_that(
+                        action.range_name,
+                        equal_to("$%s$%d:$%s$%d" %
+                                 (column, num, column,
+                                  num + rows_in_request - 1)))
+                    actions = algorithm.handle(event, context)
+                    attach_stats(algorithm, column)
+                else:
+                    assert_that(
+                        action.range_name,
+                        equal_to("$%s$%d:$%s$%d" %
+                                 (column, num + 1, column,
+                                  num + rows_in_request)))
 
     with allure.step("send wrong event: %s" % wrong):
         event = get_event(event_count + min_row, wrong)
@@ -244,6 +256,9 @@ def test_online_query_change_value(workbook, sheetname, values, wrong):
             event = get_event(num, value)
             actions = algorithm.handle(event, context)
             attach_stats(algorithm, column)
+            if num == min_row:
+                actions = algorithm.handle(event, context)
+                attach_stats(algorithm, column)
 
     with allure.step("send wrong event: %s" % wrong):
         event = get_event(event_count + min_row, wrong)
@@ -269,3 +284,41 @@ def test_online_query_change_value(workbook, sheetname, values, wrong):
                       allure.attach_type.JSON)
         cell = action.cells[0][0]
         assert_that(cell.color, equal_to(0))
+
+
+@allure.feature("Error Detector")
+@allure.story("Invalidate Stats")
+@pytest.mark.parametrize("values,wrong", FIXTURES)
+def test_online_query_invalidate_stats(workbook, sheetname, values, wrong):
+    algorithm = ErrorDetector()
+    column = "A"
+    min_row = 2
+    rows_in_request = 10
+    context = get_context_with_header(column)
+    event_count = len(values)
+
+    def get_event(num, value, prev_value=""):
+        key = "$%s$%d" % (column, num)
+        event = next(sheet_change(workbook, sheetname, key, value, prev_value))
+        allure.attach("event", event.serialize(),
+                      type=allure.attach_type.JSON)
+        return event
+
+    for num, value in enumerate(values, min_row):
+        with allure.step("send event: %d: %s" % (num, value)):
+            event = get_event(num, value)
+            actions = algorithm.handle(event, context)
+            attach_stats(algorithm, column)
+
+    assert_that(algorithm.columns,
+                has_entry(column, instance_of(ColumnErrorDetector)))
+
+    algorithm.invalidate()
+
+    assert_that(algorithm.columns,
+                has_entry(column, instance_of(ColumnErrorDetector)))
+
+    algorithm.invalidate(get_event(min_row, values[min_row]).cells)
+
+    assert_that(algorithm.columns, is_not(
+                has_key(column)))
