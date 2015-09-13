@@ -87,8 +87,8 @@ def scenario(workbook):
     sheet = workbook.sheets()[0]
     sc = Scenario(workbook)
     sc.open(comment="open workbook")
-    sc.change(sheet, "$C$2", "078 922 11 55", comment="change first number")
-    sc.change(sheet, "$C$3", "077 828 12 33", comment="change next number")
+    sc.change(sheet, "$C$21", "065 502 28 71", comment="change next number")
+    sc.change(sheet, "$C$20", "044 287 73 09", comment="change first number")
     sc.change(sheet, "$C$22", "099-112-21-16",
               comment="add old formatted number")
     sc.change(sheet, "$C$22", "099 112 21 16", comment="correct number")

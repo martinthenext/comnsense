@@ -3,7 +3,7 @@ import copy
 
 from .transformer import StringTransformer
 from ..event_handler import EventHandler
-from comnsense_agent.data import Action
+from comnsense_agent.data import Action, Event
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ class StringFormatter(EventHandler):
         self.transformer = None
         self.prev_edit_column = None
         self.prev_edit_row_index = None
+        self.direction = None
         self.state = StringFormatter.State.AwaitingFirstEdit
 
     def is_numeric(self, value):
@@ -60,7 +61,14 @@ class StringFormatter(EventHandler):
             return False
 
     def handle(self, event, context):
+        logger.debug("state: %s", repr(self.state))
+        logger.debug("prev position: $%s$%s",
+                     self.prev_edit_column, self.prev_edit_row_index)
+        logger.debug("direction: %s", self.direction)
+
         # In any state, we are only interested in single cell events
+        # if event.type != Event.Type.SheetChange:
+        #    return
         if len(event.cells) > 1:
             return
         if len(event.cells[0]) > 1:
@@ -95,19 +103,29 @@ class StringFormatter(EventHandler):
         if self.state == StringFormatter.State.AwaitingSecondEdit:
             # TODO we only work with edits going down one column
             if cell.column != self.prev_edit_column:
+                logger.debug("another column")
                 self.start_over()
                 return
 
             row_index = int(cell.row)
-            if row_index != self.prev_edit_row_index + 1:
+            if abs(row_index - self.prev_edit_row_index) != 1:
+                logger.debug("unordered changes")
                 self.start_over()
                 return
+
+            self.direction = row_index - self.prev_edit_row_index
+            logger.debug("set direction: %s", self.direction)
 
             guess = self.transformer.transform(prev_cell.value)
             if guess == cell.value:
                 # We confirmed we guess right, now let's do all cells
                 # down till we run into the empty one
-                row_to_request = row_index + 1
+                row_to_request = row_index + self.direction
+                if row_to_request < 1:
+                    logger.debug("row index < 1")
+                    self.start_over()
+                    return
+
                 range_to_request = "$%s$%s" % (cell.column, row_to_request)
                 action = Action(
                         Action.Type.RangeRequest,
@@ -121,6 +139,7 @@ class StringFormatter(EventHandler):
 
             else:
                 # We didn't guess
+                logger.debug("did't guess")
                 self.start_over()
                 return
 
@@ -154,7 +173,11 @@ class StringFormatter(EventHandler):
             )
 
             # Request a new cell further down
-            row_to_request = int(cell.row) + 1
+            row_to_request = int(cell.row) + self.direction
+            if row_to_request < 1:
+                self.start_over()
+                return [change_action]
+
             range_to_request = "$%s$%s" % (cell.column, row_to_request)
             request_action = Action(
                     Action.Type.RangeRequest,
